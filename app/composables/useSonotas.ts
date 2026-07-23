@@ -68,6 +68,7 @@ function createSonotas() {
     cursorWidth: 3,
     cursorHeight: 100,
     cursorOffset: 0, // screen-space px nudged onto the playhead (can be negative)
+    cursorMatchBar: false, // cursor height spans the played bar box instead of the frame
     highlightColor: '#e0a94c', // played-bar highlight (paint-time)
     highlightOpacity: 22,
     highlightPadding: 6,
@@ -140,7 +141,7 @@ function createSonotas() {
   function paintOpts() {
     return {
       scroll: scrollMode(),
-      cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset },
+      cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset, heightMode: s.cursorMatchBar ? 'bar' : 'frame' },
       highlight: { enabled: s.highlightNotes, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg }
@@ -423,7 +424,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.scroll, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => { if (!s.playing) paintFrame() }
   )
 
@@ -545,6 +546,7 @@ function createSonotas() {
       boxOnlyBars: box(s.renderOnlyBars),
       boxHighlight: box(s.highlightNotes),
       boxRecolor: box(s.recolorNote),
+      boxMatchBar: box(s.cursorMatchBar),
       boxTitle: box(s.showTitle),
       boxChords: box(s.showChords),
       estLine: s.resolution + ' · ' + fpsNum() + 'fps · ' + fmt(eff) + ' · ≈' + estSize,

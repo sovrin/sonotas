@@ -68,6 +68,7 @@ export function createPainter(view: SheetView): Painter {
     const cursorWidth = opts?.cursor?.width ?? DEFAULT_CURSOR_WIDTH
     const cursorOffsetX = opts?.cursor?.offsetX ?? DEFAULT_CURSOR_OFFSET_X
     const cursorHeight = opts?.cursor?.height ?? DEFAULT_CURSOR_HEIGHT
+    const cursorHeightMode = opts?.cursor?.heightMode ?? 'frame'
     const highlightEnabled = opts?.highlight?.enabled ?? false
     const highlightColor = opts?.highlight?.color ?? DEFAULT_HIGHLIGHT_COLOR
     const highlightPadding = opts?.highlight?.padding ?? DEFAULT_HIGHLIGHT_PADDING
@@ -163,10 +164,20 @@ export function createPainter(view: SheetView): Painter {
         )
       }
     }
-    // Cursor spans the full frame height (a playhead across the whole video).
-    const r = cursorRect(cursorX, cursorWidth, cursorHeight, height)
+    // Cursor. 'bar' mode spans the current bar box (same extent as the
+    // highlight, via `hb`); otherwise a centered fraction of the whole frame.
     ctx.fillStyle = cursorColor
-    ctx.fillRect(r.x, r.y, r.width, r.height)
+    if (cursorHeightMode === 'bar' && hb.barH > 0) {
+      ctx.fillRect(
+        cursorX - cursorWidth / 2,
+        bandTop + hb.barY * bandScale,
+        cursorWidth,
+        hb.barH * bandScale
+      )
+    } else {
+      const r = cursorRect(cursorX, cursorWidth, cursorHeight, height)
+      ctx.fillRect(r.x, r.y, r.width, r.height)
+    }
   }
 
   return { width, height, durationMs, paint }

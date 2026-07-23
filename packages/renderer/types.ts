@@ -47,6 +47,10 @@ export interface CursorOptions {
   width?: number // px, default 3
   offsetX?: number // screen-space px added to cursorX (scroll-independent), default 0
   height?: number // fraction 0..1 of canvas height, centered; default 1 (full height)
+  // 'frame' (default): `height` fraction of the whole canvas, centered.
+  // 'bar': spans the current master-bar box, same vertical extent as the
+  // played-bar highlight (`height` is then ignored).
+  heightMode?: 'frame' | 'bar'
 }
 
 /** Background knobs. Own shape so a `transparent?` field can be added later

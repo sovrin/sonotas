@@ -98,22 +98,43 @@ const { s, v, setCursorColor, setNum, toggle, setActiveNoteColor } = useSonotas(
       :style="`background:${v.sldWidth};margin-bottom:15px`"
       @input="setNum"
     >
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px">
-      <span>Height</span><span
-        style="color:var(--heading);font-variant-numeric:tabular-nums"
-      >{{ s.cursorHeight }}%</span>
-    </div>
-    <input
-      type="range"
-      name="cursorHeight"
-      aria-label="Cursor height"
-      min="40"
-      max="100"
-      step="1"
-      :value="s.cursorHeight"
-      :style="`background:${v.sldHeight};margin-bottom:15px`"
-      @input="setNum"
+    <button
+      role="checkbox"
+      :aria-checked="s.cursorMatchBar"
+      style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:2px 0;margin-bottom:12px;cursor:pointer;text-align:left"
+      @click="toggle('cursorMatchBar')"
     >
+      <span :style="v.boxMatchBar"><svg
+        v-if="s.cursorMatchBar"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--inset)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ><path d="M20 6L9 17l-5-5" /></svg></span>
+      <span style="font-size:13.5px;color:var(--text)">Match played-bar height</span>
+    </button>
+    <template v-if="!s.cursorMatchBar">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px">
+        <span>Height</span><span
+          style="color:var(--heading);font-variant-numeric:tabular-nums"
+        >{{ s.cursorHeight }}%</span>
+      </div>
+      <input
+        type="range"
+        name="cursorHeight"
+        aria-label="Cursor height"
+        min="40"
+        max="100"
+        step="1"
+        :value="s.cursorHeight"
+        :style="`background:${v.sldHeight};margin-bottom:15px`"
+        @input="setNum"
+      >
+    </template>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px">
       <span>Offset</span><span
         style="color:var(--heading);font-variant-numeric:tabular-nums"
