@@ -1,0 +1,7 @@
+# Keep the build context small and never overwrite the image's Linux-native
+# node_modules with the host's (COPY . . would otherwise clobber the install).
+node_modules
+**/node_modules
+.nuxt
+.git
+public/fonts

@@ -1,0 +1,21 @@
+{
+  "name": "renderer",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "test": "node --test ./*_test.ts",
+    "typecheck": "tsc --noEmit",
+    "build-font": "node scripts/build-font.ts"
+  },
+  "dependencies": {
+    "@coderline/alphatab": "^1.8.4",
+    "mediabunny": "^1.50.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.3"
+  }
+}
