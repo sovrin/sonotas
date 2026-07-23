@@ -63,11 +63,21 @@ export interface HighlightOptions {
   padding?: number // sheet-space px grown around the bar box on every side; default 0
 }
 
-/** Per-call paint knobs (scroll/cursor/highlight/background). All optional. */
+/** Active-note knobs. Fills a mark over the head(s) of the note currently
+ * playing (a per-note recolor, done as a composited overlay — the sheet itself
+ * is rasterized once, so the glyph can't be re-inked per frame). Optional. */
+export interface ActiveNoteOptions {
+  enabled?: boolean // default false
+  color?: string // final CSS color (rgba composed UI-side); default rgba(229,72,77,0.9)
+  padding?: number // sheet-space px grown around each note-head box; default 1.5
+}
+
+/** Per-call paint knobs (scroll/cursor/highlight/activeNote/background). All optional. */
 export interface PaintOptions {
   scroll?: ScrollMode // viewport behavior, default 'bar'
   cursor?: CursorOptions
   highlight?: HighlightOptions
+  activeNote?: ActiveNoteOptions
   background?: BackgroundOptions
 }
 
@@ -108,8 +118,17 @@ export interface Tile {
   img: OffscreenCanvas
 }
 
-/** A played beat: onset time plus note-x and the current master-bar box (sheet
- * coords). `barX` is the box's left edge; `barY`/`barW`/`barH` its full extent. */
+/** A rectangle in sheet coordinates. */
+export interface Box {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/** A played beat: onset time plus note-x, the current master-bar box, and the
+ * head box of each note sounding on this beat (sheet coords). `barX` is the bar
+ * box's left edge; `barY`/`barW`/`barH` its full extent. */
 export interface Beat {
   startMs: number
   x: number
@@ -117,4 +136,5 @@ export interface Beat {
   barY: number
   barW: number
   barH: number
+  heads: Box[]
 }

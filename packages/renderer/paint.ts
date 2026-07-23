@@ -8,6 +8,8 @@ const DEFAULT_CURSOR_OFFSET_X = 0
 const DEFAULT_CURSOR_HEIGHT = 1 // fraction of canvas height (full height)
 const DEFAULT_HIGHLIGHT_COLOR = 'rgba(224,169,76,0.22)'
 const DEFAULT_HIGHLIGHT_PADDING = 0
+const DEFAULT_ACTIVE_NOTE_COLOR = 'rgba(229,72,77,0.9)'
+const DEFAULT_ACTIVE_NOTE_PADDING = 0
 const DEFAULT_BACKGROUND_COLOR = '#fff'
 const EDGE_MARGIN = 80 // blank breathing room before/after the visible content
 
@@ -49,6 +51,8 @@ export function createPainter(view: SheetView): Painter {
   const viewportSheet = width / bandScale
   const contentRight = tiles.reduce((m, t) => Math.max(m, t.x + t.w), 0)
   let lastI = 0 // monotonic seed; forward walks (encode) stay O(1) per step
+  // Reused scratch buffer for recoloring the active note's glyph pixels.
+  let scratch: OffscreenCanvas | null = null
 
   function indexAt(t: number): number {
     if (lastI >= beats.length || beats[lastI]!.startMs > t) lastI = 0 // moved back → restart
@@ -67,6 +71,9 @@ export function createPainter(view: SheetView): Painter {
     const highlightEnabled = opts?.highlight?.enabled ?? false
     const highlightColor = opts?.highlight?.color ?? DEFAULT_HIGHLIGHT_COLOR
     const highlightPadding = opts?.highlight?.padding ?? DEFAULT_HIGHLIGHT_PADDING
+    const activeNoteEnabled = opts?.activeNote?.enabled ?? false
+    const activeNoteColor = opts?.activeNote?.color ?? DEFAULT_ACTIVE_NOTE_COLOR
+    const activeNotePadding = opts?.activeNote?.padding ?? DEFAULT_ACTIVE_NOTE_PADDING
     const backgroundColor = opts?.background?.color ?? DEFAULT_BACKGROUND_COLOR
 
     t = Math.max(0, Math.min(t, durationMs))
@@ -117,6 +124,44 @@ export function createPainter(view: SheetView): Painter {
         hb.barW * bandScale + pad * 2,
         hb.barH * bandScale + pad * 2
       )
+    }
+    // Recolor the currently-sounding note(s) — the played beat's note heads
+    // (beats[i], not the glide target). The sheet is a flat raster, but its
+    // tiles are glyph-on-transparent (we fill the background separately), so a
+    // tile's alpha IS the glyph shape. Copy each head box from the tiles, keep
+    // that alpha and swap the color via `source-in`, then blit back — so only
+    // the glyph pixels change color, not a box around them. Rests have no heads.
+    if (activeNoteEnabled) {
+      const pad = activeNotePadding
+      for (const head of beats[i]!.heads) {
+        const hx = head.x - pad
+        const hy = head.y - pad
+        const hw = head.w + pad * 2
+        const hh = head.h + pad * 2
+        const sw = Math.max(1, Math.ceil(hw))
+        const sh = Math.max(1, Math.ceil(hh))
+        if (!scratch || scratch.width < sw || scratch.height < sh) {
+          scratch = new OffscreenCanvas(sw, sh)
+        }
+        const sctx = scratch.getContext('2d')!
+        sctx.clearRect(0, 0, scratch.width, scratch.height)
+        // stamp the glyph pixels of this head box from every tile it overlaps
+        for (const tile of tiles) {
+          if (tile.x + tile.w < hx || tile.x > hx + hw) continue
+          if (tile.y + tile.h < hy || tile.y > hy + hh) continue
+          sctx.drawImage(tile.img, hx - tile.x, hy - tile.y, hw, hh, 0, 0, hw, hh)
+        }
+        sctx.globalCompositeOperation = 'source-in' // keep glyph alpha, new color
+        sctx.fillStyle = activeNoteColor
+        sctx.fillRect(0, 0, sw, sh)
+        sctx.globalCompositeOperation = 'source-over'
+        ctx.drawImage(
+          scratch,
+          0, 0, hw, hh,
+          (hx - scrollX) * bandScale, bandTop + hy * bandScale,
+          hw * bandScale, hh * bandScale
+        )
+      }
     }
     // Cursor spans the full frame height (a playhead across the whole video).
     const r = cursorRect(cursorX, cursorWidth, cursorHeight, height)

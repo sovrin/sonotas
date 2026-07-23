@@ -1,5 +1,5 @@
 <script setup>
-const { s, v, setCursorColor, setNum } = useSonotas()
+const { s, v, setCursorColor, setNum, toggle, setActiveNoteColor } = useSonotas()
 </script>
 
 <template>
@@ -111,8 +111,91 @@ const { s, v, setCursorColor, setNum } = useSonotas()
       max="100"
       step="1"
       :value="s.cursorHeight"
-      :style="`background:${v.sldHeight}`"
+      :style="`background:${v.sldHeight};margin-bottom:15px`"
       @input="setNum"
     >
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px">
+      <span>Offset</span><span
+        style="color:var(--heading);font-variant-numeric:tabular-nums"
+      >{{ s.cursorOffset }} px</span>
+    </div>
+    <input
+      type="range"
+      name="cursorOffset"
+      aria-label="Cursor offset"
+      min="-100"
+      max="100"
+      step="1"
+      :value="s.cursorOffset"
+      :style="`background:${v.sldOffset}`"
+      @input="setNum"
+    >
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-soft)">
+      <button
+        role="checkbox"
+        :aria-checked="s.recolorNote"
+        style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:2px 0;cursor:pointer;text-align:left"
+        @click="toggle('recolorNote')"
+      >
+        <span :style="v.boxRecolor"><svg
+          v-if="s.recolorNote"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--inset)"
+          stroke-width="3.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ><path d="M20 6L9 17l-5-5" /></svg></span>
+        <span style="font-size:13.5px;color:var(--text)">Recolour current note</span>
+      </button>
+      <div
+        v-if="s.recolorNote"
+        style="margin-top:12px"
+      >
+        <div style="font-size:11px;color:var(--t3);margin-bottom:7px">
+          Note colour
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button
+            title="Red"
+            :style="v.swAnRed"
+            @click="setActiveNoteColor('#e5484d')"
+          />
+          <button
+            title="Amber"
+            :style="v.swAnAmber"
+            @click="setActiveNoteColor('#e0a94c')"
+          />
+          <button
+            title="Green"
+            :style="v.swAnGreen"
+            @click="setActiveNoteColor('#46a758')"
+          />
+          <button
+            title="Blue"
+            :style="v.swAnBlue"
+            @click="setActiveNoteColor('#5b8def')"
+          />
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:6px">
+          <span>Opacity</span><span
+            style="color:var(--heading);font-variant-numeric:tabular-nums"
+          >{{ s.activeNoteOpacity }}%</span>
+        </div>
+        <input
+          type="range"
+          name="activeNoteOpacity"
+          aria-label="Active note opacity"
+          min="30"
+          max="100"
+          step="1"
+          :value="s.activeNoteOpacity"
+          :style="`background:${v.sldAnOpacity}`"
+          @input="setNum"
+        >
+      </div>
+    </div>
   </div>
 </template>

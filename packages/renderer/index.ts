@@ -18,6 +18,7 @@ export { countBars, listTracks } from './score.ts'
 export type { ScrollMode } from './scroll.ts'
 export type { Notation } from './settings.ts'
 export type {
+  ActiveNoteOptions,
   Aspect,
   BackgroundOptions,
   Crop,
@@ -134,6 +135,8 @@ export async function createRenderer(
         paint: {
           scroll: opts.scroll,
           cursor: opts.cursor,
+          highlight: opts.highlight,
+          activeNote: opts.activeNote,
           background: opts.background
         },
         onProgress: opts.onProgress
