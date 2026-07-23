@@ -67,9 +67,13 @@ function createSonotas() {
     cursorOpacity: 70,
     cursorWidth: 3,
     cursorHeight: 100,
+    cursorOffset: 0, // screen-space px nudged onto the playhead (can be negative)
     highlightColor: '#e0a94c', // played-bar highlight (paint-time)
     highlightOpacity: 22,
     highlightPadding: 6,
+    recolorNote: false, // recolor the currently-playing note (paint-time)
+    activeNoteColor: '#e5484d',
+    activeNoteOpacity: 90,
     showTrackName: true,
     showTempo: true,
     showTimeSig: true,
@@ -115,6 +119,7 @@ function createSonotas() {
   function qualityMode() { return QUALITY_BY_UI[s.quality] ?? 'high' }
   function cursorCss() { return hexToRgba(s.cursorColor, s.cursorOpacity / 100) }
   function highlightCss() { return hexToRgba(s.highlightColor, s.highlightOpacity / 100) }
+  function activeNoteCss() { return hexToRgba(s.activeNoteColor, s.activeNoteOpacity / 100) }
 
   function buildOpts() {
     return {
@@ -135,8 +140,9 @@ function createSonotas() {
   function paintOpts() {
     return {
       scroll: scrollMode(),
-      cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100 },
+      cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset },
       highlight: { enabled: s.highlightNotes, color: highlightCss(), padding: s.highlightPadding },
+      activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg }
     }
   }
@@ -335,6 +341,8 @@ function createSonotas() {
 
   function setHighlightColor(c: string) { s.highlightColor = c }
 
+  function setActiveNoteColor(c: string) { s.activeNoteColor = c }
+
   function setPage(p: string) {
     s.page = p
     try {
@@ -415,7 +423,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.scroll, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.scroll, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => { if (!s.playing) paintFrame() }
   )
 
@@ -519,17 +527,24 @@ function createSonotas() {
       sldOpacity: sld(s.cursorOpacity, 10, 100, 'var(--accent)'),
       sldWidth: sld(s.cursorWidth, 1, 10, 'var(--accent)'),
       sldHeight: sld(s.cursorHeight, 40, 100, 'var(--accent)'),
+      sldOffset: sld(s.cursorOffset, -100, 100, 'var(--accent)'),
       swHlAmber: sw('#e0a94c', s.highlightColor === '#e0a94c'),
       swHlAccent: sw('#8f97ac', s.highlightColor === '#8f97ac'),
       swHlGreen: sw('#46a758', s.highlightColor === '#46a758'),
       swHlBlue: sw('#5b8def', s.highlightColor === '#5b8def'),
       sldHlOpacity: sld(s.highlightOpacity, 5, 60, 'var(--accent)'),
       sldHlPadding: sld(s.highlightPadding, 0, 20, 'var(--accent)'),
+      swAnRed: sw('#e5484d', s.activeNoteColor === '#e5484d'),
+      swAnAmber: sw('#e0a94c', s.activeNoteColor === '#e0a94c'),
+      swAnGreen: sw('#46a758', s.activeNoteColor === '#46a758'),
+      swAnBlue: sw('#5b8def', s.activeNoteColor === '#5b8def'),
+      sldAnOpacity: sld(s.activeNoteOpacity, 30, 100, 'var(--accent)'),
       boxTrackName: box(s.showTrackName),
       boxTempo: box(s.showTempo),
       boxTimeSig: box(s.showTimeSig),
       boxOnlyBars: box(s.renderOnlyBars),
       boxHighlight: box(s.highlightNotes),
+      boxRecolor: box(s.recolorNote),
       boxTitle: box(s.showTitle),
       boxChords: box(s.showChords),
       estLine: s.resolution + ' · ' + fpsNum() + 'fps · ' + fmt(eff) + ' · ≈' + estSize,
@@ -577,6 +592,7 @@ function createSonotas() {
     setCanvasTheme,
     setCursorColor,
     setHighlightColor,
+    setActiveNoteColor,
     setPage,
     togglePlay,
     seek,

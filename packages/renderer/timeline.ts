@@ -1,5 +1,5 @@
 import * as alphaTab from '@coderline/alphatab'
-import type { Beat } from './types.ts'
+import type { Beat, Box } from './types.ts'
 import type { CropRange } from './settings.ts'
 import { buildTempo } from './tempo.ts'
 
@@ -38,6 +38,7 @@ export function buildTimeline(
     barY: number
     barW: number
     barH: number
+    heads: Box[]
     s: number
     e: number
     ms: number
@@ -49,12 +50,21 @@ export function buildTimeline(
     last = cur.start
     const bb = bounds.findBeat(cur.beat)
     const box = bb?.barBounds?.masterBarBounds?.realBounds
+    // Per-note head boxes (needs core.includeNoteBounds — already on). Powers the
+    // active-note recolor overlay; empty for rests or if bounds are unavailable.
+    const heads: Box[] = (bb?.notes ?? []).map(n => ({
+      x: n.noteHeadBounds.x,
+      y: n.noteHeadBounds.y,
+      w: n.noteHeadBounds.w,
+      h: n.noteHeadBounds.h
+    }))
     spans.push({
       x: bb ? bb.onNotesX : 0,
       barX: box?.x ?? 0,
       barY: box?.y ?? 0,
       barW: box?.w ?? 0,
       barH: box?.h ?? 0,
+      heads,
       s: cur.start,
       e: cur.end,
       ms: cur.duration > 0 ? cur.duration : 1,
@@ -81,7 +91,7 @@ export function buildTimeline(
     const endMs = tempo.hasRamp ? tempo.timeAtTick(span.e) : flatMs + span.ms
     if (inRange(span.bar)) {
       offset ??= startMs
-      beats.push({ startMs: startMs - offset, x: span.x, barX: span.barX, barY: span.barY, barW: span.barW, barH: span.barH })
+      beats.push({ startMs: startMs - offset, x: span.x, barX: span.barX, barY: span.barY, barW: span.barW, barH: span.barH, heads: span.heads })
       barOnset[span.bar] ??= startMs - offset // repeats revisit bars — keep the earliest
       durationMs = Math.max(durationMs, endMs - offset)
     }

@@ -10,7 +10,8 @@ const beat = (startMs: number, x: number, barX: number): Beat => ({
   barX,
   barY: 0,
   barW: 0,
-  barH: 0
+  barH: 0,
+  heads: []
 })
 
 test('bar mode anchors the view to the current bar, note on the beat', () => {
