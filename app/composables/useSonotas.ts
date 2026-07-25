@@ -19,7 +19,7 @@ const SAMPLE_URL = '/tabs/test.gp'
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
-const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', Continuous: 'smooth', Off: 'bar' }
+const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Continuous': 'smooth', 'Off': 'bar' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'high' }
 // mediabunny's Quality factor per preset (see encode.js Quality._toVideoBitrate).
 const QUALITY_FACTOR: Record<string, number> = { low: 0.6, medium: 1, high: 2 }
@@ -114,13 +114,34 @@ function createSonotas() {
     const short = SHORT_BY_RES[s.resolution] ?? 1080
     return s.aspect === '16:9' ? Math.round(short * 16 / 9) : short
   }
-  function scaleNum() { return (parseFloat(s.notationSize) || 100) / 100 }
-  function notationMode() { return NOTATION_BY_STAVES[s.staves] ?? 'tab' }
-  function scrollMode() { return SCROLL_BY_UI[s.scroll] ?? 'bar' }
-  function qualityMode() { return QUALITY_BY_UI[s.quality] ?? 'high' }
-  function cursorCss() { return hexToRgba(s.cursorColor, s.cursorOpacity / 100) }
-  function highlightCss() { return hexToRgba(s.highlightColor, s.highlightOpacity / 100) }
-  function activeNoteCss() { return hexToRgba(s.activeNoteColor, s.activeNoteOpacity / 100) }
+
+  function scaleNum() {
+    return (parseFloat(s.notationSize) || 100) / 100
+  }
+
+  function notationMode() {
+    return NOTATION_BY_STAVES[s.staves] ?? 'tab'
+  }
+
+  function scrollMode() {
+    return SCROLL_BY_UI[s.scroll] ?? 'bar'
+  }
+
+  function qualityMode() {
+    return QUALITY_BY_UI[s.quality] ?? 'high'
+  }
+
+  function cursorCss() {
+    return hexToRgba(s.cursorColor, s.cursorOpacity / 100)
+  }
+
+  function highlightCss() {
+    return hexToRgba(s.highlightColor, s.highlightOpacity / 100)
+  }
+
+  function activeNoteCss() {
+    return hexToRgba(s.activeNoteColor, s.activeNoteOpacity / 100)
+  }
 
   function buildOpts() {
     return {
@@ -258,7 +279,9 @@ function createSonotas() {
   }
 
   // ── playback (rAF loop) ─────────────────────────────────────────────────────
-  function speedNum() { return parseFloat(s.speed) || 1 }
+  function speedNum() {
+    return parseFloat(s.speed) || 1
+  }
 
   function stopLoop() {
     if (raf !== null) {
@@ -314,15 +337,25 @@ function createSonotas() {
     if (!isNaN(n)) (s as Dynamic)[el.name] = n
   }
 
-  function setTrack(e: Event) { s.trackIndex = Number((e.target as HTMLSelectElement).value) }
+  function setTrack(e: Event) {
+    s.trackIndex = Number((e.target as HTMLSelectElement).value)
+  }
 
-  function toggle(k: string) { (s as Dynamic)[k] = !(s as Dynamic)[k] }
+  function toggle(k: string) {
+    (s as Dynamic)[k] = !(s as Dynamic)[k]
+  }
 
-  function toggleTheme() { s.uiTheme = s.uiTheme === 'dark' ? 'light' : 'dark' }
+  function toggleTheme() {
+    s.uiTheme = s.uiTheme === 'dark' ? 'light' : 'dark'
+  }
 
-  function setMode(m: string) { s.mode = m }
+  function setMode(m: string) {
+    s.mode = m
+  }
 
-  function setAspect(a: string) { s.aspect = a }
+  function setAspect(a: string) {
+    s.aspect = a
+  }
 
   function setCanvasTheme(t: string) {
     s.theme = t
@@ -338,17 +371,24 @@ function createSonotas() {
     }
   }
 
-  function setCursorColor(c: string) { s.cursorColor = c }
+  function setCursorColor(c: string) {
+    s.cursorColor = c
+  }
 
-  function setHighlightColor(c: string) { s.highlightColor = c }
+  function setHighlightColor(c: string) {
+    s.highlightColor = c
+  }
 
-  function setActiveNoteColor(c: string) { s.activeNoteColor = c }
+  function setActiveNoteColor(c: string) {
+    s.activeNoteColor = c
+  }
 
   function setPage(p: string) {
     s.page = p
     try {
       window.scrollTo(0, 0)
-    } catch { /* ssr */ }
+    } catch { /* ssr */
+    }
   }
 
   // ── encode (real MP4) ───────────────────────────────────────────────────────
@@ -362,7 +402,10 @@ function createSonotas() {
     s.playing = false
     const token = ++renderToken
     s.render = { status: 'rendering', pct: 0, phase: 'Preparing score…', frame: 0, total: 0 }
-    if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null }
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl)
+      blobUrl = null
+    }
     s.videoUrl = ''
     blob = null
     try {
@@ -425,7 +468,9 @@ function createSonotas() {
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
     () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
-    () => { if (!s.playing) paintFrame() }
+    () => {
+      if (!s.playing) paintFrame()
+    }
   )
 
   onBeforeUnmount(() => {
@@ -437,9 +482,13 @@ function createSonotas() {
   })
 
   // ── helpers used by the derived values ──────────────────────────────────────
-  function fpsNum() { return parseInt(s.fps, 10) || 30 }
+  function fpsNum() {
+    return parseInt(s.fps, 10) || 30
+  }
 
-  function effDur() { return s.duration / speedNum() }
+  function effDur() {
+    return s.duration / speedNum()
+  }
 
   function fmt(t: number) {
     const m = Math.floor(t / 60)
