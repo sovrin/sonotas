@@ -74,7 +74,7 @@ export async function encodeVideo(
   // fallback where rAF is absent (e.g. a worker context).
   const raf = typeof requestAnimationFrame === 'function'
   const yieldToPaint = () =>
-    new Promise<void>((r) => (raf ? requestAnimationFrame(() => r()) : setTimeout(r)))
+    new Promise<void>(r => (raf ? requestAnimationFrame(() => r()) : setTimeout(r)))
   let lastYield = performance.now()
   for (let i = 0; i < total; i++) {
     painter.paint(ctx, startMs + (i / fps) * 1000, paint) // clip-relative source time

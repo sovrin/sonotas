@@ -11,10 +11,9 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "build-font": "pnpm --filter ./apps/web build-font"
-
   },
   "dependencies": {
-    "@iconify-json/lucide": "^1.2.118",
+    "@iconify-json/lucide": "^1.2.119",
     "@iconify-json/simple-icons": "^1.2.91",
     "@nuxt/ui": "^4.10.0",
     "nuxt": "^4.5.0",
