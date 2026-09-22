@@ -2,10 +2,11 @@
 // One track, a cursor, scrolling line or page layout. Render a single frame or a full mp4. No audio.
 // This module wires the per-concern modules together.
 import { musicFontCss } from './font.ts'
-import { createSettings } from './settings.ts'
+import { createSettings, staveProfile } from './settings.ts'
 import {
   detachCropStart,
   hasChords,
+  hasTab,
   injectTempoAt,
   loadScore,
   renderSheet
@@ -103,6 +104,11 @@ export async function createRenderer(
     barNumberColor: opts.barNumberColor
   })
   const score = loadScore(bytes, settings, track)
+  // Tab only on a track without tablature (drums, keys) would render nothing;
+  // fall back to the track's own staves.
+  if (opts.notation === 'tab' && !hasTab(score, track)) {
+    settings.display.staveProfile = staveProfile('auto')
+  }
   // Diagrams above chord-named beats (any layout) live on the score's stylesheet,
   // not in settings; off draws the chord name as text, alphaTab's default.
   score.stylesheet.globalDisplayChordDiagramsInScore = chordDiagrams
