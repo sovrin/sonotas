@@ -1,9 +1,9 @@
 import { test } from 'node:test'
+import type * as alphaTab from '@coderline/alphatab'
 import { assert, assertEquals } from './_assert.ts'
 import { loadSample, shimHeadless } from './_testutil.ts'
 
 shimHeadless()
-const alphaTab = await import('@coderline/alphatab')
 const { createSettings } = await import('./settings.ts')
 const { loadScore } = await import('./score.ts')
 const { buildTimeline } = await import('./timeline.ts')
@@ -11,7 +11,7 @@ const { buildTimeline } = await import('./timeline.ts')
 // `bars` needs no rendered geometry, so a bounds lookup that finds nothing works.
 const noBounds = {
   findBeat: () => null
-} as unknown as typeof alphaTab.rendering.BoundsLookup.prototype
+} as unknown as alphaTab.rendering.BoundsLookup
 
 test('buildTimeline emits one ascending bar onset per master bar', async () => {
   const settings = createSettings()
