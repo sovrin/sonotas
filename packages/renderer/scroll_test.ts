@@ -40,14 +40,6 @@ test('smooth mode holds on the beat when the next one is on another system', () 
   assertEquals(scrollState('smooth', beats, 0, 50, WIDTH).noteX, 900)
 })
 
-test('none mode keeps the note on the beat and wants the far-left view', () => {
-  const beats = [beat(0, 500, 400), beat(100, 800, 700)]
-  const s = scrollState('none', beats, 1, 150, WIDTH)
-  assertEquals(s.noteX, 800)
-  assertEquals(s.scrollX, -Infinity) // clampScroll pins this to the range start
-  assertEquals(clampScroll(s.scrollX, -80, 5000, WIDTH), -80)
-})
-
 test('smooth mode holds on the last beat when there is no next', () => {
   const beats = [beat(0, 250, 0)]
   const s = scrollState('smooth', beats, 0, 500, WIDTH)
@@ -74,6 +66,17 @@ test('pan mode settles on the current bar once the pan completes', () => {
   assertEquals(s.scrollX, 1000 - 80)
 })
 
+test('centered bar mode puts the bar\'s middle at the view center', () => {
+  const beats = [{ ...beat(0, 500, 400), barW: 200 }]
+  assertEquals(scrollState('bar', beats, 0, 50, WIDTH, true).scrollX, 500 - WIDTH / 2)
+})
+
+test('centered pan mode eases between the bars\' centered anchors', () => {
+  const beats = panBeats.map(b => ({ ...b, barW: 200 }))
+  // centers 100 → 1100; 0.75 of the way at 125ms into the pan
+  assertEquals(scrollState('pan', beats, 1, 1125, WIDTH, true).scrollX, 100 + 1000 * 0.75 - WIDTH / 2)
+})
+
 // vertical follow (page layout): system 0 spans y 0..100, system 1 y 300..400;
 // the cursor crosses into system 1 at 1000ms. Viewport 500 tall.
 const pageBeats = [beat(0, 10, 0, 0), beat(500, 400, 300, 0), beat(1000, 10, 0, 300)]
@@ -91,10 +94,8 @@ test('scrollStateY eases between systems in pan and smooth modes', () => {
   assertEquals(scrollStateY('smooth', pageBeats, 2, 1400, VIEW_H), 100) // settled
 })
 
-test('scrollStateY holds on the first system and pins none mode to the top', () => {
+test('scrollStateY holds on the first system', () => {
   assertEquals(scrollStateY('pan', pageBeats, 1, 600, VIEW_H), -200) // same system, no pan
-  assertEquals(scrollStateY('none', pageBeats, 2, 1100, VIEW_H), -Infinity)
-  assertEquals(clampScroll(-Infinity, 0, 2000, VIEW_H), 0)
 })
 
 test('clampScroll allows scrolling within a span wider than the view', () => {

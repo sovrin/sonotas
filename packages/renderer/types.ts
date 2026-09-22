@@ -37,6 +37,7 @@ export interface RendererOptions {
   // only controls whether it's re-shown at a mid-piece crop start (it always
   // shows on bar 1). All default true.
   showTrackName?: boolean
+  showBarNumbers?: boolean
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
@@ -79,7 +80,7 @@ export interface HighlightOptions {
 export interface ActiveNoteOptions {
   enabled?: boolean // default false
   color?: string // final CSS color (rgba composed UI-side); default rgba(229,72,77,0.9)
-  padding?: number // sheet-space px grown around each note-head box; default 1.5
+  padding?: number // sheet-space px grown around each note-head box; default 0
 }
 
 /** Song title/artist overlay, drawn in the frame's top-left from the file's own
@@ -93,6 +94,9 @@ export interface TitleOptions {
 /** Per-call paint knobs (scroll/cursor/highlight/activeNote/background/title). All optional. */
 export interface PaintOptions {
   scroll?: ScrollMode // viewport behavior, default 'bar'
+  // Draw only the bar being played, centered in the frame, hiding the rest of
+  // the sheet. Default false.
+  currentBarOnly?: boolean
   cursor?: CursorOptions
   highlight?: HighlightOptions
   activeNote?: ActiveNoteOptions
@@ -106,6 +110,7 @@ export interface EncodeOptions extends PaintOptions {
   startMs?: number // clip start, default 0
   endMs?: number // clip end, default durationMs
   fps?: number // output frame rate, default 30
+  speed?: number // playback rate (2 = twice as fast, half as long), default 1
   quality?: Quality // encoder quality, default 'high'
   onProgress?: (frame: number, total: number) => void
 }
