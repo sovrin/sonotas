@@ -51,5 +51,8 @@ ENV SERVER_CONFIG_FILE=/sws.toml
 
 COPY sws.toml /sws.toml
 COPY --from=build /app/.output/public /public
+# Redistributing alphaTab and mediabunny (MPL-2.0) and the Bravura subset (OFL)
+# requires their notices to travel with the image.
+COPY --from=build /app/THIRD_PARTY_NOTICES.md /app/LICENSE /public/
 
 EXPOSE 3000
