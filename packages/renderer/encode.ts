@@ -79,6 +79,7 @@ export interface EncodeParams {
   fast: boolean // parallel software encoders instead of the constant-quality path
   paint: PaintOptions // crop/scroll/cursor/background passed through to paint()
   onProgress?: (frame: number, total: number) => void
+  signal?: AbortSignal // closes the encoders and abandons the output
 }
 
 /** A run of output frames `[first, first + count)` one encoder paints in order. */
@@ -173,24 +174,25 @@ interface LaneOutput {
 interface Hooks {
   keep?: boolean // collect packets for muxing (the probe only counts bytes)
   onPacket?: (bytes: number) => void
-  stop?: () => boolean // polled after each frame; true aborts
+  signal?: AbortSignal
 }
 
 /** Paint and encode each lane's ranges on its own VideoEncoder, all lanes
  * concurrently. Frame `i` shows source time `startMs + i/fps·speed`, is
  * stamped `i/fps` and is a keyframe on every GOP boundary. Resolves `null` if
- * `stop()` fired. */
+ * `signal` aborted: every encoder is closed right away, dropping its queued
+ * frames, and the lanes stop painting. */
 async function encodeLanes(
   painter: Painter,
   { fps, startMs, speed, paint }: Pick<EncodeParams, 'fps' | 'startMs' | 'speed' | 'paint'>,
   setup: Setup,
   lanes: Range[][],
-  { keep, onPacket, stop }: Hooks
+  { keep, onPacket, signal }: Hooks
 ): Promise<LaneOutput[] | null> {
   const { width, height } = painter
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   let failed: unknown = null
-  let stopped = false
+  const halted = () => !!failed || !!signal?.aborted
 
   // Painting and handing frames to the encoders is cheap main-thread work; the
   // encoders run off-thread. Still yield on a wall-clock budget (~every 60ms)
@@ -206,7 +208,7 @@ async function encodeLanes(
     const out: LaneOutput = { packets: [] }
     const canvas = new OffscreenCanvas(width, height)
     const ctx = canvas.getContext('2d')!
-    let wake: (() => void) | null = null // resolves a backpressure wait early on error
+    let wake: (() => void) | null = null // resolves a backpressure wait early on error/abort
     const encoder = new VideoEncoder({
       output: (chunk, meta) => {
         if (!out.meta && meta?.decoderConfig) out.meta = meta
@@ -218,10 +220,16 @@ async function encodeLanes(
         wake?.()
       }
     })
+    const abort = () => {
+      if (encoder.state !== 'closed') encoder.close() // drops queued frames; a pending flush rejects
+      wake?.()
+    }
+    signal?.addEventListener('abort', abort, { once: true })
     encoder.configure(setup.config)
     try {
       for (const { first, count } of ranges) {
         for (let i = first; i < first + count; i++) {
+          if (halted()) return out
           painter.paint(ctx, startMs + (i / fps) * 1000 * speed, paint) // clip-relative source time
           const frame = new VideoFrame(canvas, {
             timestamp: Math.round((i / fps) * 1e6), // output timestamps start at 0
@@ -229,14 +237,12 @@ async function encodeLanes(
           })
           encoder.encode(frame, { ...setup.frame, keyFrame: i % gopFrames === 0 || i === first })
           frame.close()
-          while (encoder.encodeQueueSize >= 4 && !failed) {
+          while (encoder.encodeQueueSize >= 4 && !halted()) {
             await new Promise<void>((r) => {
               wake = r
               encoder.addEventListener('dequeue', () => r(), { once: true })
             })
           }
-          if (stop?.()) stopped = true
-          if (failed || stopped) return out
           if (performance.now() - lastYield >= 60) {
             lastYield = performance.now()
             await yieldToPaint()
@@ -245,14 +251,18 @@ async function encodeLanes(
       }
       await encoder.flush()
       return out
+    } catch (e) {
+      if (signal?.aborted) return out // the flush we cut short
+      throw e
     } finally {
+      signal?.removeEventListener('abort', abort)
       if (encoder.state !== 'closed') encoder.close()
     }
   }
 
   const outputs = await Promise.all(lanes.map(runLane))
   if (failed) throw failed
-  return stopped ? null : outputs
+  return signal?.aborted ? null : outputs
 }
 
 /** Raw bytes of a decoder config's `description` (the avcC box). */
@@ -294,14 +304,16 @@ async function mux(lanes: LaneOutput[], fps: number): Promise<Blob | null> {
  * still compresses tiny (identical frames → near-empty P-frames).
  *
  * The clip is split into runs of whole GOPs, one per encoder (see
- * `resolveSetup`), and the packets stitched back in order. */
+ * `resolveSetup`), and the packets stitched back in order. Aborting `signal`
+ * stops the encoders at once and rejects with its reason (an AbortError). */
 export async function encodeVideo(
   painter: Painter,
-  { endMs, onProgress, ...params }: EncodeParams
+  { endMs, onProgress, signal, ...params }: EncodeParams
 ): Promise<Blob> {
   const { fps, startMs, speed, quality, fast } = params
   const total = clipFrames(startMs, endMs, painter.durationMs, fps, speed)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
+  signal?.throwIfAborted()
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
   let lanes = setup.lanes
   for (;;) {
@@ -311,9 +323,11 @@ export async function encodeVideo(
       params,
       setup,
       splitRanges(total, gopFrames, lanes).map(r => [r]),
-      { keep: true, onPacket: () => onProgress?.(++done, total) }
+      { keep: true, onPacket: () => onProgress?.(++done, total), signal }
     )
-    const blob = await mux(outputs!, fps)
+    if (!outputs) throw signal!.reason
+    const blob = await mux(outputs, fps)
+    signal?.throwIfAborted()
     if (blob) return blob
     lanes = 1 // encoders disagreed on the stream header: redo it as one stream
   }
@@ -334,17 +348,17 @@ const MP4_BYTES_PER_FRAME = 4
  * `samples` evenly spread GOPs and scaling their mean by the GOP count is
  * therefore an unbiased estimate; the only error is how representative the
  * sampled GOPs are. The fast (target-bitrate) path is only approximate: its
- * rate control carries state across GOPs. Resolves `null` if `stop()` fires. */
+ * rate control carries state across GOPs. Resolves `null` if `signal` aborts. */
 export async function estimateVideoBytes(
   painter: Painter,
-  { endMs, onProgress: _, ...params }: EncodeParams,
-  samples: number,
-  stop?: () => boolean
+  { endMs, onProgress: _, signal, ...params }: EncodeParams,
+  samples: number
 ): Promise<number | null> {
   const { fps, startMs, speed, quality, fast } = params
   const total = clipFrames(startMs, endMs, painter.durationMs, fps, speed)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
+  if (signal?.aborted) return null
   const picks: Range[] = sampleGops(Math.ceil(total / gopFrames), samples).map(g => ({
     first: g * gopFrames,
     count: Math.min(gopFrames, total - g * gopFrames)
@@ -353,7 +367,7 @@ export async function estimateVideoBytes(
   const per = Math.ceil(picks.length / setup.lanes)
   const lanes = Array.from({ length: setup.lanes }, (_, j) => picks.slice(j * per, (j + 1) * per)).filter(l => l.length)
   let bytes = 0
-  const outputs = await encodeLanes(painter, params, setup, lanes, { onPacket: b => (bytes += b), stop })
+  const outputs = await encodeLanes(painter, params, setup, lanes, { onPacket: b => (bytes += b), signal })
   if (!outputs) return null
   const frames = picks.reduce((n, r) => n + r.count, 0)
   return Math.round((bytes / frames) * total + MP4_BASE_BYTES + MP4_BYTES_PER_FRAME * total)
