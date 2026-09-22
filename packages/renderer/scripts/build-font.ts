@@ -7,7 +7,7 @@
 //   macOS:  brew install harfbuzz woff2
 //   Debian: apt-get install harfbuzz-utils woff2
 //
-// Run: npm run build-font  (from packages/renderer)
+// Run: pnpm build-font  (from the repo root)
 import { execFile } from 'node:child_process'
 import { copyFile, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
