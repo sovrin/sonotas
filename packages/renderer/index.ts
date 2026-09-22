@@ -41,7 +41,7 @@ export type {
 
 const DEFAULT_WIDTH = 1280
 const DEFAULT_FPS = 30
-const DEFAULT_FONT_URL = '/fonts/Bravura.subset.woff2'
+const DEFAULT_FONT_URL = '/fonts/sonotas-music.woff2'
 const MIN_SCALE = 0.5
 const MAX_SCALE = 2.0
 // When framing, the sheet is rasterized at a fixed high scale for crispness

@@ -97,18 +97,18 @@ docker compose up -d --build   # http://localhost:3000
 
 ### Rebuilding the music font
 
-`public/fonts/Bravura.subset.woff2` holds only the glyphs alphaTab can emit. To
-regenerate it after an alphaTab upgrade without installing harfbuzz locally, run:
+`public/fonts/sonotas-music.woff2` is a subset of Bravura holding only the
+glyphs alphaTab can emit. Bravura's license reserves its name for the original,
+so the subset is renamed to "Sonotas Music" on the way. To regenerate it after
+an alphaTab upgrade, with all tooling pinned inside Docker, run:
 
 ```bash
 docker build --target font --output public/fonts .
 ```
 
-Or natively, with `harfbuzz` and `woff2` installed (`brew install harfbuzz woff2`), run:
-
-```bash
-pnpm build-font
-```
+Natively, with `harfbuzz` and `woff2` installed (`brew install harfbuzz woff2`),
+`pnpm build-font` produces the same subset but skips the rename unless
+fontTools' `ttx` is on your PATH. Use the Docker route for the committed file.
 
 ## License
 
