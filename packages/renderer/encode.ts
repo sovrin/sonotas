@@ -6,7 +6,8 @@ import {
   type Quality as MbQuality,
   QUALITY_HIGH,
   QUALITY_LOW,
-  QUALITY_MEDIUM
+  QUALITY_MEDIUM,
+  QUALITY_VERY_HIGH
 } from 'mediabunny'
 import type { Painter } from './paint.ts'
 import type { PaintOptions, Quality } from './types.ts'
@@ -16,7 +17,8 @@ import type { PaintOptions, Quality } from './types.ts'
 export const QUALITY_PRESET: Record<Quality, MbQuality> = {
   low: QUALITY_LOW,
   medium: QUALITY_MEDIUM,
-  high: QUALITY_HIGH
+  high: QUALITY_HIGH,
+  max: QUALITY_VERY_HIGH
 }
 
 /** Number of constant-rate frames in the clip window `[startMs, endMs]`. */

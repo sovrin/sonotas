@@ -1,6 +1,6 @@
 <script setup>
-const title = 'sonotas — render Guitar Pro tabs to video'
-const description = 'Drop a Guitar Pro file, frame it for any platform, and export a clean MP4 with a synced playhead — all in your browser, nothing uploaded.'
+const title = 'sonotas – Guitar Pro tabs to video'
+const description = 'Turn a Guitar Pro tab into an MP4 with a moving playhead. Runs in your browser; nothing is uploaded.'
 
 useHead({
   meta: [

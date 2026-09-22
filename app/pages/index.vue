@@ -1,69 +1,53 @@
 <script setup>
-const { s, v } = provideSonotas()
+const { s, loadFile } = provideSonotas()
+
+// Page-wide drag & drop: any file dropped anywhere replaces the loaded tab.
+const dragDepth = ref(0)
+const dragging = computed(() => dragDepth.value > 0)
+
+function onDragEnter(e) {
+  if (!e.dataTransfer?.types?.includes('Files')) return
+  dragDepth.value++
+}
+
+function onDragLeave() {
+  dragDepth.value = Math.max(0, dragDepth.value - 1)
+}
+
+function onDrop(e) {
+  dragDepth.value = 0
+  const file = e.dataTransfer?.files?.[0]
+  if (file) loadFile(file)
+}
 </script>
 
 <template>
   <div
-    class="sono"
+    class="app"
     :data-theme="s.uiTheme"
-    style="min-height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);transition:background .25s,color .25s"
+    @dragenter.prevent="onDragEnter"
+    @dragover.prevent
+    @dragleave.prevent="onDragLeave"
+    @drop.prevent="onDrop"
   >
-    <!-- NAV -->
-    <SonotasNav />
+    <AppHeader />
 
-    <!-- APP -->
-    <template v-if="s.page === 'app'">
-      <SonotasHero />
+    <main class="wrap workspace">
+      <section style="min-width:0">
+        <PreviewStage />
+        <TransportBar v-if="!s.videoUrl" />
+      </section>
 
-      <!-- WORKSPACE -->
-      <main
-        class="page ws"
-        style="max-width:1320px;margin:0 auto;width:100%;padding:22px 32px 48px;display:grid;grid-template-columns:minmax(0,1fr) 356px;gap:24px;align-items:start"
-      >
-        <!-- STAGE -->
-        <section style="display:flex;flex-direction:column;gap:14px;min-width:0">
-          <FrameControls />
+      <SettingsPanel />
+    </main>
 
-          <TabCanvas />
+    <AppFooter />
 
-          <TransportBar />
-        </section>
-
-        <!-- CONTROLS -->
-        <aside
-          class="controls"
-          style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.35);position:sticky;top:16px;display:flex;flex-direction:column;overflow:hidden"
-        >
-          <ModeToggle />
-
-          <div
-            class="ctrl-scroll"
-            style="overflow-y:auto;max-height:calc(100vh - 220px)"
-          >
-            <SourceSection />
-            <TrackSelect />
-            <FormatSection />
-            <!-- ADVANCED -->
-            <template v-if="s.mode === 'advanced'">
-              <OutputSection />
-              <PlaybackSection />
-              <CursorSection />
-              <ColorsSection />
-              <LabelsSection />
-              <BarsSection />
-            </template>
-          </div>
-
-          <RenderFooter />
-        </aside>
-      </main>
-    </template>
-
-    <HowItWorks />
-    <FormatsView />
-    <FaqView />
-    <SiteFooter />
-
-    <RenderModal />
+    <div
+      v-if="dragging"
+      class="drop-overlay"
+    >
+      Drop to load the file
+    </div>
   </div>
 </template>

@@ -101,17 +101,25 @@ export interface RenderedSheet {
   height: number
 }
 
-/** Render one track to rasterized SVG tiles, exposing alphaTab's bounds lookup. */
+/** Whether the track defines any chords (fretboard shapes a diagram can show). */
+export function hasChords(score: alphaTab.model.Score, track: number): boolean {
+  return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
+}
+
+/** Render one track to rasterized SVG tiles, exposing alphaTab's bounds lookup.
+ * `width` is the layout width in output pixels — what page layout wraps systems
+ * to; the horizontal layout ignores it. */
 export async function renderSheet(
   settings: alphaTab.Settings,
   score: alphaTab.model.Score,
   track: number,
-  css: string
+  css: string,
+  width = 1
 ): Promise<RenderedSheet> {
   // render sheet to SVG chunks (async in the browser — await full completion)
   const raw: RawChunk[] = []
   const renderer = new alphaTab.rendering.ScoreRenderer(settings)
-  renderer.width = 1
+  renderer.width = width
   await new Promise<void>((resolve) => {
     let laid = 0
     let done = false

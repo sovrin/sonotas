@@ -4,8 +4,27 @@ import * as alphaTab from '@coderline/alphatab'
  * the UI (mirrors how `ScrollMode` crosses the package boundary). */
 export type Notation = 'auto' | 'both' | 'notation' | 'tab'
 
+/** Sheet layout: one endless horizontal system, or page-style wrapped systems. */
+export type Layout = 'line' | 'page'
+
 const DEFAULT_SCALE = 1.0
 const DEFAULT_NOTATION: Notation = 'auto'
+const DEFAULT_LAYOUT: Layout = 'line'
+
+// Page-layout header lines alphaTab would engrave above the first system. The
+// painter draws its own title/artist overlay instead, and the line layout never
+// shows a tuning line, so these stay off to keep both layouts alike.
+const HEADER_ELEMENTS = [
+  alphaTab.NotationElement.ScoreTitle,
+  alphaTab.NotationElement.ScoreSubTitle,
+  alphaTab.NotationElement.ScoreArtist,
+  alphaTab.NotationElement.ScoreAlbum,
+  alphaTab.NotationElement.ScoreWords,
+  alphaTab.NotationElement.ScoreMusic,
+  alphaTab.NotationElement.ScoreWordsAndMusic,
+  alphaTab.NotationElement.ScoreCopyright,
+  alphaTab.NotationElement.GuitarTuning
+]
 
 /** Render only this 0-based inclusive master-bar range (maps to alphaTab's
  * `startBar`/`barCount`). Omit to render the whole sheet. */
@@ -17,9 +36,11 @@ export interface CropRange {
 export interface SettingsOptions {
   scale?: number // display scale, default 1.0
   notation?: Notation // stave selection, default "auto"
+  layout?: Layout // 'line' (horizontal, default) or 'page' (wrapped systems)
   crop?: CropRange // render only these bars, default whole sheet
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
+  chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
 }
@@ -60,7 +81,13 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   settings.core.engine = 'svg' // full-sheet coords; the html5 engine recycles an atlas
   settings.core.useWorkers = false
   settings.core.includeNoteBounds = true // note bounds feed the cursor
-  settings.display.layoutMode = alphaTab.LayoutMode.Horizontal
+  const layout = opts.layout ?? DEFAULT_LAYOUT
+  settings.display.layoutMode = layout === 'page'
+    ? alphaTab.LayoutMode.Page
+    : alphaTab.LayoutMode.Horizontal
+  if (layout === 'page') {
+    for (const el of HEADER_ELEMENTS) settings.notation.elements.set(el, false)
+  }
   settings.display.scale = opts.scale ?? DEFAULT_SCALE
   settings.display.staveProfile = staveProfile(
     opts.notation ?? DEFAULT_NOTATION
@@ -75,6 +102,9 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   }
   if (opts.showTrackName === false) {
     settings.notation.elements.set(alphaTab.NotationElement.TrackNames, false)
+  }
+  if (opts.chordDiagrams !== undefined) {
+    settings.notation.elements.set(alphaTab.NotationElement.ChordDiagrams, opts.chordDiagrams)
   }
   if (opts.foreground) {
     // Recolor the engraving so notation reads on a dark canvas — done in alphaTab

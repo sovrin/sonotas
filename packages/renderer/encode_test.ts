@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import { assertEquals, assertStrictEquals } from './_assert.ts'
-import { QUALITY_HIGH, QUALITY_LOW, QUALITY_MEDIUM } from 'mediabunny'
+import { QUALITY_HIGH, QUALITY_LOW, QUALITY_MEDIUM, QUALITY_VERY_HIGH } from 'mediabunny'
 import { clipFrames, QUALITY_PRESET } from './encode.ts'
 
 test('clipFrames counts the frames in a sub-clip', () => {
@@ -19,4 +19,5 @@ test('QUALITY_PRESET maps each quality to its mediabunny constant', () => {
   assertStrictEquals(QUALITY_PRESET.low, QUALITY_LOW)
   assertStrictEquals(QUALITY_PRESET.medium, QUALITY_MEDIUM)
   assertStrictEquals(QUALITY_PRESET.high, QUALITY_HIGH)
+  assertStrictEquals(QUALITY_PRESET.max, QUALITY_VERY_HIGH)
 })

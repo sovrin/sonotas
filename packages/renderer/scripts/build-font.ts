@@ -37,10 +37,11 @@ async function run(cmd: string, args: string[]) {
       throw new Error(
         `'${cmd}' not runnable (${e.message}). Install it:\n`
         + `  macOS:  brew install harfbuzz woff2\n`
-        + `  Debian: apt-get install harfbuzz-utils woff2`
+        + `  Debian: apt-get install harfbuzz-utils woff2`,
+        { cause: err }
       )
     }
-    throw new Error(`${cmd} failed: ${e.stderr ?? e.message}`)
+    throw new Error(`${cmd} failed: ${e.stderr ?? e.message}`, { cause: err })
   }
 }
 
