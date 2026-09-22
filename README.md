@@ -16,7 +16,9 @@ entirely on your machine, so nothing gets uploaded.
 - **Guitar Pro and MusicXML in:** `.gp`, `.gpx`, `.gp3`–`.gp5` and MusicXML.
   Multi-track files let you choose which track to render.
 - **MP4 out:** H.264 encoded through WebCodecs at 480p, 720p or 1080p and
-  24, 30 or 60 fps, with an up-front file size estimate.
+  24, 30 or 60 fps, with an up-front file size estimate. The clip is split
+  across several encoders at once; *Fast export* switches to software encoders
+  on half your CPU cores for roughly 3× faster exports and larger files.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
 - **Two layouts:** a single *line* that scrolls (bar snap, bar pan, continuous or
   centered), or a *page* of wrapped systems that the view follows down.
@@ -41,13 +43,13 @@ packages/renderer/    Guitar Pro → video engine
   timeline.ts         map playback time to bars and beats (tempo changes, repeats)
   scroll.ts           camera movement for each scroll mode
   paint.ts            composite each frame: sheet, highlight, playhead, overlays
-  encode.ts           encode frames to MP4 with mediabunny / WebCodecs
+  encode.ts           encode frames on parallel WebCodecs encoders, mux to MP4 with mediabunny
 public/tabs/          sample tabs (the demo loads Catastrophic.gp)
 ```
 
 Notation is engraved by [alphaTab](https://www.alphatab.net) using a subset of the
 [Bravura](https://github.com/steinbergmedia/bravura) music font. Video is encoded
-with [mediabunny](https://mediabunny.dev).
+through WebCodecs and muxed with [mediabunny](https://mediabunny.dev).
 
 > [!NOTE]
 > Export uses the browser's WebCodecs H.264 encoder. Recent Chrome and Edge

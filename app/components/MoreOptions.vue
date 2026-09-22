@@ -426,6 +426,17 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
           <option>Max</option>
         </select>
       </label>
+      <label class="check">
+        <input
+          type="checkbox"
+          :checked="s.fastExport"
+          @change="toggle('fastExport')"
+        >
+        Fast export
+      </label>
+      <p class="hint">
+        Several encoders at once: about 3× faster on multi-core machines, with 2–3× larger files and slightly softer motion.
+      </p>
     </div>
   </div>
 </template>
