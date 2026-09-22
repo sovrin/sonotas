@@ -102,11 +102,23 @@ export function createPainter(view: SheetView): Painter {
   const titleSize = Math.round(short * TITLE_SIZE)
   const artistSize = Math.round(titleSize * ARTIST_SIZE)
   let lastI = 0 // monotonic seed; forward walks (encode) stay O(1) per step
+  // Last beat starting at or before `t` (0 if none). Parallel encoders paint
+  // interleaved times, so the seed jumps back often.
+  function seek(t: number): number {
+    let lo = 0
+    let hi = beats.length - 1
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1
+      if (beats[mid]!.startMs <= t) lo = mid
+      else hi = mid - 1
+    }
+    return lo
+  }
   // Reused scratch buffer for recoloring the active note's glyph pixels.
   let scratch: OffscreenCanvas | null = null
 
   function indexAt(t: number): number {
-    if (lastI >= beats.length || beats[lastI]!.startMs > t) lastI = 0 // moved back → restart
+    if (lastI >= beats.length || beats[lastI]!.startMs > t) lastI = seek(t) // moved back → binary search
     let i = lastI
     while (i < beats.length - 1 && beats[i + 1]!.startMs <= t) i++
     lastI = i

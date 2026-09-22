@@ -47,6 +47,7 @@ function createSonotas() {
     staves: 'Tab only',
     fps: '30 fps',
     quality: 'High',
+    fastExport: false, // parallel software encoders: much faster, larger files
     scroll: 'Bar snap',
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
@@ -108,9 +109,9 @@ function createSonotas() {
   let raf: number | null = null
   let lastTs = 0
   let buildToken = 0
-  let renderToken = 0
+  let rendering: AbortController | null = null // the in-flight export
   let rebuildTimer: ReturnType<typeof setTimeout> | null = null
-  let estToken = 0
+  let estimating: AbortController | null = null // the in-flight size probe
   let estTimer: ReturnType<typeof setTimeout> | null = null
   let blobUrl: string | null = null
 
@@ -224,6 +225,7 @@ function createSonotas() {
       fps: fpsNum(),
       speed: speedNum(),
       quality: qualityMode(),
+      fast: s.fastExport,
       startMs: 0,
       endMs: s.duration * 1000,
       ...paintOpts()
@@ -231,7 +233,8 @@ function createSonotas() {
   }
 
   function abortEstimate() {
-    estToken++
+    estimating?.abort()
+    estimating = null
     if (estTimer) clearTimeout(estTimer)
     estTimer = null
   }
@@ -244,10 +247,10 @@ function createSonotas() {
 
   async function runEstimate() {
     if (!engine) return
-    const token = estToken
+    const ctl = (estimating = new AbortController())
     try {
-      const n = await engine.estimateSize({ ...encodeOpts(), stop: () => token !== estToken } as never)
-      if (n !== null && token === estToken) s.estBytes = n
+      const n = await engine.estimateSize({ ...encodeOpts(), signal: ctl.signal } as never)
+      if (n !== null && !ctl.signal.aborted) s.estBytes = n
     } catch {
       // No estimate is better than a broken export panel; the export itself
       // surfaces encoder errors.
@@ -464,7 +467,8 @@ function createSonotas() {
     if (!import.meta.client || !engine) return
     stopLoop()
     s.playing = false
-    const token = ++renderToken
+    rendering?.abort()
+    const ctl = (rendering = new AbortController())
     s.render = { status: 'rendering', pct: 0, phase: 'Preparing score…', frame: 0, total: 0 }
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl)
@@ -474,33 +478,41 @@ function createSonotas() {
     try {
       const out = await engine.encode({
         ...encodeOpts(),
+        signal: ctl.signal,
         onProgress: (frame: number, total: number) => {
-          if (token !== renderToken) return
+          if (ctl.signal.aborted) return
           const pct = total ? (frame / total) * 100 : 0
           s.render = { status: 'rendering', pct, phase: phaseFor(pct), frame, total }
         }
       } as never)
-      if (token !== renderToken) return // cancelled
+      if (ctl.signal.aborted) return // cancelled
+      rendering = null
       blobUrl = URL.createObjectURL(out)
       s.videoUrl = blobUrl
       s.outBytes = out.size
       makePoster()
       s.render = { ...s.render, status: 'done', pct: 100 }
     } catch (err) {
-      if (token === renderToken) {
-        s.engineError = (err as Error).message
-        s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
-      }
+      if (ctl.signal.aborted) return // cancelled: the AbortError is expected
+      rendering = null
+      s.engineError = (err as Error).message
+      s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     }
   }
 
+  // Stop the in-flight export, if any: the renderer closes its encoders.
+  function abortRender() {
+    rendering?.abort()
+    rendering = null
+  }
+
   function cancelRender() {
-    renderToken++ // invalidate any in-flight encode result
+    abortRender()
     s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
   }
 
   function closeRender() {
-    renderToken++
+    abortRender()
     s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl)
@@ -555,7 +567,7 @@ function createSonotas() {
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.speed].join('|'), () => {
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed].join('|'), () => {
     invalidateResult()
     invalidateEstimate()
   })
@@ -568,7 +580,7 @@ function createSonotas() {
     if (rebuildTimer) clearTimeout(rebuildTimer)
     abortEstimate()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
-    renderToken++
+    abortRender()
     buildToken++
   })
 
