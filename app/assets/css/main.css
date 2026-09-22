@@ -181,6 +181,8 @@ select {
   gap: 12px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--canvas) 80%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   font-size: 13px;
   color: var(--text);
 }
@@ -603,7 +605,7 @@ details.more[open] > summary .chev {
   white-space: nowrap;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   border-color: var(--t3);
 }
 
@@ -617,7 +619,7 @@ details.more[open] > summary .chev {
   font-size: 14px;
 }
 
-.btn.primary:hover {
+.btn.primary:hover:not(:disabled) {
   opacity: .92;
 }
 
