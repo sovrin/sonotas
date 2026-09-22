@@ -1,64 +1,101 @@
-# Nuxt Starter Template
+# sonotas
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+**Turn Guitar Pro tabs into scrolling play-along videos, right in your browser.**
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+Drop in a `.gp` file, pick a track, tweak the look, and export an MP4 with a moving
+playhead, ready for YouTube, Shorts, Reels or TikTok. Rendering and encoding run
+entirely on your machine, so nothing gets uploaded.
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot-light.png">
+  <img alt="sonotas: a Guitar Pro tab rendered as a scrolling line with an amber playhead and highlighted bar, next to the video settings panel" src="docs/screenshot-dark.png">
+</picture>
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+## Features
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+- **Guitar Pro and MusicXML in:** `.gp`, `.gpx`, `.gp3`–`.gp5` and MusicXML.
+  Multi-track files let you choose which track to render.
+- **MP4 out:** H.264 encoded through WebCodecs at 480p, 720p or 1080p and
+  24, 30 or 60 fps, with an up-front file size estimate.
+- **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
+- **Two layouts:** a single *line* that scrolls (bar snap, bar pan, continuous or
+  centered), or a *page* of wrapped systems that the view follows down.
+- **Fit to width:** size the notation so 1–8 bars span the frame, optionally
+  showing only the current bars.
+- **Styling:** tab only, standard notation or both. Dark or light canvas, custom
+  colours for background, notation and bar numbers. Playhead colour, width,
+  height and offset. Bar highlight and current-note recolouring.
+- **Extras:** export a range of bars, change the playback speed from 0.25× to 2×, and
+  toggle the song title, track name, tempo marking, bar numbers and chord diagrams.
+- **Live preview:** scrub and play the exact frames that end up in the video.
 
-## Quick Start
+## How it works
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
+The app is a [Nuxt](https://nuxt.com) + [Nuxt UI](https://ui.nuxt.com) front end
+over a small, browser-only renderer package:
+
+```
+app/                  Nuxt UI: preview stage, transport, settings and export panels
+packages/renderer/    Guitar Pro → video engine
+  score.ts            load and engrave the tab with alphaTab
+  timeline.ts         map playback time to bars and beats (tempo changes, repeats)
+  scroll.ts           camera movement for each scroll mode
+  paint.ts            composite each frame: sheet, highlight, playhead, overlays
+  encode.ts           encode frames to MP4 with mediabunny / WebCodecs
+public/tabs/          sample tabs (the demo loads Catastrophic.gp)
 ```
 
-## Deploy your own
+Notation is engraved by [alphaTab](https://www.alphatab.net) using a subset of the
+[Bravura](https://github.com/steinbergmedia/bravura) music font. Video is encoded
+with [mediabunny](https://mediabunny.dev).
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
+> [!NOTE]
+> Export uses the browser's WebCodecs H.264 encoder. Recent Chrome and Edge
+> builds work best.
 
-## Setup
+## Getting started
 
-Make sure to install the dependencies:
+You need Node 22+ and pnpm (`corepack enable` sets up the pinned version).
 
 ```bash
 pnpm install
+pnpm dev          # http://localhost:3000
 ```
 
-## Development Server
+Other scripts:
 
-Start the development server on `http://localhost:3000`:
+| Command                       | What it does                                    |
+| ----------------------------- | ----------------------------------------------- |
+| `pnpm lint`                   | ESLint across the workspace                     |
+| `pnpm typecheck`              | Type-check the Nuxt app                         |
+| `pnpm generate`               | Prerender the static site into `.output/public` |
+| `pnpm preview`                | Serve the production build locally              |
+| `pnpm --filter renderer test` | Run the renderer unit tests                     |
+
+## Self-hosting with Docker
+
+The production image prerenders the app and serves the static files with
+[static-web-server](https://static-web-server.net). There is no Node at runtime.
 
 ```bash
-pnpm dev
+docker compose up -d --build   # http://localhost:3000
 ```
 
-## Production
+### Rebuilding the music font
 
-Build the application for production:
+`public/fonts/Bravura.subset.woff2` holds only the glyphs alphaTab can emit. To
+regenerate it after an alphaTab upgrade without installing harfbuzz locally, run:
 
 ```bash
-pnpm build
+docker build --target font --output public/fonts .
 ```
 
-Locally preview production build:
+Or natively, with `harfbuzz` and `woff2` installed (`brew install harfbuzz woff2`), run:
 
 ```bash
-pnpm preview
+pnpm --filter renderer build-font
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## License
 
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+[MIT](LICENSE)
