@@ -19,7 +19,7 @@ const SAMPLE_URL = '/tabs/test.gp'
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
-const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Continuous': 'smooth', 'Off': 'none' }
+const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Bar pan': 'pan', 'Continuous': 'smooth' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
 // mediabunny's bitrate factor per preset: 0.3·e^(2.5538·level) for levels
@@ -28,7 +28,7 @@ const QUALITY_FACTOR: Record<string, number> = { low: 0.57, medium: 1.07, high: 
 // Fraction of the target bitrate near-static notation actually spends. H.264 is
 // VBR: bar-snap holds a still image between bars so it undershoots the target
 // heavily; continuous scroll moves every frame and lands much closer. Empirical.
-const MOTION_BY_SCROLL: Record<string, number> = { bar: 0.06, smooth: 0.55, pan: 0.4, none: 0.06 }
+const MOTION_BY_SCROLL: Record<string, number> = { bar: 0.06, pan: 0.4, smooth: 0.55 }
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '')
@@ -55,7 +55,8 @@ function createSonotas() {
     scroll: 'Bar snap',
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
-    highlightNotes: true,
+    highlightBar: true, // played-bar highlight (paint-time)
+    currentBarOnly: false, // hide everything but the bar being played (paint-time)
     showTitle: true, // title/artist overlay (paint-time; needs the file to carry one)
     showChords: false, // chord diagrams above chord-named beats (build-time)
     theme: 'dark', // canvas preset selector (Dark/Light) — sets the colors below
@@ -70,13 +71,15 @@ function createSonotas() {
     cursorHeight: 100,
     cursorOffset: 0, // screen-space px nudged onto the playhead (can be negative)
     cursorMatchBar: false, // cursor height spans the played bar box instead of the frame
-    highlightColor: '#e0a94c', // played-bar highlight (paint-time)
+    highlightColor: '#e0a94c',
     highlightOpacity: 22,
     highlightPadding: 6,
     recolorNote: false, // recolor the currently-playing note (paint-time)
     activeNoteColor: '#e5484d',
     activeNoteOpacity: 90,
     showTrackName: true,
+    showBarNumbers: true,
+    showAttribution: true, // alphaTab's "rendered by alphaTab" line (build-time)
     showTempo: true,
     showTimeSig: true,
     fromBar: 1,
@@ -160,6 +163,8 @@ function createSonotas() {
       layout: layoutMode(),
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
+      showBarNumbers: s.showBarNumbers,
+      showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
       foreground: s.fg,
@@ -171,8 +176,9 @@ function createSonotas() {
   function paintOpts() {
     return {
       scroll: scrollMode(),
+      currentBarOnly: s.currentBarOnly,
       cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset, heightMode: s.cursorMatchBar ? 'bar' : 'frame' },
-      highlight: { enabled: s.highlightNotes, color: highlightCss(), padding: s.highlightPadding },
+      highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg },
       title: { enabled: s.showTitle, color: s.fg }
@@ -208,7 +214,7 @@ function createSonotas() {
     const motion = MOTION_BY_SCROLL[scrollMode()] ?? 0.2
     const pixels = s.sheetW * s.sheetH
     const target = factor * 3_000_000 * Math.pow(pixels / (1920 * 1080), 0.95) // avc target bitrate
-    return (target / 8) * s.duration * motion
+    return (target / 8) * effDur() * motion
   }
 
   function fmtSize(bytes: number) {
@@ -420,6 +426,7 @@ function createSonotas() {
     try {
       const out = await engine.encode({
         fps: parseInt(s.fps, 10) || 30,
+        speed: speedNum(),
         quality: qualityMode() as never,
         startMs: 0,
         endMs: s.duration * 1000,
@@ -489,7 +496,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()
@@ -497,7 +504,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.showTitle, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => {
       invalidateResult()
       if (!s.playing) paintFrame()
