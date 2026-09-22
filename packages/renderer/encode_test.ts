@@ -11,6 +11,11 @@ test('clipFrames over the full range matches ceil(durationMs/1000*fps)', () => {
   assertEquals(clipFrames(0, 5000, 5000, 30), Math.ceil((5000 / 1000) * 30))
 })
 
+test('clipFrames scales the frame count by playback speed', () => {
+  assertEquals(clipFrames(0, 4000, 4000, 30, 2), 60) // twice as fast → half as long
+  assertEquals(clipFrames(0, 4000, 4000, 30, 0.5), 240)
+})
+
 test('clipFrames returns at least one frame', () => {
   assertEquals(clipFrames(1000, 1000, 5000, 30), 1)
 })

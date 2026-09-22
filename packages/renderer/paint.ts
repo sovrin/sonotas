@@ -126,47 +126,65 @@ export function createPainter(view: SheetView): Painter {
     const backgroundColor = opts?.background?.color ?? DEFAULT_BACKGROUND_COLOR
     const titleEnabled = opts?.title?.enabled ?? false
     const titleColor = opts?.title?.color ?? view.titleColor ?? DEFAULT_TITLE_COLOR
+    const currentBarOnly = opts?.currentBarOnly ?? false
 
     t = Math.max(0, Math.min(t, durationMs))
     const i = indexAt(t)
-    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet)
+    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet, currentBarOnly)
 
     // Line layout scrolls along x, bounded a margin *outside* the content, so
     // the first/last bar keeps the same left/right breathing room instead of
     // sitting flush against the frame edge; the margin stays blank (no tiles
     // live there). Page layout is as wide as the frame and scrolls along y,
-    // below the title block, bounded by the sheet itself.
+    // below the title block, bounded by the sheet itself. When only the
+    // current bar is drawn it's centered on both axes and left unbounded —
+    // there are no neighbors to reveal.
     const top = page ? titleBlockHeight(titleEnabled) : bandTop
     const viewportH = height - top
-    const scrollX = page
-      ? 0
-      : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
-    const scrollY = page
-      ? clampScroll(scrollStateY(scroll, beats, i, t, viewportH), 0, contentBottom, viewportH)
-      : 0
+    const scrollX = currentBarOnly
+      ? wantedX
+      : page
+        ? 0
+        : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
+    const wantedY = page ? scrollStateY(scroll, beats, i, t, viewportH) : 0
+    const scrollY = page && !currentBarOnly
+      ? clampScroll(wantedY, 0, contentBottom, viewportH)
+      : wantedY
     // Map sheet pixels → output pixels: subtract scroll, scale by the band fit.
     const X = (x: number) => (x - scrollX) * k
     const Y = (y: number) => top + (y - scrollY) * k
     // Cursor offset is screen-space (after scroll/scale), so scroll-independent.
     const cursorX = X(noteX) + cursorOffsetX
 
+    // The bar the playhead is over. In continuous scroll the cursor glides
+    // between notes and can cross a barline before the next beat's onset; pick
+    // the bar by note-x, not the last beat's bar, so the highlight (and the lone
+    // bar) advances with the cursor instead of trailing a note behind. In
+    // bar/pan modes the note sits on the beat, so this is a no-op.
+    let hb = beats[i]!
+    const nb = beats[i + 1]
+    if (nb && nb.barY === hb.barY && nb.barX > hb.barX && noteX >= nb.barX) hb = nb
+
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, width, height)
 
+    // Only the current bar: clip the notation to its box (which already spans
+    // the markings above the staff, e.g. tempo and chords).
+    const clipBar = currentBarOnly && hb.barW > 0
+    if (clipBar) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(X(hb.barX), Y(hb.barY), hb.barW * k, hb.barH * k)
+      ctx.clip()
+    }
     for (const tile of tiles) {
       if (tile.x + tile.w < scrollX || tile.x > scrollX + viewportSheet) continue
       if (page && (tile.y + tile.h < scrollY || tile.y > scrollY + viewportH)) continue
       ctx.drawImage(tile.img, X(tile.x), Y(tile.y), tile.w * k, tile.h * k)
     }
+    if (clipBar) ctx.restore()
     // Translucent wash over the current master-bar box, drawn on top of the
-    // notation so it reads as a highlight. In continuous scroll the cursor
-    // glides between notes and can cross a barline before the next beat's onset;
-    // highlight the bar the playhead is actually over (by note-x), not the last
-    // beat's bar, so it advances with the cursor instead of trailing a note
-    // behind. In bar/pan modes the note sits on the beat, so this is a no-op.
-    let hb = beats[i]!
-    const nb = beats[i + 1]
-    if (nb && nb.barY === hb.barY && nb.barX > hb.barX && noteX >= nb.barX) hb = nb
+    // notation so it reads as a highlight.
     if (highlightEnabled && hb.barW > 0) {
       const pad = highlightPadding * k
       ctx.fillStyle = highlightColor

@@ -74,10 +74,18 @@ const CURSOR_COLORS = [
     <label class="check">
       <input
         type="checkbox"
-        :checked="s.highlightNotes"
-        @change="toggle('highlightNotes')"
+        :checked="s.highlightBar"
+        @change="toggle('highlightBar')"
       >
       Highlight the current bar
+    </label>
+    <label class="check">
+      <input
+        type="checkbox"
+        :checked="s.currentBarOnly"
+        @change="toggle('currentBarOnly')"
+      >
+      Show only the current bar
     </label>
   </div>
 </template>

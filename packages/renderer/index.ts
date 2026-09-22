@@ -97,6 +97,7 @@ export async function createRenderer(
     crop,
     showTempo,
     showTrackName: opts.showTrackName,
+    showBarNumbers: opts.showBarNumbers,
     chordDiagrams,
     foreground: opts.foreground,
     barNumberColor: opts.barNumberColor
@@ -162,9 +163,11 @@ export async function createRenderer(
         fps: opts.fps ?? DEFAULT_FPS,
         startMs: opts.startMs ?? 0,
         endMs: opts.endMs ?? durationMs,
+        speed: opts.speed ?? 1,
         quality: opts.quality ?? 'high',
         paint: {
           scroll: opts.scroll,
+          currentBarOnly: opts.currentBarOnly,
           cursor: opts.cursor,
           highlight: opts.highlight,
           activeNote: opts.activeNote,
