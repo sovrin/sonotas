@@ -143,6 +143,14 @@ export interface Renderer {
   ): void
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
+  /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its
+   * 2s GOPs. Resolves `null` if `opts.stop()` returns true mid-probe. */
+  estimateSize(opts?: EstimateOptions): Promise<number | null>
+}
+
+export interface EstimateOptions extends Omit<EncodeOptions, 'onProgress'> {
+  samples?: number // GOPs to encode, default 8
+  stop?: () => boolean // polled after each frame; true aborts the probe
 }
 
 /** A rasterized SVG chunk of the sheet, placed in full-sheet coordinates. */
