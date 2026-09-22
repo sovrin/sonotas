@@ -79,6 +79,7 @@ function createSonotas() {
     activeNoteOpacity: 90,
     showTrackName: true,
     showBarNumbers: true,
+    showAttribution: true, // alphaTab's "rendered by alphaTab" line (build-time)
     showTempo: true,
     showTimeSig: true,
     fromBar: 1,
@@ -163,6 +164,7 @@ function createSonotas() {
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
       showBarNumbers: s.showBarNumbers,
+      showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
       foreground: s.fg,
@@ -494,7 +496,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()

@@ -106,15 +106,22 @@ export function hasChords(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
 }
 
+// alphaTab always engraves this line below the sheet, as its own partial, with
+// no setting to turn it off.
+const ANNOTATION = 'rendered by alphaTab'
+
 /** Render one track to rasterized SVG tiles, exposing alphaTab's bounds lookup.
  * `width` is the layout width in output pixels — what page layout wraps systems
- * to; the horizontal layout ignores it. */
+ * to; the horizontal layout ignores it. `annotation: false` drops alphaTab's
+ * "rendered by alphaTab" line (the sheet keeps its height, so toggling it
+ * doesn't resize the notation). */
 export async function renderSheet(
   settings: alphaTab.Settings,
   score: alphaTab.model.Score,
   track: number,
   css: string,
-  width = 1
+  width = 1,
+  annotation = true
 ): Promise<RenderedSheet> {
   // render sheet to SVG chunks (async in the browser — await full completion)
   const raw: RawChunk[] = []
@@ -151,8 +158,9 @@ export async function renderSheet(
   if (!raw.length) throw new Error('no chunks rendered')
 
   const bounds = renderer.boundsLookup!
+  const kept = annotation ? raw : raw.filter(c => !c.svg.includes(ANNOTATION))
   const tiles: Tile[] = await Promise.all(
-    raw.map(async c => ({
+    kept.map(async c => ({
       x: c.x,
       y: c.y,
       w: c.w,
@@ -160,6 +168,6 @@ export async function renderSheet(
       img: await svgToCanvas(c.svg, c.w, c.h, css)
     }))
   )
-  const height = Math.max(...tiles.map(t => t.y + t.h)) & ~1
+  const height = Math.max(...raw.map(c => c.y + c.h)) & ~1
   return { tiles, bounds, height }
 }

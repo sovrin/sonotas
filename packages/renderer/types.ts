@@ -38,6 +38,7 @@ export interface RendererOptions {
   // shows on bar 1). All default true.
   showTrackName?: boolean
   showBarNumbers?: boolean
+  showAttribution?: boolean // alphaTab's "rendered by alphaTab" line below the sheet
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the

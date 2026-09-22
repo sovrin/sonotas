@@ -109,6 +109,14 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
             class="muted"
           >(no chords in this file)</span>
         </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            :checked="s.showAttribution"
+            @change="toggle('showAttribution')"
+          >
+          “rendered by alphaTab” line
+        </label>
       </div>
     </div>
 
