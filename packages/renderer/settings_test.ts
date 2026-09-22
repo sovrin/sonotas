@@ -83,6 +83,34 @@ test('createSettings hides the track name only when showTrackName is false', () 
   )
 })
 
+test('createSettings maps layout to alphaTab\'s layout mode, default horizontal', () => {
+  assertEquals(createSettings().display.layoutMode, alphaTab.LayoutMode.Horizontal)
+  assertEquals(createSettings({ layout: 'line' }).display.layoutMode, alphaTab.LayoutMode.Horizontal)
+  assertEquals(createSettings({ layout: 'page' }).display.layoutMode, alphaTab.LayoutMode.Page)
+})
+
+test('createSettings turns off alphaTab\'s header lines only in page layout', () => {
+  assertEquals(
+    createSettings({ layout: 'page' }).notation.elements.get(alphaTab.NotationElement.ScoreTitle),
+    false
+  )
+  assertEquals(
+    createSettings({ layout: 'page' }).notation.elements.get(alphaTab.NotationElement.ScoreArtist),
+    false
+  )
+  assertEquals(
+    createSettings().notation.elements.get(alphaTab.NotationElement.ScoreTitle),
+    undefined
+  )
+})
+
+test('createSettings sets the chord diagram header only when asked', () => {
+  const el = alphaTab.NotationElement.ChordDiagrams
+  assertEquals(createSettings({ chordDiagrams: true }).notation.elements.get(el), true)
+  assertEquals(createSettings({ chordDiagrams: false }).notation.elements.get(el), false)
+  assertEquals(createSettings().notation.elements.get(el), undefined)
+})
+
 test('createSettings maps each notation to its StaveProfile', () => {
   assertEquals(
     createSettings({ notation: 'auto' }).display.staveProfile,
