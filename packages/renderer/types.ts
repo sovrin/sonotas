@@ -119,6 +119,10 @@ export interface EncodeOptions extends PaintOptions {
   fps?: number // output frame rate, default 30
   speed?: number // playback rate (2 = twice as fast, half as long), default 1
   quality?: Quality // encoder quality, default 'high'
+  /** Parallel software encoders: ~3× faster on multi-core machines, but 2–3×
+   * larger files with slightly softer motion. Falls back to the default
+   * constant-quality encoder where software H.264 isn't available. */
+  fast?: boolean
   onProgress?: (frame: number, total: number) => void
 }
 

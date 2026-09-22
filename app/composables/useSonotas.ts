@@ -47,6 +47,7 @@ function createSonotas() {
     staves: 'Tab only',
     fps: '30 fps',
     quality: 'High',
+    fastExport: false, // parallel software encoders: much faster, larger files
     scroll: 'Bar snap',
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
@@ -224,6 +225,7 @@ function createSonotas() {
       fps: fpsNum(),
       speed: speedNum(),
       quality: qualityMode(),
+      fast: s.fastExport,
       startMs: 0,
       endMs: s.duration * 1000,
       ...paintOpts()
@@ -555,7 +557,7 @@ function createSonotas() {
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.speed].join('|'), () => {
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed].join('|'), () => {
     invalidateResult()
     invalidateEstimate()
   })
