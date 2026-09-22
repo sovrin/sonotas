@@ -1,5 +1,6 @@
 import type { Beat, PaintOptions, Tile } from './types.ts'
-import { clampScroll, scrollState } from './scroll.ts'
+import type { Layout } from './settings.ts'
+import { clampScroll, scrollState, scrollStateY } from './scroll.ts'
 import { cursorRect } from './cursor.ts'
 
 const DEFAULT_CURSOR_COLOR = 'rgba(255,0,0,0.7)'
@@ -11,7 +12,13 @@ const DEFAULT_HIGHLIGHT_PADDING = 0
 const DEFAULT_ACTIVE_NOTE_COLOR = 'rgba(229,72,77,0.9)'
 const DEFAULT_ACTIVE_NOTE_PADDING = 0
 const DEFAULT_BACKGROUND_COLOR = '#fff'
+const DEFAULT_TITLE_COLOR = '#000'
 const EDGE_MARGIN = 80 // blank breathing room before/after the visible content
+// Title overlay metrics, as fractions of the frame's short edge.
+const TITLE_MARGIN = 0.04
+const TITLE_SIZE = 0.045
+const ARTIST_SIZE = 0.6 // of the title size
+const TITLE_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
 
 type Ctx = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D
 
@@ -25,8 +32,16 @@ export interface SheetView {
    * (unframed: the sheet fills the canvas). */
   sheetHeight?: number
   /** Vertical fraction of the frame the sheet band fills when framed (centered).
-   * Undefined/1 keeps the sheet at native size (unframed). */
+   * Undefined/1 keeps the sheet at native size (unframed). Line layout only. */
   fill?: number
+  /** 'line' (default): one horizontal system, scrolled along x and centered
+   * vertically. 'page': wrapped systems already laid out at the output width,
+   * top-aligned and scrolled along y. */
+  layout?: Layout
+  /** Song metadata for the title overlay ('' draws nothing). */
+  title?: string
+  artist?: string
+  titleColor?: string // default for the overlay when the paint call gives none
 }
 
 export interface Painter {
@@ -40,16 +55,26 @@ export interface Painter {
 
 export function createPainter(view: SheetView): Painter {
   const { tiles, beats, width, height, durationMs } = view
+  const page = view.layout === 'page'
   const sheetHeight = view.sheetHeight ?? height
-  // Scale the sheet band to `fill` of the frame's SHORT edge, centered. Using the
-  // short edge (not the height) keeps notation the same size across aspects: a
-  // tall 9:16 frame then shows fewer bars with margins, instead of zooming one
-  // bar to fill the height. Unframed (fill undefined) → 1, sheet fills canvas.
-  const bandScale = view.fill ? (Math.min(width, height) * view.fill) / sheetHeight : 1
-  const bandTop = (height - sheetHeight * bandScale) / 2
+  const title = view.title ?? ''
+  const artist = view.artist ?? ''
+  // Line layout: scale the sheet band to `fill` of the frame's SHORT edge,
+  // centered. Using the short edge (not the height) keeps notation the same
+  // size across aspects: a tall 9:16 frame then shows fewer bars with margins,
+  // instead of zooming one bar to fill the height. Unframed (fill undefined) →
+  // 1, sheet fills canvas. Page layout: the sheet is already laid out in output
+  // pixels, so it's drawn 1:1 from the top.
+  const k = !page && view.fill ? (Math.min(width, height) * view.fill) / sheetHeight : 1
+  const bandTop = page ? 0 : (height - sheetHeight * k) / 2
   // Viewport measured in sheet pixels (what maps onto the full output width).
-  const viewportSheet = width / bandScale
+  const viewportSheet = width / k
   const contentRight = tiles.reduce((m, t) => Math.max(m, t.x + t.w), 0)
+  const contentBottom = tiles.reduce((m, t) => Math.max(m, t.y + t.h), 0)
+  const short = Math.min(width, height)
+  const titleMargin = Math.round(short * TITLE_MARGIN)
+  const titleSize = Math.round(short * TITLE_SIZE)
+  const artistSize = Math.round(titleSize * ARTIST_SIZE)
   let lastI = 0 // monotonic seed; forward walks (encode) stay O(1) per step
   // Reused scratch buffer for recoloring the active note's glyph pixels.
   let scratch: OffscreenCanvas | null = null
@@ -62,13 +87,36 @@ export function createPainter(view: SheetView): Painter {
     return i
   }
 
+  /** Height of the title block (title + artist lines with margins), 0 when
+   * nothing is drawn. Page layout starts the sheet below it. */
+  function titleBlockHeight(show: boolean): number {
+    if (!show || !title) return 0
+    return titleMargin + titleSize + (artist ? Math.round(artistSize * 1.3) : 0) + titleMargin
+  }
+
+  function paintTitle(ctx: Ctx, color: string): void {
+    ctx.fillStyle = color
+    ctx.textBaseline = 'alphabetic'
+    ctx.textAlign = 'left'
+    ctx.font = `600 ${titleSize}px ${TITLE_FONT}`
+    ctx.fillText(title, titleMargin, titleMargin + titleSize)
+    if (artist) {
+      ctx.font = `400 ${artistSize}px ${TITLE_FONT}`
+      ctx.globalAlpha = 0.72
+      ctx.fillText(artist, titleMargin, titleMargin + titleSize + Math.round(artistSize * 1.3))
+      ctx.globalAlpha = 1
+    }
+  }
+
   function paint(ctx: Ctx, t: number, opts?: PaintOptions): void {
     const scroll = opts?.scroll ?? 'bar'
     const cursorColor = opts?.cursor?.color ?? DEFAULT_CURSOR_COLOR
     const cursorWidth = opts?.cursor?.width ?? DEFAULT_CURSOR_WIDTH
     const cursorOffsetX = opts?.cursor?.offsetX ?? DEFAULT_CURSOR_OFFSET_X
     const cursorHeight = opts?.cursor?.height ?? DEFAULT_CURSOR_HEIGHT
-    const cursorHeightMode = opts?.cursor?.heightMode ?? 'frame'
+    // Stacked systems have no meaningful "frame-high" cursor; page layout
+    // always spans the current bar.
+    const cursorHeightMode = page ? 'bar' : opts?.cursor?.heightMode ?? 'frame'
     const highlightEnabled = opts?.highlight?.enabled ?? false
     const highlightColor = opts?.highlight?.color ?? DEFAULT_HIGHLIGHT_COLOR
     const highlightPadding = opts?.highlight?.padding ?? DEFAULT_HIGHLIGHT_PADDING
@@ -76,36 +124,39 @@ export function createPainter(view: SheetView): Painter {
     const activeNoteColor = opts?.activeNote?.color ?? DEFAULT_ACTIVE_NOTE_COLOR
     const activeNotePadding = opts?.activeNote?.padding ?? DEFAULT_ACTIVE_NOTE_PADDING
     const backgroundColor = opts?.background?.color ?? DEFAULT_BACKGROUND_COLOR
+    const titleEnabled = opts?.title?.enabled ?? false
+    const titleColor = opts?.title?.color ?? view.titleColor ?? DEFAULT_TITLE_COLOR
 
     t = Math.max(0, Math.min(t, durationMs))
     const i = indexAt(t)
-    const { noteX, scrollX: wanted } = scrollState(scroll, beats, i, t, viewportSheet)
+    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet)
 
-    // Scroll is bounded a margin *outside* the content, so the first/last bar
-    // keeps the same left/right breathing room instead of sitting flush against
-    // the frame edge; the margin stays blank (no tiles live there).
-    const scrollX = clampScroll(
-      wanted,
-      -EDGE_MARGIN,
-      contentRight + EDGE_MARGIN,
-      viewportSheet
-    )
+    // Line layout scrolls along x, bounded a margin *outside* the content, so
+    // the first/last bar keeps the same left/right breathing room instead of
+    // sitting flush against the frame edge; the margin stays blank (no tiles
+    // live there). Page layout is as wide as the frame and scrolls along y,
+    // below the title block, bounded by the sheet itself.
+    const top = page ? titleBlockHeight(titleEnabled) : bandTop
+    const viewportH = height - top
+    const scrollX = page
+      ? 0
+      : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
+    const scrollY = page
+      ? clampScroll(scrollStateY(scroll, beats, i, t, viewportH), 0, contentBottom, viewportH)
+      : 0
     // Map sheet pixels → output pixels: subtract scroll, scale by the band fit.
+    const X = (x: number) => (x - scrollX) * k
+    const Y = (y: number) => top + (y - scrollY) * k
     // Cursor offset is screen-space (after scroll/scale), so scroll-independent.
-    const cursorX = (noteX - scrollX) * bandScale + cursorOffsetX
+    const cursorX = X(noteX) + cursorOffsetX
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, width, height)
 
     for (const tile of tiles) {
       if (tile.x + tile.w < scrollX || tile.x > scrollX + viewportSheet) continue
-      ctx.drawImage(
-        tile.img,
-        (tile.x - scrollX) * bandScale,
-        bandTop + tile.y * bandScale,
-        tile.w * bandScale,
-        tile.h * bandScale
-      )
+      if (page && (tile.y + tile.h < scrollY || tile.y > scrollY + viewportH)) continue
+      ctx.drawImage(tile.img, X(tile.x), Y(tile.y), tile.w * k, tile.h * k)
     }
     // Translucent wash over the current master-bar box, drawn on top of the
     // notation so it reads as a highlight. In continuous scroll the cursor
@@ -115,15 +166,15 @@ export function createPainter(view: SheetView): Painter {
     // behind. In bar/pan modes the note sits on the beat, so this is a no-op.
     let hb = beats[i]!
     const nb = beats[i + 1]
-    if (nb && nb.barX > hb.barX && noteX >= nb.barX) hb = nb
+    if (nb && nb.barY === hb.barY && nb.barX > hb.barX && noteX >= nb.barX) hb = nb
     if (highlightEnabled && hb.barW > 0) {
-      const pad = highlightPadding * bandScale
+      const pad = highlightPadding * k
       ctx.fillStyle = highlightColor
       ctx.fillRect(
-        (hb.barX - scrollX) * bandScale - pad,
-        bandTop + hb.barY * bandScale - pad,
-        hb.barW * bandScale + pad * 2,
-        hb.barH * bandScale + pad * 2
+        X(hb.barX) - pad,
+        Y(hb.barY) - pad,
+        hb.barW * k + pad * 2,
+        hb.barH * k + pad * 2
       )
     }
     // Recolor the currently-sounding note(s) — the played beat's note heads
@@ -156,28 +207,20 @@ export function createPainter(view: SheetView): Painter {
         sctx.fillStyle = activeNoteColor
         sctx.fillRect(0, 0, sw, sh)
         sctx.globalCompositeOperation = 'source-over'
-        ctx.drawImage(
-          scratch,
-          0, 0, hw, hh,
-          (hx - scrollX) * bandScale, bandTop + hy * bandScale,
-          hw * bandScale, hh * bandScale
-        )
+        ctx.drawImage(scratch, 0, 0, hw, hh, X(hx), Y(hy), hw * k, hh * k)
       }
     }
     // Cursor. 'bar' mode spans the current bar box (same extent as the
     // highlight, via `hb`); otherwise a centered fraction of the whole frame.
     ctx.fillStyle = cursorColor
     if (cursorHeightMode === 'bar' && hb.barH > 0) {
-      ctx.fillRect(
-        cursorX - cursorWidth / 2,
-        bandTop + hb.barY * bandScale,
-        cursorWidth,
-        hb.barH * bandScale
-      )
+      ctx.fillRect(cursorX - cursorWidth / 2, Y(hb.barY), cursorWidth, hb.barH * k)
     } else {
       const r = cursorRect(cursorX, cursorWidth, cursorHeight, height)
       ctx.fillRect(r.x, r.y, r.width, r.height)
     }
+    // Title/artist overlay last, so it sits above anything scrolled under it.
+    if (titleEnabled && title) paintTitle(ctx, titleColor)
   }
 
   return { width, height, durationMs, paint }
