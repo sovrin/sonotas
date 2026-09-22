@@ -124,6 +124,12 @@ export function measureBars(
   )
 }
 
+/** Whether the track has a stringed staff alphaTab can draw as tablature. Drum
+ * kits and keys don't, so "tab only" leaves nothing to render for them. */
+export function hasTab(score: alphaTab.model.Score, track: number): boolean {
+  return (score.tracks[track]?.staves ?? []).some(s => s.isStringed && !s.isPercussion)
+}
+
 // alphaTab always engraves this line below the sheet, as its own partial, with
 // no setting to turn it off.
 const ANNOTATION = 'rendered by alphaTab'
@@ -145,7 +151,7 @@ export async function renderSheet(
   const raw: RawChunk[] = []
   const renderer = new alphaTab.rendering.ScoreRenderer(settings)
   renderer.width = width
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     let laid = 0
     let done = false
     const maybe = () => {
@@ -171,6 +177,9 @@ export async function renderSheet(
       done = true
       maybe()
     })
+    // alphaTab reports render failures here instead of throwing; without this
+    // the promise never settles and the caller hangs.
+    renderer.error.on(reject)
     renderer.renderScore(score, [track])
   })
   if (!raw.length) throw new Error('no chunks rendered')

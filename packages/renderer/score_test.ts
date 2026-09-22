@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import { assert, assertEquals } from './_assert.ts'
-import { loadSample, shimHeadless } from './_testutil.ts'
+import { loadDemo, loadSample, shimHeadless } from './_testutil.ts'
 
 shimHeadless()
 const alphaTab = await import('@coderline/alphatab')
 const { createSettings } = await import('./settings.ts')
-const { countBars, detachCropStart, injectTempoAt, listTracks, loadScore, measureBars }
+const { countBars, detachCropStart, hasTab, injectTempoAt, listTracks, loadScore, measureBars, renderSheet }
   = await import('./score.ts')
 
 test('listTracks returns a non-empty, sequentially-indexed track list', async () => {
@@ -73,4 +73,23 @@ test('measureBars scales linearly with the display scale', async () => {
     assert(Math.abs(two[i]!.w - b.w * 2) < 0.5, `w ${two[i]!.w} vs 2×${b.w}`)
     assert(Math.abs(two[i]!.h - b.h * 2) < 0.5, `h ${two[i]!.h} vs 2×${b.h}`)
   })
+})
+
+test('hasTab is true for stringed tracks and false for the drum kit', async () => {
+  const score = loadScore(await loadDemo(), createSettings(), 0)
+
+  assertEquals(hasTab(score, 0), true) // Lead guitar
+  assertEquals(hasTab(score, 1), false) // Drums
+  assertEquals(hasTab(score, 3), true)
+})
+
+test('renderSheet rejects instead of hanging when alphaTab fails to render', async () => {
+  // Tab only on the drum kit leaves alphaTab no staff to draw: it reports an
+  // error rather than finishing.
+  const settings = createSettings({ notation: 'tab' })
+  const score = loadScore(await loadDemo(), settings, 1)
+
+  let failed = false
+  await renderSheet(settings, score, 1, '').catch(() => (failed = true))
+  assert(failed, 'expected renderSheet to reject')
 })
