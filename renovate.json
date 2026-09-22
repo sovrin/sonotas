@@ -8,6 +8,10 @@
   "packageRules": [{
     "matchDepTypes": ["resolutions"],
     "enabled": false
+  }, {
+    "description": "typescript-eslint and vue-tsc don't support TypeScript 7 yet (lint and typecheck crash); lift once they do",
+    "matchPackageNames": ["typescript"],
+    "allowedVersions": "<7"
   }],
   "postUpdateOptions": ["pnpmDedupe"]
 }
