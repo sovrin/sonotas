@@ -190,6 +190,7 @@ export async function createRenderer(
     endMs: opts.endMs ?? durationMs,
     speed: opts.speed ?? 1,
     quality: opts.quality ?? 'high',
+    fast: opts.fast ?? false,
     paint: {
       scroll: opts.scroll,
       currentBarOnly: opts.currentBarOnly,
