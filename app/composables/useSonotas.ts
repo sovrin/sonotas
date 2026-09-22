@@ -13,7 +13,7 @@ const KEY: InjectionKey<SonotasStore> = Symbol('sonotas')
 type Dynamic = Record<string, unknown>
 
 // The bundled demo tab, served from public/.
-const SAMPLE_URL = '/tabs/test.gp'
+const SAMPLE_URL = '/tabs/Catastrophic.gp'
 
 // UI resolution → short edge (px). The renderer derives the other edge from the
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
@@ -41,7 +41,7 @@ function hexToRgba(hex: string, alpha: number): string {
 function createSonotas() {
   // ── state ─────────────────────────────────────────────────────────────────
   const s = reactive({
-    sourceName: 'Ritardando (demo)',
+    sourceName: 'Catastrophic (demo)',
     isDemo: true, // false once the user loads their own file
     loadError: '', // surfaced when a picked file can't be parsed
     tracks: [] as { index: number, name: string }[],
@@ -467,11 +467,11 @@ function createSonotas() {
     s.posterUrl = ''
   }
 
-  // e.g. "ritardando-16x9-1080p.mp4": the loaded file's name (sans extension
-  // and demo tag), the frame and the resolution.
+  // e.g. "catastrophic-16x9-1080p.mp4": the loaded file's name (sans
+  // extension, demo tag and accents), the frame and the resolution.
   function outName() {
-    const base = s.sourceName.replace(/\.[^.]+$/, '').replace(/\(demo\)/i, '')
-    const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
+    const base = s.sourceName.replace(/\(demo\)/i, '').trim().replace(/\.\w+$/, '')
+    const slug = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
     return `${slug}-${s.aspect.replace(':', 'x')}-${s.resolution}.mp4`
   }
 
