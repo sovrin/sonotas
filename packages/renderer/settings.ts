@@ -59,7 +59,7 @@ function colorFromHex(hex: string): alphaTab.model.Color {
 // Exhaustive switch, no `default`: adding a Notation member becomes a type error
 // here rather than silently mapping to a fallback. `TabMixed` is intentionally
 // unmapped and unexposed.
-function staveProfile(n: Notation): alphaTab.StaveProfile {
+export function staveProfile(n: Notation): alphaTab.StaveProfile {
   switch (n) {
     case 'auto':
       return alphaTab.StaveProfile.Default
