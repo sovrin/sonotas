@@ -52,7 +52,7 @@ export interface RendererOptions {
   chordDiagrams?: boolean
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
-  fontUrl?: string // URL of the Bravura woff2 music font, default '/fonts/Bravura.subset.woff2'
+  fontUrl?: string // URL of the woff2 music font (a Bravura subset), default '/fonts/sonotas-music.woff2'
 }
 
 /** Cursor appearance knobs. All optional; omission preserves current output. */
