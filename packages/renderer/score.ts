@@ -1,5 +1,5 @@
 import * as alphaTab from '@coderline/alphatab'
-import type { Tile, TrackInfo } from './types.ts'
+import type { Box, Tile, TrackInfo } from './types.ts'
 import { svgToCanvas } from './svg.ts'
 import { createSettings } from './settings.ts'
 
@@ -106,6 +106,24 @@ export function hasChords(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
 }
 
+/** Master-bar boxes of the track laid out with `settings`, in render order, in
+ * output px at its `display.scale`. Layout only — nothing is painted, so this
+ * is cheap next to {@link renderSheet}. alphaTab lays out in unscaled units and
+ * applies the scale on output, so bar sizes are linear in the scale: measure
+ * once, then derive the scale that gives a wanted size. */
+export function measureBars(
+  settings: alphaTab.Settings,
+  score: alphaTab.model.Score,
+  track: number
+): Box[] {
+  const renderer = new alphaTab.rendering.ScoreRenderer(settings)
+  renderer.width = 1
+  renderer.renderScore(score, [track]) // lays out synchronously; partials only paint on renderResult()
+  return (renderer.boundsLookup?.staffSystems ?? []).flatMap(system =>
+    system.bars.map(({ realBounds: r }) => ({ x: r.x, y: r.y, w: r.w, h: r.h }))
+  )
+}
+
 // alphaTab always engraves this line below the sheet, as its own partial, with
 // no setting to turn it off.
 const ANNOTATION = 'rendered by alphaTab'
@@ -165,7 +183,8 @@ export async function renderSheet(
       y: c.y,
       w: c.w,
       h: c.h,
-      img: await svgToCanvas(c.svg, c.w, c.h, css)
+      img: await svgToCanvas(c.svg, c.w, c.h, css),
+      annotation: c.svg.includes(ANNOTATION)
     }))
   )
   const height = Math.max(...raw.map(c => c.y + c.h)) & ~1

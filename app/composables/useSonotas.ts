@@ -19,7 +19,7 @@ const SAMPLE_URL = '/tabs/test.gp'
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
-const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Bar pan': 'pan', 'Continuous': 'smooth' }
+const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Bar pan': 'pan', 'Continuous': 'smooth', 'Centered': 'center' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
 // mediabunny's bitrate factor per preset: 0.3·e^(2.5538·level) for levels
@@ -28,7 +28,7 @@ const QUALITY_FACTOR: Record<string, number> = { low: 0.57, medium: 1.07, high: 
 // Fraction of the target bitrate near-static notation actually spends. H.264 is
 // VBR: bar-snap holds a still image between bars so it undershoots the target
 // heavily; continuous scroll moves every frame and lands much closer. Empirical.
-const MOTION_BY_SCROLL: Record<string, number> = { bar: 0.06, pan: 0.4, smooth: 0.55 }
+const MOTION_BY_SCROLL: Record<string, number> = { bar: 0.06, pan: 0.4, smooth: 0.55, center: 0.55 }
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '')
@@ -56,7 +56,8 @@ function createSonotas() {
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
     highlightBar: true, // played-bar highlight (paint-time)
-    currentBarOnly: false, // hide everything but the bar being played (paint-time)
+    currentBarOnly: false, // hide everything but the bar(s) being played (paint-time; implies fitting ≥1 bar)
+    fitBars: 'Off', // line layout: size the widest run of N bars to the frame width (build-time)
     showTitle: true, // title/artist overlay (paint-time; needs the file to carry one)
     showChords: false, // chord diagrams above chord-named beats (build-time)
     theme: 'dark', // canvas preset selector (Dark/Light) — sets the colors below
@@ -137,6 +138,14 @@ function createSonotas() {
     return LAYOUT_BY_UI[s.layout] ?? 'line'
   }
 
+  // Bars fit across the frame (0 = off). Line layout only; showing just the
+  // current bar always fits at least that one.
+  function fitBarsNum() {
+    if (layoutMode() !== 'line') return 0
+    const n = parseInt(s.fitBars, 10) || 0
+    return s.currentBarOnly ? Math.max(1, n) : n
+  }
+
   function qualityMode() {
     return QUALITY_BY_UI[s.quality] ?? 'high'
   }
@@ -161,6 +170,7 @@ function createSonotas() {
       scale: scaleNum(),
       notation: notationMode(),
       layout: layoutMode(),
+      fitBars: fitBarsNum(),
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
       showBarNumbers: s.showBarNumbers,
@@ -496,7 +506,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()
@@ -555,6 +565,7 @@ function createSonotas() {
 
     return {
       isPage: s.layout === 'Page',
+      fitBars: fitBarsNum(),
       timeLabel: fmt(s.time),
       durLabel: fmt(s.duration),
       barLabel: barLabel(),
