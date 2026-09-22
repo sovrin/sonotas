@@ -146,6 +146,12 @@ select {
   color: var(--t3);
 }
 
+/* Third-party credits get their own line so they read as a credit, not as the
+   tail of the format blurb. */
+.footer .credits {
+  flex-basis: 100%;
+}
+
 /* ── stage ─────────────────────────────────────────────────────────────── */
 
 .stage {

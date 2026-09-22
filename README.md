@@ -31,6 +31,18 @@ entirely on your machine, so nothing gets uploaded.
   toggle the song title, track name, tempo marking, bar numbers and chord diagrams.
 - **Live preview:** scrub and play the exact frames that end up in the video.
 
+## Built on alphaTab
+
+Everything musical in sonotas is done by [alphaTab](https://www.alphatab.net),
+the open-source notation engine by [Daniel Kuschny and contributors](https://github.com/CoderLine/alphaTab).
+It reads every supported Guitar Pro format and MusicXML, engraves the tablature
+and standard notation you see in the video, and supplies the MIDI timing that
+moves the playhead. sonotas adds the camera, the styling and the encoder around
+it. alphaTab is licensed under the MPL-2.0; if it is useful to you, star the
+repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
+Exports carry alphaTab's own "rendered by alphaTab" line unless you turn it off
+under *More options*.
+
 ## How it works
 
 The app is a [Nuxt](https://nuxt.com) + [Nuxt UI](https://ui.nuxt.com) front end
@@ -100,4 +112,6 @@ pnpm build-font
 
 ## License
 
-[MIT](LICENSE)
+sonotas is [MIT](LICENSE) licensed. It ships alphaTab (MPL-2.0), the Bravura
+font (SIL OFL 1.1), mediabunny (MPL-2.0) and Nuxt UI (MIT); their notices are
+collected in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
