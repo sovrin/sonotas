@@ -21,6 +21,9 @@ const COLOR_ROWS = [
   { name: 'barNum', label: 'Bar numbers' }
 ]
 
+// No bar-number colour to pick while bar numbers are hidden.
+const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s.showBarNumbers))
+
 const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%' })
 </script>
 
@@ -69,18 +72,18 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
         <label class="check">
           <input
             type="checkbox"
-            :checked="s.showTempo"
-            @change="toggle('showTempo')"
+            :checked="s.showBarNumbers"
+            @change="toggle('showBarNumbers')"
           >
-          Tempo marking
+          Bar numbers
         </label>
         <label class="check">
           <input
             type="checkbox"
-            :checked="s.showTimeSig"
-            @change="toggle('showTimeSig')"
+            :checked="s.showTempo"
+            @change="toggle('showTempo')"
           >
-          Time signature
+          Tempo marking
         </label>
         <label class="check">
           <input
@@ -106,6 +109,14 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
             class="muted"
           >(no chords in this file)</span>
         </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            :checked="s.showAttribution"
+            @change="toggle('showAttribution')"
+          >
+          “rendered by alphaTab” line
+        </label>
       </div>
     </div>
 
@@ -119,34 +130,45 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
         >
         Export only a range of bars
       </label>
-      <div
-        v-if="s.renderOnlyBars"
-        class="row2"
-      >
-        <label class="field">
-          <span>From bar</span>
+      <template v-if="s.renderOnlyBars">
+        <div class="row2">
+          <label class="field">
+            <span>From bar</span>
+            <input
+              type="number"
+              name="fromBar"
+              class="input"
+              min="1"
+              :max="s.toBar"
+              :value="s.fromBar"
+              @input="setNum"
+            >
+          </label>
+          <label class="field">
+            <span>To bar</span>
+            <input
+              type="number"
+              name="toBar"
+              class="input"
+              :min="s.fromBar"
+              :value="s.toBar"
+              @input="setNum"
+            >
+          </label>
+        </div>
+        <label
+          v-if="s.fromBar > 1"
+          class="check"
+          style="margin-top:8px"
+        >
           <input
-            type="number"
-            name="fromBar"
-            class="input"
-            min="1"
-            :max="s.toBar"
-            :value="s.fromBar"
-            @input="setNum"
+            type="checkbox"
+            :checked="s.showTimeSig"
+            @change="toggle('showTimeSig')"
           >
+          Repeat the time signature at the first bar
         </label>
-        <label class="field">
-          <span>To bar</span>
-          <input
-            type="number"
-            name="toBar"
-            class="input"
-            :min="s.fromBar"
-            :value="s.toBar"
-            @input="setNum"
-          >
-        </label>
-      </div>
+      </template>
     </div>
 
     <div class="section">
@@ -178,16 +200,13 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
             @change="setField"
           >
             <option>Bar snap</option>
+            <option>Bar pan</option>
             <option>Continuous</option>
-            <option>Off</option>
           </select>
         </label>
       </div>
       <p class="hint">
         Speed also scales the length of the exported video.
-        <template v-if="s.scroll === 'Off'">
-          With scrolling off the view stays at the start and the playhead runs out of frame past the visible bars.
-        </template>
       </p>
     </div>
 
@@ -272,7 +291,7 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
     </div>
 
     <div
-      v-if="s.highlightNotes"
+      v-if="s.highlightBar"
       class="section"
     >
       <h2>Bar highlight</h2>
@@ -367,7 +386,7 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
     <div class="section">
       <h2>Colours</h2>
       <div
-        v-for="row in COLOR_ROWS"
+        v-for="row in colorRows"
         :key="row.name"
         class="kv"
       >

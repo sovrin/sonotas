@@ -21,29 +21,32 @@ export const QUALITY_PRESET: Record<Quality, MbQuality> = {
   max: QUALITY_VERY_HIGH
 }
 
-/** Number of constant-rate frames in the clip window `[startMs, endMs]`. */
+/** Number of constant-rate frames in the clip window `[startMs, endMs]` played
+ * at `speed` (2 = twice as fast → half the frames). */
 export function clipFrames(
   startMs: number,
   endMs: number,
   durationMs: number,
-  fps: number
+  fps: number,
+  speed = 1
 ): number {
   const start = Math.max(0, startMs)
   const end = Math.min(endMs, durationMs)
-  return Math.max(1, Math.ceil(((end - start) / 1000) * fps))
+  return Math.max(1, Math.ceil(((end - start) / 1000 / speed) * fps))
 }
 
 export interface EncodeParams {
   fps: number
   startMs: number
   endMs: number
+  speed: number // playback rate; scales source time per output frame
   quality: Quality
   paint: PaintOptions // crop/scroll/cursor/background passed through to paint()
   onProgress?: (frame: number, total: number) => void
 }
 
 /** Encode the clip window `[startMs, endMs]` to an mp4 Blob via WebCodecs at a
- * constant `fps`.
+ * constant `fps`, played back at `speed`.
  *
  * One frame per 1/fps step, cursor painted at the exact frame time. Constant
  * frame rate (not per-beat variable durations) is what real-time players — VLC
@@ -51,7 +54,7 @@ export interface EncodeParams {
  * still compresses tiny (identical frames → near-empty P-frames). */
 export async function encodeVideo(
   painter: Painter,
-  { fps, startMs, endMs, quality, paint, onProgress }: EncodeParams
+  { fps, startMs, endMs, speed, quality, paint, onProgress }: EncodeParams
 ): Promise<Blob> {
   const { width, height, durationMs } = painter
   const canvas = new OffscreenCanvas(width, height)
@@ -67,7 +70,7 @@ export async function encodeVideo(
   out.addVideoTrack(src, { frameRate: fps })
   await out.start()
 
-  const total = clipFrames(startMs, endMs, durationMs, fps)
+  const total = clipFrames(startMs, endMs, durationMs, fps, speed)
   // The paint→encode loop is synchronous CPU work; nothing repaints while it
   // runs. Yield on a wall-clock budget (~every 60ms) so progress UI updates at
   // a steady ~16fps no matter how long the clip is — a frame-count cadence
@@ -79,7 +82,7 @@ export async function encodeVideo(
     new Promise<void>(r => (raf ? requestAnimationFrame(() => r()) : setTimeout(r)))
   let lastYield = performance.now()
   for (let i = 0; i < total; i++) {
-    painter.paint(ctx, startMs + (i / fps) * 1000, paint) // clip-relative source time
+    painter.paint(ctx, startMs + (i / fps) * 1000 * speed, paint) // clip-relative source time
     await src.add(i / fps, 1 / fps) // output timestamps start at 0
     onProgress?.(i + 1, total)
     if (performance.now() - lastYield >= 60) {
