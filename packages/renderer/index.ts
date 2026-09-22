@@ -1,10 +1,11 @@
 // @sovrin/renderer — minimal, browser-only Guitar Pro → video renderer.
-// One track, red cursor, bar-by-bar scroll. Render a single frame or a full mp4. No audio.
+// One track, a cursor, scrolling line or page layout. Render a single frame or a full mp4. No audio.
 // This module wires the per-concern modules together.
 import { musicFontCss } from './font.ts'
 import { createSettings } from './settings.ts'
 import {
   detachCropStart,
+  hasChords,
   injectTempoAt,
   loadScore,
   renderSheet
@@ -12,11 +13,11 @@ import {
 import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
 import { encodeVideo } from './encode.ts'
-import type { EncodeOptions, Renderer, RendererOptions } from './types.ts'
+import type { Aspect, EncodeOptions, Renderer, RendererOptions } from './types.ts'
 
 export { countBars, listTracks } from './score.ts'
 export type { ScrollMode } from './scroll.ts'
-export type { Notation } from './settings.ts'
+export type { Layout, Notation } from './settings.ts'
 export type {
   ActiveNoteOptions,
   Aspect,
@@ -29,6 +30,7 @@ export type {
   Quality,
   Renderer,
   RendererOptions,
+  TitleOptions,
   TrackInfo
 } from './types.ts'
 
@@ -45,7 +47,13 @@ const FRAMED_RASTER_SCALE = 2.5
 // Smaller ⇒ smaller staff ⇒ more bars fit across the frame. `scale` (notation
 // size) multiplies this, clamped below.
 const FRAMED_BASE_FILL = 0.33
-const ASPECT_RATIO: Record<string, number> = { '16:9': 16 / 9, '9:16': 9 / 16, '1:1': 1 }
+// Page layout is engraved straight at output resolution (no band fit), so its
+// notation size is an alphaTab scale: this at a 1080px short edge and notation
+// size 100% — chosen to match what the line layout's band fit shows for a
+// single tab staff — scaled with the frame's short edge and the size knob.
+const PAGE_BASE_SCALE = 1.8
+const PAGE_REF_SHORT = 1080
+const ASPECT_RATIO: Record<Aspect, number> = { '16:9': 16 / 9, '9:16': 9 / 16, '1:1': 1 }
 
 function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v))
@@ -60,12 +68,22 @@ export async function createRenderer(
   const width = (opts.width ?? DEFAULT_WIDTH) & ~1
   const aspect = opts.aspect
   const framed = !!aspect
-  // Framed: fixed crisp raster, notation size → band fill. Unframed: the scale
-  // knob drives the raster directly (clamp only when provided).
-  const scale = framed
-    ? FRAMED_RASTER_SCALE
-    : opts.scale === undefined ? undefined : clamp(opts.scale, MIN_SCALE, MAX_SCALE)
-  const fill = framed ? clamp(FRAMED_BASE_FILL * (opts.scale ?? 1), 0.15, 0.9) : undefined
+  const layout = opts.layout ?? 'line'
+  const page = layout === 'page'
+  // Frame height follows the aspect; unframed line output takes the sheet's
+  // height (below), unframed page output the whole page's.
+  const frameHeight = framed ? Math.round(width / ASPECT_RATIO[aspect]) & ~1 : 0
+  const shortEdge = framed ? Math.min(width, frameHeight) : width
+  // Line + framed: fixed crisp raster, notation size → band fill. Line +
+  // unframed: the scale knob drives the raster directly (clamp only when
+  // provided). Page: engraved at output resolution, notation size → scale.
+  const scale = page
+    ? PAGE_BASE_SCALE * (shortEdge / PAGE_REF_SHORT) * clamp(opts.scale ?? 1, MIN_SCALE, MAX_SCALE)
+    : framed
+      ? FRAMED_RASTER_SCALE
+      : opts.scale === undefined ? undefined : clamp(opts.scale, MIN_SCALE, MAX_SCALE)
+  const fill = framed && !page ? clamp(FRAMED_BASE_FILL * (opts.scale ?? 1), 0.15, 0.9) : undefined
+  const chordDiagrams = opts.chordDiagrams ?? false
   const crop = opts.crop
   const showTempo = opts.showTempo ?? true
   const showTimeSignature = opts.showTimeSignature ?? true
@@ -75,13 +93,18 @@ export async function createRenderer(
   const settings = createSettings({
     scale,
     notation: opts.notation,
+    layout,
     crop,
     showTempo,
     showTrackName: opts.showTrackName,
+    chordDiagrams,
     foreground: opts.foreground,
     barNumberColor: opts.barNumberColor
   })
   const score = loadScore(bytes, settings, track)
+  // Diagrams above chord-named beats (any layout) live on the score's stylesheet,
+  // not in settings; off draws the chord name as text, alphaTab's default.
+  score.stylesheet.globalDisplayChordDiagramsInScore = chordDiagrams
   // A crop that starts mid-piece loses the earlier tempo marker; re-inject it.
   if (showTempo && midPieceCrop) injectTempoAt(score, crop!.fromBar)
   // Make the crop's start bar re-draw the time signature during render, then
@@ -93,7 +116,8 @@ export async function createRenderer(
     settings,
     score,
     track,
-    css
+    css,
+    page ? width : 1
   )
   reattach?.()
   const { beats, durationMs, bars } = buildTimeline(
@@ -105,7 +129,7 @@ export async function createRenderer(
   )
   // Output canvas: framed → this aspect (short/long edge derived from `width`),
   // else the bare sheet. Height forced even for the H.264 encoder.
-  const height = framed ? Math.round(width / ASPECT_RATIO[aspect]) & ~1 : sheetHeight
+  const height = framed ? frameHeight : sheetHeight
   const painter = createPainter({
     tiles,
     beats,
@@ -113,6 +137,10 @@ export async function createRenderer(
     height,
     sheetHeight,
     fill,
+    layout,
+    title: score.title,
+    artist: score.artist,
+    titleColor: opts.foreground,
     durationMs
   })
 
@@ -120,6 +148,9 @@ export async function createRenderer(
     durationMs,
     width,
     height,
+    title: score.title,
+    artist: score.artist,
+    hasChords: hasChords(score, track),
     bars,
     frame(canvas, atMs, opts) {
       if (canvas.width !== width) canvas.width = width // resize also clears; skip if unchanged
@@ -137,7 +168,8 @@ export async function createRenderer(
           cursor: opts.cursor,
           highlight: opts.highlight,
           activeNote: opts.activeNote,
-          background: opts.background
+          background: opts.background,
+          title: opts.title
         },
         onProgress: opts.onProgress
       })

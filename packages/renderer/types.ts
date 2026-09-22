@@ -1,8 +1,8 @@
 import type { ScrollMode } from './scroll.ts'
-import type { Notation } from './settings.ts'
+import type { Layout, Notation } from './settings.ts'
 
 /** Encoder quality preset. Mapped to mediabunny constants inside encode.ts. */
-export type Quality = 'low' | 'medium' | 'high'
+export type Quality = 'low' | 'medium' | 'high' | 'max'
 
 /** Output frame aspect. When set, the sheet is composited (centered, on a
  * background fill) into a canvas of this ratio instead of being emitted as a
@@ -29,6 +29,9 @@ export interface RendererOptions {
   aspect?: Aspect // frame the sheet to this ratio; omit for a bare horizontal strip
   scale?: number // notation scale, clamped 0.5–2.0, default 1.0
   notation?: Notation // stave selection, default "auto"
+  // 'line' (default): one endless system the view scrolls along. 'page': systems
+  // wrap at the frame width and stack; the view follows the current system down.
+  layout?: Layout
   crop?: Crop // render only these bars, default whole sheet
   // Leading-element visibility. Track name and tempo are global; time signature
   // only controls whether it's re-shown at a mid-piece crop start (it always
@@ -36,6 +39,9 @@ export interface RendererOptions {
   showTrackName?: boolean
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
+  // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
+  // bare chord name; in page layout also lists them in the header. Default false.
+  chordDiagrams?: boolean
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
   fontUrl?: string // URL of the Bravura woff2 music font, default '/fonts/Bravura.subset.woff2'
@@ -76,13 +82,22 @@ export interface ActiveNoteOptions {
   padding?: number // sheet-space px grown around each note-head box; default 1.5
 }
 
-/** Per-call paint knobs (scroll/cursor/highlight/activeNote/background). All optional. */
+/** Song title/artist overlay, drawn in the frame's top-left from the file's own
+ * metadata (nothing to draw when the file has none). In page layout the sheet
+ * starts below it. */
+export interface TitleOptions {
+  enabled?: boolean // default false
+  color?: string // CSS color; defaults to the notation color
+}
+
+/** Per-call paint knobs (scroll/cursor/highlight/activeNote/background/title). All optional. */
 export interface PaintOptions {
   scroll?: ScrollMode // viewport behavior, default 'bar'
   cursor?: CursorOptions
   highlight?: HighlightOptions
   activeNote?: ActiveNoteOptions
   background?: BackgroundOptions
+  title?: TitleOptions
 }
 
 /** Options for {@link Renderer.encode} — the paint knobs plus the encode-loop
@@ -99,6 +114,11 @@ export interface Renderer {
   durationMs: number
   width: number
   height: number
+  /** Song metadata from the file ('' when absent) — what the title overlay shows. */
+  title: string
+  artist: string
+  /** Whether the rendered track defines any chords (so chord diagrams can exist). */
+  hasChords: boolean
   /** Start-ms of each rendered bar's first play (rebased to 0); `bars.length`
    * is the rendered bar count. */
   bars: number[]
