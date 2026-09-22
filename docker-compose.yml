@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sonotas
+    container_name: sonotas
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
