@@ -1,7 +1,7 @@
 <script setup>
 // The one thing the page is for: the button that produces the MP4, and once
 // it exists, the button that saves it.
-const { s, v, startRender, cancelRender, closeRender, download } = useSonotas()
+const { s, v, startRender, closeRender, download } = useSonotas()
 </script>
 
 <template>
@@ -38,35 +38,13 @@ const { s, v, startRender, cancelRender, closeRender, download } = useSonotas()
       </div>
     </template>
 
-    <template v-else-if="v.isRendering">
-      <div class="meta">
-        <span>Exporting… <b class="mono">{{ v.pct }}%</b></span>
-        <span class="mono">frame {{ v.frame }} / {{ v.totalFrames }}</span>
-      </div>
-      <div class="progress">
-        <i :style="{ width: v.pct + '%' }" />
-      </div>
-      <div class="actions">
-        <span
-          class="mono"
-          style="font-size:12px;color:var(--t3)"
-        >{{ v.estLine }}</span>
-        <button
-          class="linkbtn"
-          @click="cancelRender"
-        >
-          Cancel
-        </button>
-      </div>
-    </template>
-
     <template v-else>
       <div class="meta">
         <span class="mono">{{ v.estLine }}</span>
       </div>
       <button
         class="btn primary"
-        :disabled="!s.ready || s.building"
+        :disabled="!s.ready || s.building || v.isRendering"
         @click="startRender"
       >
         Export MP4
