@@ -118,7 +118,8 @@ export async function createRenderer(
     score,
     track,
     css,
-    page ? width : 1
+    page ? width : 1,
+    opts.showAttribution ?? true
   )
   reattach?.()
   const { beats, durationMs, bars } = buildTimeline(
