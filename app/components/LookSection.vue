@@ -1,5 +1,7 @@
 <script setup>
-const { s, setCanvasTheme, setCursorColor, setLayout, toggle } = useSonotas()
+const { s, v, setCanvasTheme, setCursorColor, setField, setLayout, toggle } = useSonotas()
+
+const FIT_BARS = [1, 2, 3, 4, 5, 6, 7, 8]
 
 const CURSOR_COLORS = [
   { hex: '#8f97ac', name: 'Grey' },
@@ -85,7 +87,30 @@ const CURSOR_COLORS = [
         :checked="s.currentBarOnly"
         @change="toggle('currentBarOnly')"
       >
-      Show only the current bar
+      {{ v.fitBars > 1 ? `Show only the current ${v.fitBars} bars` : 'Show only the current bar' }}
     </label>
+    <div
+      v-if="!v.isPage"
+      class="kv"
+    >
+      <span title="Size the notation so this many bars span nearly the whole frame width">Fit to width</span>
+      <select
+        name="fitBars"
+        class="select fit-select"
+        aria-label="Fit to width"
+        :value="v.fitBars ? (v.fitBars === 1 ? '1 bar' : `${v.fitBars} bars`) : 'Off'"
+        @change="setField"
+      >
+        <option :disabled="s.currentBarOnly">
+          Off
+        </option>
+        <option
+          v-for="n in FIT_BARS"
+          :key="n"
+        >
+          {{ n === 1 ? '1 bar' : `${n} bars` }}
+        </option>
+      </select>
+    </div>
   </div>
 </template>

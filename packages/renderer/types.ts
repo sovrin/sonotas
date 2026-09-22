@@ -33,6 +33,12 @@ export interface RendererOptions {
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout
   crop?: Crop // render only these bars, default whole sheet
+  // Line layout: engrave the notation so the widest run of this many
+  // consecutive bars spans nearly the whole frame width (capped by the frame
+  // height); bar/pan scroll then centers the current bar and the ones after it
+  // (see PaintOptions.currentBarOnly). Overrides `scale`; ignored in page
+  // layout. 0 (default) = off.
+  fitBars?: number
   // Leading-element visibility. Track name and tempo are global; time signature
   // only controls whether it's re-shown at a mid-piece crop start (it always
   // shows on bar 1). All default true.
@@ -95,8 +101,8 @@ export interface TitleOptions {
 /** Per-call paint knobs (scroll/cursor/highlight/activeNote/background/title). All optional. */
 export interface PaintOptions {
   scroll?: ScrollMode // viewport behavior, default 'bar'
-  // Draw only the bar being played, centered in the frame, hiding the rest of
-  // the sheet. Default false.
+  // Draw only the bar being played — with fitBars, the run of that many bars
+  // from it — centered in the frame, hiding the rest of the sheet. Default false.
   currentBarOnly?: boolean
   cursor?: CursorOptions
   highlight?: HighlightOptions
@@ -146,6 +152,7 @@ export interface Tile {
   w: number
   h: number
   img: OffscreenCanvas
+  annotation?: boolean // alphaTab's "rendered by alphaTab" line, not notation
 }
 
 /** A rectangle in sheet coordinates. */

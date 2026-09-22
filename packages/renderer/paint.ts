@@ -1,7 +1,8 @@
-import type { Beat, PaintOptions, Tile } from './types.ts'
+import type { Beat, Box, PaintOptions, Tile } from './types.ts'
 import type { Layout } from './settings.ts'
-import { clampScroll, scrollState, scrollStateY } from './scroll.ts'
+import { barAt, clampScroll, scrollState, scrollStateY } from './scroll.ts'
 import { cursorRect } from './cursor.ts'
+import { barWindow } from './fit.ts'
 
 const DEFAULT_CURSOR_COLOR = 'rgba(255,0,0,0.7)'
 const DEFAULT_CURSOR_WIDTH = 3
@@ -38,6 +39,11 @@ export interface SheetView {
    * vertically. 'page': wrapped systems already laid out at the output width,
    * top-aligned and scrolled along y. */
   layout?: Layout
+  /** Line layout engraved so the widest run of this many bars nearly fills the
+   * frame: the bar boxes (not the whole band) are centered vertically, and
+   * `bar`/`pan` scroll center the current bar and the ones after it instead of
+   * pinning the bar near the left edge. 0/undefined: off. */
+  fitBars?: number
   /** Song metadata for the title overlay ('' draws nothing). */
   title?: string
   artist?: string
@@ -66,11 +72,31 @@ export function createPainter(view: SheetView): Painter {
   // 1, sheet fills canvas. Page layout: the sheet is already laid out in output
   // pixels, so it's drawn 1:1 from the top.
   const k = !page && view.fill ? (Math.min(width, height) * view.fill) / sheetHeight : 1
-  const bandTop = page ? 0 : (height - sheetHeight * k) / 2
+  const fitBars = page ? 0 : view.fitBars ?? 0
+  // Tallest bar box — what fit-to-bars centers vertically (a line layout's bars
+  // share one system, so they all sit at the same y).
+  const tallest = beats.reduce<Beat | undefined>((m, b) => (!m || b.barH > m.barH ? b : m), undefined)
+  const bandTop = page
+    ? 0
+    : fitBars && tallest
+      ? height / 2 - (tallest.barY + tallest.barH / 2) * k
+      : (height - sheetHeight * k) / 2
   // Viewport measured in sheet pixels (what maps onto the full output width).
   const viewportSheet = width / k
   const contentRight = tiles.reduce((m, t) => Math.max(m, t.x + t.w), 0)
   const contentBottom = tiles.reduce((m, t) => Math.max(m, t.y + t.h), 0)
+  // The line layout's bar boxes in sheet order (beats repeat them across
+  // repeats; keyed by x, which is unique along one system), for the run of
+  // `fitBars` in view.
+  const bars: Box[] = []
+  const barIndex = new Map<number, number>()
+  if (fitBars > 1) {
+    for (const b of [...beats].sort((p, q) => p.barX - q.barX)) {
+      if (barIndex.has(b.barX)) continue
+      barIndex.set(b.barX, bars.length)
+      bars.push({ x: b.barX, y: b.barY, w: b.barW, h: b.barH })
+    }
+  }
   const short = Math.min(width, height)
   const titleMargin = Math.round(short * TITLE_MARGIN)
   const titleSize = Math.round(short * TITLE_SIZE)
@@ -85,6 +111,21 @@ export function createPainter(view: SheetView): Painter {
     while (i < beats.length - 1 && beats[i + 1]!.startMs <= t) i++
     lastI = i
     return i
+  }
+
+  /** Horizontal extent `[x0, x1]` of what's in focus while beat `b` plays: its
+   * bar, or with fit-to-bars the run of `fitBars` reading ahead from it. */
+  function focusSpan(b: Beat): [number, number] {
+    const j = barIndex.get(b.barX)
+    if (j === undefined) return [b.barX, b.barX + b.barW]
+    const [start, end] = barWindow(bars.length, j, fitBars)
+    const last = bars[end - 1]!
+    return [bars[start]!.x, last.x + last.w]
+  }
+
+  function focusMid(b: Beat): number {
+    const [x0, x1] = focusSpan(b)
+    return (x0 + x1) / 2
   }
 
   /** Height of the title block (title + artist lines with margins), 0 when
@@ -130,18 +171,22 @@ export function createPainter(view: SheetView): Painter {
 
     t = Math.max(0, Math.min(t, durationMs))
     const i = indexAt(t)
-    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet, currentBarOnly)
 
     // Line layout scrolls along x, bounded a margin *outside* the content, so
     // the first/last bar keeps the same left/right breathing room instead of
     // sitting flush against the frame edge; the margin stays blank (no tiles
     // live there). Page layout is as wide as the frame and scrolls along y,
-    // below the title block, bounded by the sheet itself. When only the
-    // current bar is drawn it's centered on both axes and left unbounded —
-    // there are no neighbors to reveal.
+    // below the title block, bounded by the sheet itself. The bar(s) in focus
+    // are centered — when they're the only ones drawn (every scroll mode, both
+    // axes), or fit to the frame in bar/pan scroll — and then left unbounded, so
+    // the first and last bars center like the rest. `center` scroll is left
+    // unbounded too, keeping the cursor mid-frame from first note to last.
+    const center = currentBarOnly || (!!fitBars && (scroll === 'bar' || scroll === 'pan'))
+    const focus = center ? focusMid : undefined
+    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet, focus)
     const top = page ? titleBlockHeight(titleEnabled) : bandTop
     const viewportH = height - top
-    const scrollX = currentBarOnly
+    const scrollX = center || (scroll === 'center' && !page)
       ? wantedX
       : page
         ? 0
@@ -156,28 +201,25 @@ export function createPainter(view: SheetView): Painter {
     // Cursor offset is screen-space (after scroll/scale), so scroll-independent.
     const cursorX = X(noteX) + cursorOffsetX
 
-    // The bar the playhead is over. In continuous scroll the cursor glides
-    // between notes and can cross a barline before the next beat's onset; pick
-    // the bar by note-x, not the last beat's bar, so the highlight (and the lone
-    // bar) advances with the cursor instead of trailing a note behind. In
-    // bar/pan modes the note sits on the beat, so this is a no-op.
-    let hb = beats[i]!
-    const nb = beats[i + 1]
-    if (nb && nb.barY === hb.barY && nb.barX > hb.barX && noteX >= nb.barX) hb = nb
+    // The bar the playhead is over — highlighted, and the lone bar drawn.
+    const hb = barAt(beats, i, noteX)
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, width, height)
 
-    // Only the current bar: clip the notation to its box (which already spans
-    // the markings above the staff, e.g. tempo and chords).
+    // Only the current bar(s): clip the notation to the focus span, as tall as
+    // the bar box (which already spans the markings above the staff, e.g. tempo
+    // and chords). The attribution line is skipped — its top reaches into it.
     const clipBar = currentBarOnly && hb.barW > 0
     if (clipBar) {
+      const [x0, x1] = focusSpan(hb)
       ctx.save()
       ctx.beginPath()
-      ctx.rect(X(hb.barX), Y(hb.barY), hb.barW * k, hb.barH * k)
+      ctx.rect(X(x0), Y(hb.barY), (x1 - x0) * k, hb.barH * k)
       ctx.clip()
     }
     for (const tile of tiles) {
+      if (clipBar && tile.annotation) continue
       if (tile.x + tile.w < scrollX || tile.x > scrollX + viewportSheet) continue
       if (page && (tile.y + tile.h < scrollY || tile.y > scrollY + viewportH)) continue
       ctx.drawImage(tile.img, X(tile.x), Y(tile.y), tile.w * k, tile.h * k)

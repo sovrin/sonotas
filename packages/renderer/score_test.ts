@@ -5,7 +5,7 @@ import { loadDemo, loadSample, shimHeadless } from './_testutil.ts'
 shimHeadless()
 const alphaTab = await import('@coderline/alphatab')
 const { createSettings } = await import('./settings.ts')
-const { countBars, detachCropStart, hasTab, injectTempoAt, listTracks, loadScore, renderSheet }
+const { countBars, detachCropStart, hasTab, injectTempoAt, listTracks, loadScore, measureBars, renderSheet }
   = await import('./score.ts')
 
 test('listTracks returns a non-empty, sequentially-indexed track list', async () => {
@@ -59,6 +59,20 @@ test('injectTempoAt leaves a bar that already has a tempo alone', async () => {
   injectTempoAt(score, 0)
 
   assertEquals(bar.tempoAutomations.length, before)
+})
+
+test('measureBars scales linearly with the display scale', async () => {
+  const bytes = await loadSample()
+  const at = (scale: number) => measureBars(createSettings({ scale }), loadScore(bytes, createSettings(), 0), 0)
+  const one = at(1)
+  const two = at(2)
+  assert(one.length > 1, 'expected measured bars')
+  assertEquals(two.length, one.length)
+  // fit-to-bars derives its engrave scale from one measurement at 1
+  one.forEach((b, i) => {
+    assert(Math.abs(two[i]!.w - b.w * 2) < 0.5, `w ${two[i]!.w} vs 2×${b.w}`)
+    assert(Math.abs(two[i]!.h - b.h * 2) < 0.5, `h ${two[i]!.h} vs 2×${b.h}`)
+  })
 })
 
 test('hasTab is true for stringed tracks and false for the drum kit', async () => {
