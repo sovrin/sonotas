@@ -20,9 +20,11 @@ Under MPL-2.0 the library's source stays available at the repository above.
 
 ## Bravura
 
-SMuFL music font used for all notation glyphs. sonotas ships a subset of
-Bravura (`public/fonts/Bravura.subset.woff2`) containing only the glyphs
-alphaTab can emit; see the README for how it is built.
+SMuFL music font used for all notation glyphs. sonotas ships a Modified
+Version of Bravura (`public/fonts/sonotas-music.woff2`): a subset containing
+only the glyphs alphaTab can emit, renamed to "Sonotas Music" because the OFL
+reserves the name Bravura for the original. Bravura's copyright, license and
+trademark records are kept inside the file. See the README for how it is built.
 
 - Copyright © Steinberg Media Technologies GmbH (<http://www.steinberg.net/>)
 - License: [SIL Open Font License 1.1](https://github.com/steinbergmedia/bravura/blob/master/LICENSE.txt),
