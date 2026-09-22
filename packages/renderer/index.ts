@@ -200,7 +200,8 @@ export async function createRenderer(
       background: opts.background,
       title: opts.title
     },
-    onProgress: opts.onProgress
+    onProgress: opts.onProgress,
+    signal: opts.signal
   })
 
   return {
@@ -219,8 +220,8 @@ export async function createRenderer(
     encode(opts: EncodeOptions = {}) {
       return encodeVideo(painter, encodeParams(opts))
     },
-    estimateSize({ samples = 8, stop, ...opts }: EstimateOptions = {}) {
-      return estimateVideoBytes(painter, encodeParams(opts), samples, stop)
+    estimateSize({ samples = 8, ...opts }: EstimateOptions = {}) {
+      return estimateVideoBytes(painter, encodeParams(opts), samples)
     }
   }
 }

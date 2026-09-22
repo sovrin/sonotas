@@ -124,6 +124,9 @@ export interface EncodeOptions extends PaintOptions {
    * constant-quality encoder where software H.264 isn't available. */
   fast?: boolean
   onProgress?: (frame: number, total: number) => void
+  /** Stops the encode: encoders are closed at once and `encode()` rejects with
+   * the signal's reason (an AbortError by default). */
+  signal?: AbortSignal
 }
 
 export interface Renderer {
@@ -148,13 +151,12 @@ export interface Renderer {
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its
-   * 2s GOPs. Resolves `null` if `opts.stop()` returns true mid-probe. */
+   * 2s GOPs. Resolves `null` if `opts.signal` aborts mid-probe. */
   estimateSize(opts?: EstimateOptions): Promise<number | null>
 }
 
 export interface EstimateOptions extends Omit<EncodeOptions, 'onProgress'> {
   samples?: number // GOPs to encode, default 8
-  stop?: () => boolean // polled after each frame; true aborts the probe
 }
 
 /** A rasterized SVG chunk of the sheet, placed in full-sheet coordinates. */
