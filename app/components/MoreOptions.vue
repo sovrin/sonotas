@@ -51,6 +51,8 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
             name="notationSize"
             class="select"
             :value="s.notationSize"
+            :disabled="!!v.fitBars"
+            :title="v.fitBars ? 'Set by “Fit to width”' : undefined"
             @change="setField"
           >
             <option>80%</option>
@@ -202,6 +204,7 @@ const pct = (val, min, max) => ({ '--p': ((val - min) / (max - min)) * 100 + '%'
             <option>Bar snap</option>
             <option>Bar pan</option>
             <option>Continuous</option>
+            <option>Centered</option>
           </select>
         </label>
       </div>

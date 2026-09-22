@@ -1,9 +1,10 @@
 import { test } from 'node:test'
 import { assertEquals } from './_assert.ts'
-import { clampScroll, scrollState, scrollStateY } from './scroll.ts'
+import { barAt, clampScroll, scrollState, scrollStateY } from './scroll.ts'
 import type { Beat } from './types.ts'
 
 const WIDTH = 1000
+const barMid = (b: Beat) => b.barX + b.barW / 2
 const beat = (startMs: number, x: number, barX: number, barY = 0): Beat => ({
   startMs,
   x,
@@ -47,6 +48,39 @@ test('smooth mode holds on the last beat when there is no next', () => {
   assertEquals(s.scrollX, 250 - WIDTH / 2)
 })
 
+// A repeat: bar A 0..200, bar B 200..400 played twice, one beat per second.
+// B's last beat (x 350, 2000–3000ms) jumps back to B's first (x 250) at 3000ms.
+const bar = (startMs: number, x: number, barX: number): Beat => ({ ...beat(startMs, x, barX), barW: 200 })
+const repeatBeats = [bar(0, 50, 0), bar(1000, 250, 200), bar(2000, 350, 200), bar(3000, 250, 200), bar(4000, 350, 200)]
+
+test('smooth mode glides to the bar end ahead of a repeat, not back over it', () => {
+  assertEquals(scrollState('smooth', repeatBeats, 2, 2500, WIDTH).noteX, 375) // halfway 350 → 400
+  assertEquals(scrollState('smooth', repeatBeats, 1, 1500, WIDTH).noteX, 300) // plain glide 250 → 350
+})
+
+test('smooth mode quick-pans from the bar end after a repeat jump', () => {
+  // 125ms into the 250ms pan → ease-out 0.75 of the way from the bar end (400)
+  // to the gliding note (250 + 100 · 0.125 = 262.5)
+  const s = scrollState('smooth', repeatBeats, 3, 3125, WIDTH)
+  assertEquals(s.noteX, 262.5)
+  assertEquals(s.scrollX, 400 + (262.5 - 400) * 0.75 - WIDTH / 2)
+  // settled once the pan is over; the note is then followed as usual
+  assertEquals(scrollState('smooth', repeatBeats, 3, 3400, WIDTH).scrollX, 290 - WIDTH / 2)
+})
+
+test('center mode follows the note like smooth', () => {
+  const beats = [beat(0, 200, 0), beat(100, 400, 0)]
+  assertEquals(scrollState('center', beats, 0, 50, WIDTH), scrollState('smooth', beats, 0, 50, WIDTH))
+})
+
+test('center mode rewinds the note with the sheet after a repeat jump', () => {
+  // same pan as smooth, but the note eases too, so it stays mid-view
+  const s = scrollState('center', repeatBeats, 3, 3125, WIDTH)
+  const eased = 400 + (262.5 - 400) * 0.75
+  assertEquals(s.noteX, eased)
+  assertEquals(s.scrollX, eased - WIDTH / 2)
+})
+
 // pan mode: bar 0 anchored at x 0, bar 1 at x 1000; bar 1 starts at 1000ms.
 const panBeats = [beat(0, 10, 0), beat(1000, 1010, 1000)]
 
@@ -68,13 +102,30 @@ test('pan mode settles on the current bar once the pan completes', () => {
 
 test('centered bar mode puts the bar\'s middle at the view center', () => {
   const beats = [{ ...beat(0, 500, 400), barW: 200 }]
-  assertEquals(scrollState('bar', beats, 0, 50, WIDTH, true).scrollX, 500 - WIDTH / 2)
+  assertEquals(scrollState('bar', beats, 0, 50, WIDTH, barMid).scrollX, 500 - WIDTH / 2)
 })
 
 test('centered pan mode eases between the bars\' centered anchors', () => {
   const beats = panBeats.map(b => ({ ...b, barW: 200 }))
   // centers 100 → 1100; 0.75 of the way at 125ms into the pan
-  assertEquals(scrollState('pan', beats, 1, 1125, WIDTH, true).scrollX, 100 + 1000 * 0.75 - WIDTH / 2)
+  assertEquals(scrollState('pan', beats, 1, 1125, WIDTH, barMid).scrollX, 100 + 1000 * 0.75 - WIDTH / 2)
+})
+
+test('centered smooth mode holds the bar still while the note glides', () => {
+  // bar 0 spans 0..200 (center 100), bar 1 200..400 (center 300)
+  const beats = [{ ...beat(0, 50, 0), barW: 200 }, { ...beat(100, 250, 200), barW: 200 }]
+  const early = scrollState('smooth', beats, 0, 25, WIDTH, barMid) // note at 100, still bar 0
+  assertEquals(early.noteX, 100)
+  assertEquals(early.scrollX, 100 - WIDTH / 2)
+  // note at 212.5 has crossed the barline before bar 1's first onset → bar 1
+  assertEquals(scrollState('smooth', beats, 0, 81.25, WIDTH, barMid).scrollX, 300 - WIDTH / 2)
+})
+
+test('barAt picks the bar the note x is over, not only the beat\'s', () => {
+  const beats = [beat(0, 50, 0), beat(100, 250, 200), beat(200, 20, 0, 300)]
+  assertEquals(barAt(beats, 0, 150), beats[0])
+  assertEquals(barAt(beats, 0, 200), beats[1]) // crossed the barline
+  assertEquals(barAt(beats, 1, 900), beats[1]) // next is on another system
 })
 
 // vertical follow (page layout): system 0 spans y 0..100, system 1 y 300..400;
