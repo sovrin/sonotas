@@ -7,3 +7,7 @@ allowBuilds:
   esbuild: false
   unrs-resolver: false
   vue-demi: false
+
+minimumReleaseAgeExclude:
+  - '@iconify-json/lucide@1.2.136'
+  - '@nuxt/ui@4.11.2'
