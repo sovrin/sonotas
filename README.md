@@ -93,7 +93,7 @@ docker build --target font --output public/fonts .
 Or natively, with `harfbuzz` and `woff2` installed (`brew install harfbuzz woff2`), run:
 
 ```bash
-pnpm --filter renderer build-font
+pnpm build-font
 ```
 
 ## License
