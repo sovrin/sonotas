@@ -15,8 +15,9 @@ import {
 import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
 import { widestRun } from './fit.ts'
-import { encodeVideo } from './encode.ts'
-import type { Aspect, EncodeOptions, Renderer, RendererOptions } from './types.ts'
+import { encodeVideo, estimateVideoBytes } from './encode.ts'
+import type { EncodeParams } from './encode.ts'
+import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions } from './types.ts'
 
 export { countBars, listTracks } from './score.ts'
 export type { ScrollMode } from './scroll.ts'
@@ -28,6 +29,7 @@ export type {
   Crop,
   CursorOptions,
   EncodeOptions,
+  EstimateOptions,
   HighlightOptions,
   PaintOptions,
   Quality,
@@ -180,6 +182,26 @@ export async function createRenderer(
     durationMs
   })
 
+  // Public encode options → encoder params, filling defaults. Shared by
+  // encode() and estimateSize() so the probe measures exactly what exports.
+  const encodeParams = (opts: EncodeOptions): EncodeParams => ({
+    fps: opts.fps ?? DEFAULT_FPS,
+    startMs: opts.startMs ?? 0,
+    endMs: opts.endMs ?? durationMs,
+    speed: opts.speed ?? 1,
+    quality: opts.quality ?? 'high',
+    paint: {
+      scroll: opts.scroll,
+      currentBarOnly: opts.currentBarOnly,
+      cursor: opts.cursor,
+      highlight: opts.highlight,
+      activeNote: opts.activeNote,
+      background: opts.background,
+      title: opts.title
+    },
+    onProgress: opts.onProgress
+  })
+
   return {
     durationMs,
     width,
@@ -194,23 +216,10 @@ export async function createRenderer(
       painter.paint(canvas.getContext('2d')!, atMs, opts)
     },
     encode(opts: EncodeOptions = {}) {
-      return encodeVideo(painter, {
-        fps: opts.fps ?? DEFAULT_FPS,
-        startMs: opts.startMs ?? 0,
-        endMs: opts.endMs ?? durationMs,
-        speed: opts.speed ?? 1,
-        quality: opts.quality ?? 'high',
-        paint: {
-          scroll: opts.scroll,
-          currentBarOnly: opts.currentBarOnly,
-          cursor: opts.cursor,
-          highlight: opts.highlight,
-          activeNote: opts.activeNote,
-          background: opts.background,
-          title: opts.title
-        },
-        onProgress: opts.onProgress
-      })
+      return encodeVideo(painter, encodeParams(opts))
+    },
+    estimateSize({ samples = 8, stop, ...opts }: EstimateOptions = {}) {
+      return estimateVideoBytes(painter, encodeParams(opts), samples, stop)
     }
   }
 }
