@@ -506,6 +506,11 @@ input[type=range]::-moz-range-thumb {
   text-transform: uppercase;
 }
 
+.kv .fit-select {
+  width: auto;
+  min-width: 104px;
+}
+
 .range-label {
   display: flex;
   justify-content: space-between;

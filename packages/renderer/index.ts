@@ -9,10 +9,12 @@ import {
   hasTab,
   injectTempoAt,
   loadScore,
+  measureBars,
   renderSheet
 } from './score.ts'
 import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
+import { widestRun } from './fit.ts'
 import { encodeVideo } from './encode.ts'
 import type { Aspect, EncodeOptions, Renderer, RendererOptions } from './types.ts'
 
@@ -54,6 +56,9 @@ const FRAMED_BASE_FILL = 0.33
 // single tab staff — scaled with the frame's short edge and the size knob.
 const PAGE_BASE_SCALE = 1.8
 const PAGE_REF_SHORT = 1080
+// Fit-to-bars (line layout): fraction of the frame's width the widest run of
+// bars spans (and of its height the tallest bar may take), leaving a margin.
+const BAR_FIT = 0.92
 const ASPECT_RATIO: Record<Aspect, number> = { '16:9': 16 / 9, '9:16': 9 / 16, '1:1': 1 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -71,6 +76,7 @@ export async function createRenderer(
   const framed = !!aspect
   const layout = opts.layout ?? 'line'
   const page = layout === 'page'
+  const fitBars = page ? 0 : Math.max(0, Math.floor(opts.fitBars ?? 0))
   // Frame height follows the aspect; unframed line output takes the sheet's
   // height (below), unframed page output the whole page's.
   const frameHeight = framed ? Math.round(width / ASPECT_RATIO[aspect]) & ~1 : 0
@@ -78,12 +84,17 @@ export async function createRenderer(
   // Line + framed: fixed crisp raster, notation size → band fill. Line +
   // unframed: the scale knob drives the raster directly (clamp only when
   // provided). Page: engraved at output resolution, notation size → scale.
-  const scale = page
-    ? PAGE_BASE_SCALE * (shortEdge / PAGE_REF_SHORT) * clamp(opts.scale ?? 1, MIN_SCALE, MAX_SCALE)
-    : framed
-      ? FRAMED_RASTER_SCALE
-      : opts.scale === undefined ? undefined : clamp(opts.scale, MIN_SCALE, MAX_SCALE)
-  const fill = framed && !page ? clamp(FRAMED_BASE_FILL * (opts.scale ?? 1), 0.15, 0.9) : undefined
+  // Fit-to-bars: measured at 1 below, then engraved at output size (no fill).
+  const scale = fitBars
+    ? 1
+    : page
+      ? PAGE_BASE_SCALE * (shortEdge / PAGE_REF_SHORT) * clamp(opts.scale ?? 1, MIN_SCALE, MAX_SCALE)
+      : framed
+        ? FRAMED_RASTER_SCALE
+        : opts.scale === undefined ? undefined : clamp(opts.scale, MIN_SCALE, MAX_SCALE)
+  const fill = framed && !page && !fitBars
+    ? clamp(FRAMED_BASE_FILL * (opts.scale ?? 1), 0.15, 0.9)
+    : undefined
   const chordDiagrams = opts.chordDiagrams ?? false
   const crop = opts.crop
   const showTempo = opts.showTempo ?? true
@@ -119,6 +130,22 @@ export async function createRenderer(
   const reattach = showTimeSignature && midPieceCrop
     ? detachCropStart(score, crop!.fromBar, track)
     : undefined
+  // Fit-to-bars: lay out once at scale 1 to measure the bars, then engrave at
+  // the scale that makes the widest run of `fitBars` span BAR_FIT of the frame
+  // width (capped so the tallest bar fits the frame height). alphaTab scales
+  // linearly, so this lands exactly, and the sheet is painted 1:1 — crisp, no
+  // raster upscaling.
+  if (fitBars) {
+    const bars = measureBars(settings, score, track)
+    const w = widestRun(bars, fitBars)
+    const h = bars.reduce((m, b) => Math.max(m, b.h), 0)
+    if (w > 0 && h > 0) {
+      settings.display.scale = Math.min(
+        (width * BAR_FIT) / w,
+        framed ? (frameHeight * BAR_FIT) / h : Infinity
+      )
+    }
+  }
   const { tiles, bounds, height: sheetHeight } = await renderSheet(
     settings,
     score,
@@ -146,6 +173,7 @@ export async function createRenderer(
     sheetHeight,
     fill,
     layout,
+    fitBars,
     title: score.title,
     artist: score.artist,
     titleColor: opts.foreground,
