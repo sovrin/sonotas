@@ -29,7 +29,9 @@ entirely on your machine, so nothing gets uploaded.
   height and offset. Bar highlight and current-note recolouring.
 - **Extras:** export a range of bars, change the playback speed from 0.25× to 2×, and
   toggle the song title, track name, tempo marking, bar numbers and chord diagrams.
-- **Live preview:** scrub and play the exact frames that end up in the video.
+- **Live preview:** scrub and play the exact frames that end up in the video. The
+  timeline shows the song in play order, repeats included; Space plays and pauses,
+  and I and O set the first and last exported bar at the playhead.
 
 ## Built on alphaTab
 
@@ -41,15 +43,16 @@ moves the playhead. sonotas adds the camera, the styling and the encoder around
 it. alphaTab is licensed under the MPL-2.0; if it is useful to you, star the
 repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
 Exports carry alphaTab's own "rendered by alphaTab" line unless you turn it off
-under *More options*.
+in the *Look* tab.
 
 ## How it works
 
-The app is a [Nuxt](https://nuxt.com) + [Nuxt UI](https://ui.nuxt.com) front end
-over a small, browser-only renderer package:
+The app is a [Nuxt](https://nuxt.com) front end, styled with
+[aequitas](https://github.com/sovrin/aequitas), over a small, browser-only
+renderer package:
 
 ```
-app/                  Nuxt UI: preview stage, transport, settings and export panels
+app/                  Nuxt app: preview stage, timeline, settings tabs and export panel
 packages/renderer/    Guitar Pro → video engine
   score.ts            load and engrave the tab with alphaTab
   timeline.ts         map playback time to bars and beats (tempo changes, repeats)
@@ -113,5 +116,6 @@ fontTools' `ttx` is on your PATH. Use the Docker route for the committed file.
 ## License
 
 sonotas is [MIT](LICENSE) licensed. It ships alphaTab (MPL-2.0), the Bravura
-font (SIL OFL 1.1), mediabunny (MPL-2.0) and Nuxt UI (MIT); their notices are
+font (SIL OFL 1.1), mediabunny (MPL-2.0), aequitas (MIT) and the Geist fonts
+(SIL OFL 1.1); their notices are
 collected in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
