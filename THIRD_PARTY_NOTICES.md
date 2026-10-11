@@ -39,12 +39,30 @@ Muxes the WebCodecs-encoded frames into the exported MP4.
 - License: [Mozilla Public License 2.0](https://github.com/Vanilagy/mediabunny/blob/main/LICENSE)
 - Source: <https://github.com/Vanilagy/mediabunny> · <https://mediabunny.dev>
 
-## Nuxt and Nuxt UI
+## Nuxt
 
-Application framework and component library for the user interface. The
-project was started from a Nuxt UI template, whose copyright line is kept in
-[LICENSE](LICENSE).
+Application framework for the user interface. The project was started from a
+Nuxt UI template, whose copyright line is kept in [LICENSE](LICENSE); Nuxt UI
+itself is no longer used.
 
 - Copyright © Nuxt
-- License: [MIT](https://github.com/nuxt/ui/blob/v4/LICENSE.md)
-- Source: <https://github.com/nuxt/nuxt> · <https://github.com/nuxt/ui>
+- License: [MIT](https://github.com/nuxt/nuxt/blob/main/LICENSE)
+- Source: <https://github.com/nuxt/nuxt>
+
+## aequitas
+
+CSS design language the interface is built on, including its icon set. Vendored
+from its build output into `app/assets/aequitas/`.
+
+- Copyright © Oleg Kamlowski
+- License: [MIT](https://github.com/sovrin/aequitas/blob/main/LICENSE)
+- Source: <https://github.com/sovrin/aequitas>
+
+## Geist
+
+Sans and mono typefaces shipped with aequitas (`app/assets/aequitas/fonts/`),
+used where the system UI font is unavailable.
+
+- Copyright © 2023 Vercel, in collaboration with basement.studio
+- License: [SIL Open Font License 1.1](https://github.com/vercel/geist-font/blob/main/LICENSE.txt)
+- Source: <https://github.com/vercel/geist-font>
