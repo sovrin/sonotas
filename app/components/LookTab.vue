@@ -1,7 +1,7 @@
 <script setup>
 // How the score looks in the frame: a theme first, then the notation, then
 // what is drawn. Exact colours wait behind a fold.
-const { s, setField, setLayout, setCanvasTheme, toggle } = useSonotas()
+const { s, v, setField, setLayout, setCanvasTheme, toggle } = useSonotas()
 
 const THEMES = [
   { v: 'dark', label: 'Dark', note: 'Light notation on near-black', bg: '#121316', fg: '#e8e9eb' },
@@ -26,19 +26,28 @@ const SIZES = [
   { v: '150%', label: 'XL' }
 ]
 
+// Off, or 1–8 bars sized to span the frame (line layout only).
+const FIT_BARS = ['Off', '1 bar', ...[2, 3, 4, 5, 6, 7, 8].map(n => `${n} bars`)]
+
 const SHOW = [
   { key: 'showTitle', label: 'Song title', missing: () => !s.title, note: 'none in this file' },
   { key: 'showTrackName', label: 'Track name' },
+  { key: 'showBarNumbers', label: 'Bar numbers' },
   { key: 'showTempo', label: 'Tempo marking' },
-  { key: 'showTimeSig', label: 'Time signature' },
-  { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords, note: 'none in this file' }
+  { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords, note: 'none in this file' },
+  // Only meaningful when the export starts mid-song.
+  { key: 'showTimeSig', label: 'Time signature at the first bar', when: () => s.renderOnlyBars && s.fromBar > 1 },
+  { key: 'showAttribution', label: '“rendered by alphaTab” line' }
 ]
+const shown = computed(() => SHOW.filter(i => !i.when || i.when()))
 
 const COLOR_ROWS = [
   { name: 'bg', label: 'Background' },
   { name: 'fg', label: 'Notation' },
   { name: 'barNum', label: 'Bar numbers' }
 ]
+// No bar-number colour to pick while bar numbers are hidden.
+const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s.showBarNumbers))
 </script>
 
 <template>
@@ -78,7 +87,7 @@ const COLOR_ROWS = [
         <summary>Custom colours</summary>
         <div class="stack gap-3">
           <div
-            v-for="row in COLOR_ROWS"
+            v-for="row in colorRows"
             :key="row.name"
             class="flex items-center justify-between gap-3"
           >
@@ -129,17 +138,52 @@ const COLOR_ROWS = [
         label="Staves"
         :options="STAVES"
       />
+      <div
+        v-if="!v.isPage"
+        class="field"
+      >
+        <label for="fitBars">Fit to width</label>
+        <div class="select">
+          <select
+            id="fitBars"
+            name="fitBars"
+            class="input"
+            data-size="s"
+            :value="v.fitBars ? (v.fitBars === 1 ? '1 bar' : `${v.fitBars} bars`) : 'Off'"
+            @change="setField"
+          >
+            <option
+              v-for="o in FIT_BARS"
+              :key="o"
+              :disabled="o === 'Off' && s.currentBarOnly"
+            >
+              {{ o }}
+            </option>
+          </select>
+        </div>
+        <small>Sizes the notation so this many bars span the frame.</small>
+      </div>
       <SegmentedField
+        v-if="!v.fitBars"
         name="notationSize"
         label="Size"
         :options="SIZES"
       />
+      <label>
+        <input
+          type="checkbox"
+          role="switch"
+          :checked="s.currentBarOnly"
+          @change="toggle('currentBarOnly')"
+        >
+        {{ v.fitBars > 1 ? `Show only the current ${v.fitBars} bars` : 'Show only the current bar' }}
+      </label>
     </InspectorGroup>
 
     <InspectorGroup title="Show">
       <div class="stack gap-2">
         <label
-          v-for="item in SHOW"
+          v-for="item in shown"
           :key="item.key"
         >
           <input

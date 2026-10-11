@@ -1,6 +1,6 @@
 <script setup>
 // The file that comes out: its frame, size, smoothness and pace.
-const { s, setField, setAspect } = useSonotas()
+const { s, setField, setAspect, toggle } = useSonotas()
 
 const ASPECTS = [
   { v: '16:9', w: 16, h: 9, hint: 'For YouTube' },
@@ -67,6 +67,18 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
         label="Quality"
         :options="QUALITY"
       />
+      <div class="field">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.fastExport"
+            @change="toggle('fastExport')"
+          >
+          Fast export
+        </label>
+        <small>Several encoders at once: about 3× faster on multi-core machines, with 2–3× larger files and slightly softer motion.</small>
+      </div>
     </InspectorGroup>
 
     <InspectorGroup title="Timing">

@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import { assert, assertEquals } from './_assert.ts'
-import { loadSample, shimHeadless } from './_testutil.ts'
+import { loadDemo, loadSample, shimHeadless } from './_testutil.ts'
 
 shimHeadless()
 const alphaTab = await import('@coderline/alphatab')
 const { createSettings } = await import('./settings.ts')
-const { countBars, detachCropStart, injectTempoAt, listTracks, loadScore }
+const { countBars, detachCropStart, hasTab, injectTempoAt, listTracks, loadScore, measureBars, renderSheet }
   = await import('./score.ts')
 
 test('listTracks returns a non-empty, sequentially-indexed track list', async () => {
@@ -59,4 +59,37 @@ test('injectTempoAt leaves a bar that already has a tempo alone', async () => {
   injectTempoAt(score, 0)
 
   assertEquals(bar.tempoAutomations.length, before)
+})
+
+test('measureBars scales linearly with the display scale', async () => {
+  const bytes = await loadSample()
+  const at = (scale: number) => measureBars(createSettings({ scale }), loadScore(bytes, createSettings(), 0), 0)
+  const one = at(1)
+  const two = at(2)
+  assert(one.length > 1, 'expected measured bars')
+  assertEquals(two.length, one.length)
+  // fit-to-bars derives its engrave scale from one measurement at 1
+  one.forEach((b, i) => {
+    assert(Math.abs(two[i]!.w - b.w * 2) < 0.5, `w ${two[i]!.w} vs 2×${b.w}`)
+    assert(Math.abs(two[i]!.h - b.h * 2) < 0.5, `h ${two[i]!.h} vs 2×${b.h}`)
+  })
+})
+
+test('hasTab is true for stringed tracks and false for the drum kit', async () => {
+  const score = loadScore(await loadDemo(), createSettings(), 0)
+
+  assertEquals(hasTab(score, 0), true) // Lead guitar
+  assertEquals(hasTab(score, 1), false) // Drums
+  assertEquals(hasTab(score, 3), true)
+})
+
+test('renderSheet rejects instead of hanging when alphaTab fails to render', async () => {
+  // Tab only on the drum kit leaves alphaTab no staff to draw: it reports an
+  // error rather than finishing.
+  const settings = createSettings({ notation: 'tab' })
+  const score = loadScore(await loadDemo(), settings, 1)
+
+  let failed = false
+  await renderSheet(settings, score, 1, '').catch(() => (failed = true))
+  assert(failed, 'expected renderSheet to reject')
 })

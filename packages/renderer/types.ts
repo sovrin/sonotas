@@ -33,10 +33,18 @@ export interface RendererOptions {
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout
   crop?: Crop // render only these bars, default whole sheet
+  // Line layout: engrave the notation so the widest run of this many
+  // consecutive bars spans nearly the whole frame width (capped by the frame
+  // height); bar/pan scroll then centers the current bar and the ones after it
+  // (see PaintOptions.currentBarOnly). Overrides `scale`; ignored in page
+  // layout. 0 (default) = off.
+  fitBars?: number
   // Leading-element visibility. Track name and tempo are global; time signature
   // only controls whether it's re-shown at a mid-piece crop start (it always
   // shows on bar 1). All default true.
   showTrackName?: boolean
+  showBarNumbers?: boolean
+  showAttribution?: boolean // alphaTab's "rendered by alphaTab" line below the sheet
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
@@ -44,7 +52,7 @@ export interface RendererOptions {
   chordDiagrams?: boolean
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
-  fontUrl?: string // URL of the Bravura woff2 music font, default '/fonts/Bravura.subset.woff2'
+  fontUrl?: string // URL of the woff2 music font (a Bravura subset), default '/fonts/sonotas-music.woff2'
 }
 
 /** Cursor appearance knobs. All optional; omission preserves current output. */
@@ -79,7 +87,7 @@ export interface HighlightOptions {
 export interface ActiveNoteOptions {
   enabled?: boolean // default false
   color?: string // final CSS color (rgba composed UI-side); default rgba(229,72,77,0.9)
-  padding?: number // sheet-space px grown around each note-head box; default 1.5
+  padding?: number // sheet-space px grown around each note-head box; default 0
 }
 
 /** Song title/artist overlay, drawn in the frame's top-left from the file's own
@@ -93,6 +101,9 @@ export interface TitleOptions {
 /** Per-call paint knobs (scroll/cursor/highlight/activeNote/background/title). All optional. */
 export interface PaintOptions {
   scroll?: ScrollMode // viewport behavior, default 'bar'
+  // Draw only the bar being played — with fitBars, the run of that many bars
+  // from it — centered in the frame, hiding the rest of the sheet. Default false.
+  currentBarOnly?: boolean
   cursor?: CursorOptions
   highlight?: HighlightOptions
   activeNote?: ActiveNoteOptions
@@ -106,8 +117,16 @@ export interface EncodeOptions extends PaintOptions {
   startMs?: number // clip start, default 0
   endMs?: number // clip end, default durationMs
   fps?: number // output frame rate, default 30
+  speed?: number // playback rate (2 = twice as fast, half as long), default 1
   quality?: Quality // encoder quality, default 'high'
+  /** Parallel software encoders: ~3× faster on multi-core machines, but 2–3×
+   * larger files with slightly softer motion. Falls back to the default
+   * constant-quality encoder where software H.264 isn't available. */
+  fast?: boolean
   onProgress?: (frame: number, total: number) => void
+  /** Stops the encode: encoders are closed at once and `encode()` rejects with
+   * the signal's reason (an AbortError by default). */
+  signal?: AbortSignal
 }
 
 export interface Renderer {
@@ -131,6 +150,13 @@ export interface Renderer {
   ): void
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
+  /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its
+   * 2s GOPs. Resolves `null` if `opts.signal` aborts mid-probe. */
+  estimateSize(opts?: EstimateOptions): Promise<number | null>
+}
+
+export interface EstimateOptions extends Omit<EncodeOptions, 'onProgress'> {
+  samples?: number // GOPs to encode, default 8
 }
 
 /** A rasterized SVG chunk of the sheet, placed in full-sheet coordinates. */
@@ -140,6 +166,7 @@ export interface Tile {
   w: number
   h: number
   img: OffscreenCanvas
+  annotation?: boolean // alphaTab's "rendered by alphaTab" line, not notation
 }
 
 /** A rectangle in sheet coordinates. */

@@ -83,6 +83,21 @@ test('createSettings hides the track name only when showTrackName is false', () 
   )
 })
 
+test('createSettings hides bar numbers only when showBarNumbers is false', () => {
+  assertEquals(
+    createSettings({ showBarNumbers: false }).notation.elements.get(
+      alphaTab.NotationElement.BarNumber
+    ),
+    false
+  )
+  assertEquals(
+    createSettings().notation.elements.get(
+      alphaTab.NotationElement.BarNumber
+    ),
+    undefined
+  )
+})
+
 test('createSettings maps layout to alphaTab\'s layout mode, default horizontal', () => {
   assertEquals(createSettings().display.layoutMode, alphaTab.LayoutMode.Horizontal)
   assertEquals(createSettings({ layout: 'line' }).display.layoutMode, alphaTab.LayoutMode.Horizontal)

@@ -9,7 +9,9 @@ const props = defineProps({
 
 const { s } = useSonotas()
 const id = useId()
-const pick = v => { s[props.name] = v }
+function pick(v) {
+  s[props.name] = v
+}
 </script>
 
 <template>

@@ -40,6 +40,7 @@ export interface SettingsOptions {
   crop?: CropRange // render only these bars, default whole sheet
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
+  showBarNumbers?: boolean // draw bar numbers, default true
   chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
@@ -58,7 +59,7 @@ function colorFromHex(hex: string): alphaTab.model.Color {
 // Exhaustive switch, no `default`: adding a Notation member becomes a type error
 // here rather than silently mapping to a fallback. `TabMixed` is intentionally
 // unmapped and unexposed.
-function staveProfile(n: Notation): alphaTab.StaveProfile {
+export function staveProfile(n: Notation): alphaTab.StaveProfile {
   switch (n) {
     case 'auto':
       return alphaTab.StaveProfile.Default
@@ -102,6 +103,9 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   }
   if (opts.showTrackName === false) {
     settings.notation.elements.set(alphaTab.NotationElement.TrackNames, false)
+  }
+  if (opts.showBarNumbers === false) {
+    settings.notation.elements.set(alphaTab.NotationElement.BarNumber, false)
   }
   if (opts.chordDiagrams !== undefined) {
     settings.notation.elements.set(alphaTab.NotationElement.ChordDiagrams, opts.chordDiagrams)

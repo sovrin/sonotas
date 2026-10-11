@@ -5,10 +5,12 @@
 const { s, v, toggle, setCursorColor, setHighlightColor, setActiveNoteColor } = useSonotas()
 
 const SCROLLS = [
-  { v: 'Bar snap', label: 'Snap' },
-  { v: 'Continuous', label: 'Smooth' },
-  { v: 'Off', label: 'Off' }
+  { v: 'Bar snap', label: 'Snap', hint: 'The view jumps a bar at a time.' },
+  { v: 'Bar pan', label: 'Pan', hint: 'The view slides to each new bar.' },
+  { v: 'Continuous', label: 'Smooth', hint: 'The view glides with the music.' },
+  { v: 'Centered', label: 'Center', hint: 'The playhead stays centred; the score moves under it.' }
 ]
+const scrollHint = computed(() => SCROLLS.find(o => o.v === s.scroll)?.hint)
 
 const CURSOR_COLORS = [
   { hex: '#8f97ac', name: 'Grey' },
@@ -41,9 +43,7 @@ const NOTE_COLORS = [
         label="Scrolling"
         :options="SCROLLS"
       >
-        <small v-if="s.scroll === 'Off'">The view stays at the start; the playhead runs out of frame past the visible bars.</small>
-        <small v-else-if="s.scroll === 'Bar snap'">The view jumps a bar at a time.</small>
-        <small v-else>The view glides with the music.</small>
+        <small>{{ scrollHint }}</small>
       </SegmentedField>
     </InspectorGroup>
 
@@ -117,11 +117,11 @@ const NOTE_COLORS = [
           type="checkbox"
           role="switch"
           :aria-labelledby="labelledby"
-          :checked="s.highlightNotes"
-          @change="toggle('highlightNotes')"
+          :checked="s.highlightBar"
+          @change="toggle('highlightBar')"
         >
       </template>
-      <template v-if="s.highlightNotes">
+      <template v-if="s.highlightBar">
         <SwatchPicker
           :colors="HL_COLORS"
           :selected="s.highlightColor"

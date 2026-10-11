@@ -44,6 +44,7 @@ function onDrop(e) {
       <FileHeader />
       <PreviewStage />
       <SongTimeline />
+      <AppFooter />
     </main>
 
     <AppInspector />
