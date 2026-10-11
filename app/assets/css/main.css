@@ -1,725 +1,304 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+/* Sonotas on aequitas: only what the framework doesn't draw. Unlayered, so
+   every rule here wins over aequitas' @layer ae.* without !important. */
 
-/* Sonotas — one small stylesheet. Two neutral themes, no glows, system font. */
+/* ── identity ──────────────────────────────────────────────────────────── */
 
+/* Amber is the colour the video lights the current bar with, so the interface
+   uses it for "now" and "on" as well; the neutrals are a cool ink. */
 :root {
-  --bg: #16171a;
-  --canvas: #0f1012;
-  --surface: #1e2024;
-  --inset: #16171a;
-  --text: #ececef;
-  --t2: #b7bac1;
-  --t3: #8b8f98;
-  --t4: #5f636c;
-  --border: rgba(236, 236, 239, .09);
-  --border2: rgba(236, 236, 239, .16);
-  --track: #3a3d44;
-  --danger: #e5484d;
+  --ae-hue: 70;
+  --ae-neutral-hue: 260;
 }
 
-.app[data-theme="light"] {
-  --bg: #f1f2f4;
-  --canvas: #e2e4e8;
-  --surface: #ffffff;
-  --inset: #f1f2f4;
-  --text: #1c1d21;
-  --t2: #45484f;
-  --t3: #6b6f78;
-  --t4: #9a9ea6;
-  --border: rgba(28, 29, 33, .1);
-  --border2: rgba(28, 29, 33, .18);
-  --track: #d4d6db;
-  --danger: #c93a3f;
+/* ── frame ─────────────────────────────────────────────────────────────── */
+
+/* An editor frame (header, a working column one viewport tall, a floating
+   inspector) is all aequitas' .shell; only the inspector is a little wider. */
+.shell {
+  --inspector: calc(1rem * pow(var(--ae-phi), 6) + var(--ae-space-4));
+
+  /* The navbar's page gutter would push the brand off the work's left edge. */
+  & > .navbar {
+    padding-inline: var(--ae-space-5);
+  }
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-html, body {
-  margin: 0;
-}
-
-body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: var(--t2);
-  text-underline-offset: 3px;
-}
-
-a:hover {
-  color: var(--text);
-}
-
-button {
-  font: inherit;
-}
-
-:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 2px;
-}
-
-select {
-  color-scheme: dark;
-}
-
-.app[data-theme="light"] select {
-  color-scheme: light;
-}
-
-/* ── shell ─────────────────────────────────────────────────────────────── */
-
-.app {
-  min-height: 100vh;
+/* The toolbar names the song being worked on, title over its facts. */
+.navbar .song {
   display: flex;
   flex-direction: column;
-  background: var(--bg);
-  color: var(--text);
-  transition: background .2s, color .2s;
+  line-height: var(--ae-leading-tight);
 }
 
-.wrap {
-  width: 100%;
-  max-width: 1360px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-}
-
-.wordmark {
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -.01em;
-}
-
-.wordmark small {
-  font-weight: 400;
-  font-size: 13px;
-  color: var(--t3);
-  margin-left: 10px;
-}
-
-.workspace {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 20px;
-  align-items: start;
-  padding-bottom: 28px;
-}
-
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px 24px;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  color: var(--t3);
+.song-title {
+  font-size: var(--ae-text-m);
+  font-weight: 560;
+  letter-spacing: -0.01em;
 }
 
 /* ── stage ─────────────────────────────────────────────────────────────── */
 
-.stage {
-  position: relative;
-  min-height: 420px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--canvas);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.stage canvas,
-.stage video {
-  display: block;
-  max-width: 100%;
-  max-height: 68vh;
-  height: auto;
-  background: var(--inset);
-}
-
-.stage-msg {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 380px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--t3);
-  line-height: 1.5;
-}
-
-.stage-msg .err {
-  color: var(--t4);
-  word-break: break-word;
-}
-
-.stage-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--canvas) 80%, transparent);
-  font-size: 13px;
-  color: var(--text);
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  flex: none;
-  border-radius: 50%;
-  border: 2px solid var(--track);
-  border-top-color: var(--text);
-  animation: sp .8s linear infinite;
-}
-
-@keyframes sp {
-  to {
-    transform: rotate(360deg);
+/* Stacked, nothing gives the stage a height, and a stage with only its intrinsic
+   size scales its canvas to nothing. Cut it to the video's own frame instead. */
+@media (width < 48rem) {
+  main > .stage {
+    flex: none;
+    aspect-ratio: var(--frame);
+    max-block-size: 70svh;
   }
 }
 
-.progress {
-  width: 100%;
-  height: 4px;
-  background: var(--track);
-  border-radius: 2px;
-  overflow: hidden;
+/* The export overlay fades in rather than cutting over the preview. */
+.stage > .overlay {
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+
+  @starting-style {
+    opacity: 0;
+  }
 }
 
-.progress > i {
-  display: block;
-  height: 100%;
-  background: var(--text);
-  transition: width .15s;
+.render-pct {
+  font-family: var(--ae-font-mono);
+  font-size: var(--ae-text-4xl);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
-.stage-overlay .progress {
-  width: min(360px, 70%);
+/* ── theme cards ───────────────────────────────────────────────────────── */
+
+/* A theme drawn as a thumbnail of the video: its paper, four strings in its
+   ink, and a bar lit in the highlight colour. */
+.theme-thumb {
+  flex: none;
+  margin-inline-start: auto;
+  inline-size: calc(1rem * pow(var(--ae-phi), 3));
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(90deg, transparent 30%, color-mix(in oklch, var(--now) 45%, transparent) 30% 55%, transparent 55%),
+    linear-gradient(var(--fg) 0 1px, transparent 1px) 0 30% / 100% 20% repeat-y,
+    var(--bg);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--fg) 20%, transparent);
 }
 
-/* ── transport ─────────────────────────────────────────────────────────── */
+/* ── frame glyphs ──────────────────────────────────────────────────────── */
+
+/* Glyph and ratio stay on one line, even in a narrow, filled segment. */
+.segmented span:has(> .ratio-glyph) {
+  white-space: nowrap;
+}
+
+/* Each frame option drawn at its own proportions, all at one height. */
+.ratio-glyph {
+  display: inline-block;
+  block-size: 0.875em;
+  margin-inline-end: var(--ae-space-1);
+  vertical-align: -0.1em;
+  border: var(--ae-stroke) solid currentColor;
+}
+
+/* ── timeline ──────────────────────────────────────────────────────────── */
 
 .transport {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 0 4px;
+  gap: var(--ae-space-2) var(--ae-space-4);
 }
 
-.playbtn {
-  width: 36px;
-  height: 36px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid var(--border2);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.playbtn:hover {
-  border-color: var(--t3);
-}
-
-.mono {
-  font-variant-numeric: tabular-nums;
-}
-
-.transport .time {
-  font-size: 13px;
-  min-width: 36px;
-}
-
-.transport .dur {
-  color: var(--t3);
-  text-align: right;
-}
-
-.transport .bar {
-  font-size: 12.5px;
-  color: var(--t3);
-  white-space: nowrap;
-  padding-left: 12px;
-  border-left: 1px solid var(--border2);
-}
-
-/* ── range ─────────────────────────────────────────────────────────────── */
-
-input[type=range] {
-  --p: 0%;
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 4px;
-  margin: 6px 0;
-  border-radius: 2px;
-  cursor: pointer;
-  background: linear-gradient(var(--text), var(--text)) 0 / var(--p) 100% no-repeat, var(--track);
-}
-
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text);
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 1px var(--border2);
-}
-
-input[type=range]::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text);
-  border: 2px solid var(--surface);
-}
-
-.transport input[type=range] {
-  flex: 1;
-}
-
-/* ── settings panel ────────────────────────────────────────────────────── */
-
-.panel {
-  position: sticky;
-  top: 14px;
+.transport-readout {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 28px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  line-height: var(--ae-leading-tight);
+  font-variant-numeric: tabular-nums;
+
+  & b {
+    font-family: var(--ae-font-mono);
+    font-size: var(--ae-text-xl);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  & span {
+    font-size: var(--ae-text-xs);
+    color: var(--ae-text-muted);
+  }
 }
 
-.panel-scroll {
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.section {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.section h2 {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--t2);
-}
-
-.section h2 + .row2,
-.section h2 + .field {
-  margin-top: 0;
-}
-
-.field {
-  display: block;
-  min-width: 0;
-}
-
-.field > span {
-  display: block;
-  font-size: 12px;
-  color: var(--t3);
-  margin-bottom: 4px;
-}
-
-.field + .field,
-.row2 + .field,
-.field + .row2,
-.row2 + .row2,
-.seg + .row2,
-.check + .row2,
-.check + .field,
-.field + .check {
-  margin-top: 10px;
-}
-
-.row2 > .field {
-  margin-top: 0;
-}
-
-.row2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.select,
-.input {
-  width: 100%;
-  font: inherit;
-  font-size: 13px;
-  color: var(--text);
-  background: var(--inset);
-  border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 7px 10px;
-}
-
-.select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 28px;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8f98' stroke-width='2' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 9px center;
-}
-
-.select:disabled {
-  color: var(--t3);
-  cursor: default;
-}
-
-.seg {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--inset);
-  border: 1px solid var(--border2);
-  border-radius: 6px;
-}
-
-.seg button {
-  border: none;
-  background: transparent;
-  color: var(--t2);
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.seg button:hover {
-  color: var(--text);
-}
-
-.seg button[aria-pressed="true"] {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 0 0 1px var(--border2);
-}
-
-.seg.fill {
+.transport-range {
+  grid-column: 3;
   display: flex;
-}
-
-.seg.fill button {
-  flex: 1;
-}
-
-.check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.check input {
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--text);
-}
-
-.check .muted {
-  color: var(--t4);
-  font-size: 12px;
-}
-
-.swatches {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.swatch {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 1px var(--border2);
-  cursor: pointer;
-}
-
-.swatch[aria-pressed="true"] {
-  box-shadow: 0 0 0 2px var(--text);
-}
-
-.color {
-  width: 34px;
-  height: 24px;
-  padding: 1px;
-  border: 1px solid var(--border2);
-  border-radius: 5px;
-  background: var(--inset);
-  cursor: pointer;
-}
-
-.kv {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 4px 0;
-  font-size: 13px;
+  gap: var(--ae-space-2) var(--ae-space-4);
+  font-size: var(--ae-text-s);
 }
 
-.kv .val {
-  font-size: 12px;
-  color: var(--t3);
-  text-transform: uppercase;
+/* On a phone the strip takes its own full row under the readouts. */
+@media (width < 48rem) {
+  .transport {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .transport-strip {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .transport-range {
+    grid-column: 1 / -1;
+  }
 }
 
-.range-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--t3);
-  margin-top: 8px;
+/* ── bar strip ─────────────────────────────────────────────────────────── */
+
+/* The song on a tab staff: one cell per bar, as wide as the bar lasts. The
+   six lines are the strings; the end is a final barline, thick as in print. */
+.bar-strip {
+  position: relative;
+  block-size: calc(1rem * pow(var(--ae-phi), 3));
 }
 
-.range-label b {
-  font-weight: 500;
-  color: var(--text);
-}
-
-.hint {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--t3);
-}
-
-.hint.error {
-  color: var(--danger);
-}
-
-.sub {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-details.more > summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--t2);
+.bar-strip-track {
+  position: absolute;
+  inset: 0;
+  background-color: var(--ae-bg-sunken);
+  box-shadow: inset calc(-2 * var(--ae-edge)) 0 0 var(--ae-text-muted);
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
+  touch-action: none;
+  user-select: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: var(--ae-space-5) 0 var(--ae-space-2);
+    background: linear-gradient(var(--ae-border-strong) 0 1px, transparent 1px) 0 0 / 100% calc((100% - 1px) / 5) repeat-y;
+    pointer-events: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset calc(-2 * var(--ae-edge)) 0 0 var(--ae-text-muted), var(--ae-ring);
+  }
 }
 
-details.more > summary::-webkit-details-marker {
-  display: none;
+.bar-strip-bar {
+  position: absolute;
+  inset-block: 0;
+  box-shadow: inset 1px 0 0 var(--ae-border-strong);
+
+  & > span {
+    position: absolute;
+    inset-block-start: var(--ae-space-1);
+    inset-inline-start: var(--ae-space-2);
+    font-family: var(--ae-font-mono);
+    font-size: var(--ae-text-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--ae-text-muted);
+  }
+
+  /* The bar being played, lit as the video lights it. */
+  &[data-current] {
+    background: color-mix(in oklch, var(--strip-now) 26%, transparent);
+
+    & > span {
+      color: var(--ae-text);
+    }
+  }
+
+  /* Bars outside the export range sit behind a veil. */
+  &[data-out] {
+    background: color-mix(in oklch, var(--ae-bg) 72%, transparent);
+
+    & > span {
+      opacity: 0.5;
+    }
+  }
 }
 
-details.more > summary:hover {
-  color: var(--text);
+/* The playhead, in the video's cursor colour, with a square cap above. */
+.bar-strip-head {
+  position: absolute;
+  inset-block: calc(-1 * var(--ae-space-1)) 0;
+  inline-size: 2px;
+  translate: -1px 0;
+  background: var(--strip-head);
+  pointer-events: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 50%;
+    inline-size: var(--ae-space-2);
+    aspect-ratio: 1;
+    translate: -50% 0;
+    background: inherit;
+  }
 }
 
-details.more[open] > summary .chev {
-  transform: rotate(180deg);
-}
-
-.chev {
-  transition: transform .15s;
-}
-
-/* ── file row ──────────────────────────────────────────────────────────── */
-
-.file-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.file-name {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-name small {
-  display: block;
-  font-size: 12px;
-  color: var(--t3);
-}
-
-/* ── buttons ───────────────────────────────────────────────────────────── */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border2);
-  background: transparent;
-  color: var(--text);
-  font-size: 13px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn:hover {
-  border-color: var(--t3);
-}
-
-.btn.primary {
-  width: 100%;
-  height: 42px;
-  border: none;
-  background: var(--text);
-  color: var(--bg);
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.btn.primary:hover {
-  opacity: .92;
-}
-
-.btn:disabled {
-  opacity: .45;
-  cursor: default;
-}
-
-.btn.icon {
-  width: 34px;
-  padding: 0;
-  color: var(--t2);
-}
-
-.linkbtn {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--t3);
-  font-size: 12.5px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.linkbtn:hover {
-  color: var(--text);
-}
-
-/* ── export ────────────────────────────────────────────────────────────── */
-
-.export {
-  padding: 14px 16px 16px;
-  border-top: 1px solid var(--border);
-}
-
-.export .meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--t3);
-  margin-bottom: 10px;
-}
-
-.export .meta b {
-  font-weight: 500;
-  color: var(--text);
-}
-
-.export .meta .name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.export .actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-/* ── drop overlay ──────────────────────────────────────────────────────── */
-
-.drop-overlay {
-  position: fixed;
-  inset: 12px;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--t3);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  font-size: 15px;
+/* An export fills the bars as it renders them. */
+.bar-strip-progress {
+  position: absolute;
+  inset-block: 0;
+  background: color-mix(in oklch, var(--ae-accent) 24%, transparent);
+  box-shadow: inset 0 calc(-1 * var(--ae-edge)) 0 var(--ae-accent);
   pointer-events: none;
 }
 
-/* ── responsive ────────────────────────────────────────────────────────── */
+/* Range brackets: [ at the first exported bar, ] after the last. */
+.bar-strip-bracket {
+  position: absolute;
+  inset-block: calc(-1 * var(--ae-space-1));
+  z-index: 1;
+  inline-size: var(--ae-space-3);
+  border: var(--ae-edge) solid var(--ae-accent);
+  cursor: ew-resize;
+  touch-action: none;
 
-@media (max-width: 880px) {
-  .workspace {
-    grid-template-columns: 1fr;
+  &[data-edge="from"] {
+    border-inline-end: 0;
   }
 
-  .panel {
-    position: static;
-    max-height: none;
+  &[data-edge="to"] {
+    translate: -100% 0;
+    border-inline-start: 0;
   }
 
-  .panel-scroll {
-    overflow: visible;
+  /* A wider grip than the bracket draws, for the pointer's sake. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 calc(-1 * var(--ae-space-2));
   }
 
-  .stage {
-    min-height: 0;
-    padding: 12px;
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ae-ring);
   }
+}
 
-  .transport .bar {
-    display: none;
+/* ── inspector ─────────────────────────────────────────────────────────── */
+
+.shell > .inspector {
+  font-size: var(--ae-text-s);
+
+  /* Tabs on top, the open panel scrolling, export pinned at the foot. */
+  & > :not(.tabs, .export-panel) {
+    flex: 1;
+    min-block-size: 0;
+  }
+}
+
+.export-panel {
+  flex: none;
+  padding: var(--ae-space-4) var(--ae-space-5) var(--ae-space-5);
+  box-shadow: inset 0 1px 0 var(--ae-border);
+
+  & progress {
+    inline-size: 100%;
   }
 }

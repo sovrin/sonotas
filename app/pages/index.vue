@@ -1,6 +1,11 @@
 <script setup>
 const { s, loadFile } = provideSonotas()
 
+// aequitas reads the theme from <html data-theme>.
+useHead({
+  htmlAttrs: { 'data-theme': () => s.uiTheme }
+})
+
 // Page-wide drag & drop: any file dropped anywhere replaces the loaded tab.
 const dragDepth = ref(0)
 const dragging = computed(() => dragDepth.value > 0)
@@ -23,8 +28,11 @@ function onDrop(e) {
 
 <template>
   <div
-    class="app"
-    :data-theme="s.uiTheme"
+    class="shell"
+    data-header
+    data-inspector
+    data-float
+    data-fill
     @dragenter.prevent="onDragEnter"
     @dragover.prevent
     @dragleave.prevent="onDragLeave"
@@ -32,22 +40,20 @@ function onDrop(e) {
   >
     <AppHeader />
 
-    <main class="wrap workspace">
-      <section style="min-width:0">
-        <PreviewStage />
-        <TransportBar v-if="!s.videoUrl" />
-      </section>
-
-      <SettingsPanel />
+    <main>
+      <FileHeader />
+      <PreviewStage />
+      <SongTimeline />
     </main>
 
-    <AppFooter />
+    <AppInspector />
 
     <div
-      v-if="dragging"
-      class="drop-overlay"
+      class="dropzone"
+      data-page
+      :data-active="dragging || undefined"
     >
-      Drop to load the file
+      <strong>Drop to load the file</strong>
     </div>
   </div>
 </template>
