@@ -5,6 +5,7 @@ import { musicFontCss } from './font.ts'
 import { createSettings, staveProfile } from './settings.ts'
 import {
   detachCropStart,
+  untieCropStart,
   hasChords,
   hasTab,
   injectTempoAt,
@@ -132,6 +133,8 @@ export async function createRenderer(
   const reattach = showTimeSignature && midPieceCrop
     ? detachCropStart(score, crop!.fromBar, track)
     : undefined
+  // A note tied in from before the crop would crash alphaTab; draw it plain.
+  const retie = midPieceCrop ? untieCropStart(score, crop!.fromBar, track) : undefined
   // Fit-to-bars: lay out once at scale 1 to measure the bars, then engrave at
   // the scale that makes the widest run of `fitBars` span BAR_FIT of the frame
   // width (capped so the tallest bar fits the frame height). alphaTab scales
@@ -157,7 +160,8 @@ export async function createRenderer(
     opts.showAttribution ?? true
   )
   reattach?.()
-  const { beats, durationMs, bars } = buildTimeline(
+  retie?.()
+  const { beats, durationMs, bars, plays } = buildTimeline(
     score,
     settings,
     track,
@@ -212,6 +216,7 @@ export async function createRenderer(
     artist: score.artist,
     hasChords: hasChords(score, track),
     bars,
+    plays,
     frame(canvas, atMs, opts) {
       if (canvas.width !== width) canvas.width = width // resize also clears; skip if unchanged
       if (canvas.height !== height) canvas.height = height

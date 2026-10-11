@@ -9,6 +9,9 @@ const TABS = [
   { id: 'output', label: 'Output' }
 ]
 
+// Settings hold still while an export reads them.
+const { v } = useSonotas()
+
 const current = ref('frame')
 const tabEls = ref([])
 
@@ -32,6 +35,7 @@ function onKeydown(e, i) {
       class="tabs"
       role="tablist"
       aria-label="Settings"
+      :inert="v.isRendering"
     >
       <button
         v-for="(t, i) in TABS"
@@ -49,7 +53,7 @@ function onKeydown(e, i) {
       </button>
     </div>
 
-    <div>
+    <div :inert="v.isRendering">
       <FrameTab
         id="panel-frame"
         role="tabpanel"

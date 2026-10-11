@@ -141,6 +141,9 @@ export interface Renderer {
   /** Start-ms of each rendered bar's first play (rebased to 0); `bars.length`
    * is the rendered bar count. */
   bars: number[]
+  /** Every bar as played, repeats included (rendered bar index, onset ms) —
+   * the song's real timeline, for a scrubber. */
+  plays: { bar: number, startMs: number }[]
   /** Paint one frame (at time `atMs`) onto a visible canvas — for previews.
    * Pass `opts` to tune crop, scroll, cursor, and background. */
   frame(

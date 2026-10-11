@@ -1,5 +1,5 @@
 <template>
-  <footer class="cluster gap-2 text-xs text-muted">
+  <footer class="cluster gap-2 text-s text-muted">
     <span>
       Notation engraved by <a
         href="https://www.alphatab.net"

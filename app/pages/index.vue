@@ -49,6 +49,9 @@ function onDrop(e) {
 
     <AppInspector />
 
+    <!-- On a phone the credits close the page, after the settings. -->
+    <AppFooter class="shell-credits" />
+
     <div
       class="dropzone"
       data-page

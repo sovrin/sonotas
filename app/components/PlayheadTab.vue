@@ -4,15 +4,17 @@
 // behind a fold, since the defaults suit most videos.
 const { s, v, toggle, setCursorColor, setHighlightColor, setActiveNoteColor } = useSonotas()
 
-const CURSOR_COLORS = [
-  { hex: '#8f97ac', name: 'Grey' },
+// Grey holds 3:1 on both canvas themes; Ink is white on dark and near-black
+// on light, so a thin line never disappears into the paper.
+const CURSOR_COLORS = computed(() => [
+  { hex: '#737b87', name: 'Grey' },
   { hex: '#e5484d', name: 'Red' },
-  { hex: '#e9eaec', name: 'White' },
+  { hex: INK[s.theme] ?? INK.dark, name: 'Ink' },
   { hex: '#e0a94c', name: 'Amber' }
-]
+])
 const HL_COLORS = [
   { hex: '#e0a94c', name: 'Amber' },
-  { hex: '#8f97ac', name: 'Grey' },
+  { hex: '#737b87', name: 'Grey' },
   { hex: '#46a758', name: 'Green' },
   { hex: '#5b8def', name: 'Blue' }
 ]

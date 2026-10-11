@@ -20,7 +20,7 @@ const scope = computed(() => {
         role="status"
       >
         <strong class="text-s">Your video is ready</strong>
-        <span class="text-xs text-muted font-mono tabular truncate">{{ v.outName }} · {{ v.sizeLabel }}</span>
+        <span class="text-s text-muted font-mono tabular">{{ v.outName }} · {{ v.sizeLabel }}</span>
       </div>
       <button
         class="btn w-full"
@@ -39,20 +39,20 @@ const scope = computed(() => {
         data-variant="ghost"
         @click="closeRender"
       >
-        Back to preview
+        {{ s.downloaded ? 'Back to preview' : 'Discard video' }}
       </button>
     </template>
 
     <template v-else-if="v.isRendering">
       <div class="stack gap-2">
         <div class="flex justify-between text-s">
-          <span>{{ v.phase }}</span>
+          <span role="status">{{ v.phase }}</span>
           <span class="font-mono tabular">{{ v.pct }}%</span>
         </div>
         <progress
           :value="v.pct"
           max="100"
-          :aria-label="v.phase"
+          aria-label="Export progress"
         />
       </div>
       <button
@@ -65,14 +65,30 @@ const scope = computed(() => {
     </template>
 
     <template v-else>
+      <div
+        v-if="!s.canExport"
+        class="alert"
+        data-tone="warning"
+        role="alert"
+      >
+        <div><strong>This browser can’t export video.</strong> Export needs the WebCodecs video encoder. Open sonotas in a recent Chrome or Edge.</div>
+      </div>
+      <div
+        v-else-if="s.exportError"
+        class="alert"
+        data-tone="danger"
+        role="alert"
+      >
+        <div><strong>Couldn’t export the video.</strong> {{ s.exportError }} Try again, or turn off Fast export under Output.</div>
+      </div>
       <div class="stack gap-1">
         <span class="text-s">{{ scope }} · {{ s.aspect }}</span>
-        <span class="text-xs text-muted font-mono tabular">{{ v.estLine }}</span>
+        <span class="text-s font-mono tabular">{{ v.estLine }}</span>
       </div>
       <button
         class="btn w-full"
         data-variant="primary"
-        :disabled="!s.ready || s.building"
+        :disabled="!s.ready || s.building || !s.canExport"
         @click="startRender"
       >
         Export MP4

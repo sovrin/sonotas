@@ -57,12 +57,13 @@ onMounted(() => {
       v-if="v.isRendering"
       class="overlay"
     >
+      <!-- The export panel announces progress; this is its picture. -->
       <div
         class="stack gap-2 items-center text-center"
-        role="status"
+        aria-hidden="true"
       >
         <span class="render-pct">{{ v.pct }}%</span>
-        <span class="text-s text-muted">{{ v.phase }} <span class="font-mono tabular">{{ v.frame }} / {{ v.totalFrames }}</span> frames</span>
+        <span class="text-s text-muted">{{ v.phase }} <span class="font-mono tabular">{{ v.frame }} / {{ v.totalFrames }}</span></span>
       </div>
     </div>
   </section>

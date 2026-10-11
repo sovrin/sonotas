@@ -56,6 +56,55 @@ export function injectTempoAt(
   bar.tempoAutomations.push(auto)
 }
 
+/** Unhook ties, slurs and hammer-ons/pull-offs that reach into crop start bar
+ * `fromBar` from a bar before it. alphaTab draws a tie from its origin note,
+ * which a crop doesn't render, and crashes on the missing origin. The notes
+ * draw as plain notes instead; the returned restore relinks them before
+ * MIDI/timeline generation, so playback still holds the tied notes. */
+export function untieCropStart(
+  score: alphaTab.model.Score,
+  fromBar: number,
+  track: number
+): () => void {
+  const restores: (() => void)[] = []
+  const before = (origin: alphaTab.model.Note | null) =>
+    !!origin && origin.beat.voice.bar.masterBar.index < fromBar
+  for (const staff of score.tracks[track]?.staves ?? []) {
+    for (const voice of staff.bars[fromBar]?.voices ?? []) {
+      for (const beat of voice.beats) {
+        for (const note of beat.notes) {
+          if (before(note.tieOrigin)) {
+            const [origin, dest] = [note.tieOrigin, note.isTieDestination]
+            note.tieOrigin = null
+            note.isTieDestination = false
+            restores.push(() => {
+              note.tieOrigin = origin
+              note.isTieDestination = dest
+            })
+          }
+          if (before(note.slurOrigin)) {
+            const [origin, dest] = [note.slurOrigin, note.isSlurDestination]
+            note.slurOrigin = null
+            note.isSlurDestination = false
+            restores.push(() => {
+              note.slurOrigin = origin
+              note.isSlurDestination = dest
+            })
+          }
+          if (before(note.hammerPullOrigin)) {
+            const origin = note.hammerPullOrigin
+            note.hammerPullOrigin = null
+            restores.push(() => {
+              note.hammerPullOrigin = origin
+            })
+          }
+        }
+      }
+    }
+  }
+  return () => restores.forEach(r => r())
+}
+
 /** Detach the crop's first bar from its predecessor so alphaTab treats it as a
  * fresh start and re-draws the (otherwise omitted) unchanged time signature.
  * Only the render needs this; the returned restore reconnects the links before

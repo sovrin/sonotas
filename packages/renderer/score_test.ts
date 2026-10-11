@@ -5,7 +5,7 @@ import { loadDemo, loadSample, shimHeadless } from './_testutil.ts'
 shimHeadless()
 const alphaTab = await import('@coderline/alphatab')
 const { createSettings } = await import('./settings.ts')
-const { countBars, detachCropStart, hasTab, injectTempoAt, listTracks, loadScore, measureBars, renderSheet }
+const { countBars, detachCropStart, untieCropStart, hasTab, injectTempoAt, listTracks, loadScore, measureBars, renderSheet }
   = await import('./score.ts')
 
 test('listTracks returns a non-empty, sequentially-indexed track list', async () => {
@@ -92,4 +92,21 @@ test('renderSheet rejects instead of hanging when alphaTab fails to render', asy
   let failed = false
   await renderSheet(settings, score, 1, '').catch(() => (failed = true))
   assert(failed, 'expected renderSheet to reject')
+})
+
+test('untieCropStart unhooks ties from before the crop and restores them', async () => {
+  // The demo's bar 13 opens with notes tied from bar 12: a crop starting there
+  // crashed alphaTab's tie glyph on the unrendered origin.
+  const score = loadScore(await loadDemo(), createSettings(), 0)
+  const notes = score.tracks[0]!.staves[0]!.bars[12]!.voices
+    .flatMap(v => v.beats.flatMap(b => b.notes))
+    .filter(n => n.tieOrigin && n.tieOrigin.beat.voice.bar.masterBar.index < 12)
+  assert(notes.length > 0, 'expected notes tied into bar 13')
+  const origins = notes.map(n => n.tieOrigin)
+
+  const restore = untieCropStart(score, 12, 0)
+  assert(notes.every(n => n.tieOrigin === null && !n.isTieDestination))
+
+  restore()
+  assert(notes.every((n, i) => n.tieOrigin === origins[i] && n.isTieDestination))
 })
