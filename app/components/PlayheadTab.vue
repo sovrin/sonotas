@@ -1,16 +1,8 @@
 <script setup>
-// What moves with the music: the view, the playhead line, the bar it is in
-// and the note being played. Each shows its colour; the measurements wait
+// What marks the music as it plays: the playhead line, the bar it is in and
+// the note being played. Each shows its colour; the measurements wait
 // behind a fold, since the defaults suit most videos.
 const { s, v, toggle, setCursorColor, setHighlightColor, setActiveNoteColor } = useSonotas()
-
-const SCROLLS = [
-  { v: 'Bar snap', label: 'Snap', hint: 'The view jumps a bar at a time.' },
-  { v: 'Bar pan', label: 'Pan', hint: 'The view slides to each new bar.' },
-  { v: 'Continuous', label: 'Smooth', hint: 'The view glides with the music.' },
-  { v: 'Centered', label: 'Center', hint: 'The playhead stays centred; the score moves under it.' }
-]
-const scrollHint = computed(() => SCROLLS.find(o => o.v === s.scroll)?.hint)
 
 const CURSOR_COLORS = [
   { hex: '#8f97ac', name: 'Grey' },
@@ -37,16 +29,6 @@ const NOTE_COLORS = [
     class="stack"
     data-divided
   >
-    <InspectorGroup title="View">
-      <SegmentedField
-        name="scroll"
-        label="Scrolling"
-        :options="SCROLLS"
-      >
-        <small>{{ scrollHint }}</small>
-      </SegmentedField>
-    </InspectorGroup>
-
     <InspectorGroup title="Playhead">
       <SwatchPicker
         :colors="CURSOR_COLORS"
