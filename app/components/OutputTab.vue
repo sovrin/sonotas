@@ -27,7 +27,9 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
         name="quality"
         label="Quality"
         :options="QUALITY"
-      />
+      >
+        <small>Higher quality looks sharper and makes a larger file.</small>
+      </SegmentedField>
       <div class="field">
         <label>
           <input

@@ -1,6 +1,6 @@
 <script setup>
-// Step one, said once: while the sample is up, invite your own file. A load
-// error takes its place.
+// A file that wouldn't open, said right under the toolbar. (What to open and
+// how is the Open button's tip.)
 const { s } = useSonotas()
 </script>
 
@@ -13,10 +13,4 @@ const { s } = useSonotas()
   >
     <div><strong>Couldn’t open that file.</strong> {{ s.loadError }} Try a .gp, .gpx, .gp3–5 or MusicXML file.</div>
   </div>
-  <p
-    v-else-if="s.isDemo"
-    class="caption"
-  >
-    This is a sample. Open your own Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML file, or drop it anywhere. It stays in your browser; nothing is uploaded.
-  </p>
 </template>

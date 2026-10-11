@@ -6,8 +6,28 @@
 /* Amber is the colour the video lights the current bar with, so the interface
    uses it for "now" and "on" as well; the neutrals are a cool ink. */
 :root {
-  --ae-hue: 70;
+  --ae-hue: 75;
   --ae-neutral-hue: 260;
+  /* The accent is the video's own bar-highlight amber (#e0a94c, the logo's
+     too), so "now" is one colour everywhere. In the light UI the same amber is
+     darkened until white text on it still reads (4.6:1). */
+  --ae-accent-dark: oklch(0.769 0.127 78);
+  --ae-accent-light: oklch(0.56 0.12 75);
+
+  /* A dim studio: one faint amber spill over the stage, where the video plays,
+     and a cool ink field behind the settings. aequitas' default aurora derives
+     three fields from the accent, which over this ink mix to brown. */
+  --ae-aurora:
+    radial-gradient(
+      55% 45% at 38% 0%,
+      light-dark(oklch(0.93 0.07 70 / 0.55), oklch(0.5 0.1 70 / 0.16)),
+      transparent
+    ),
+    radial-gradient(
+      45% 60% at 100% 100%,
+      light-dark(oklch(0.9 0.03 260 / 0.6), oklch(0.36 0.05 260 / 0.45)),
+      transparent
+    );
 }
 
 /* ── frame ─────────────────────────────────────────────────────────────── */
@@ -20,10 +40,43 @@
   /* The navbar's page gutter would push the brand off the work's left edge. */
   & > .navbar {
     padding-inline: var(--ae-space-5);
+
+    @media (width < 48rem) {
+      gap: var(--ae-space-3);
+      padding-inline: var(--ae-space-4);
+    }
   }
 }
 
-/* The toolbar names the song being worked on, title over its facts. */
+/* The toolbar: the app, a hairline, then the song being worked on (title and
+   badge over its facts). */
+.navbar .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ae-space-2);
+  padding-inline-end: var(--ae-space-4);
+  box-shadow: inset calc(-1 * var(--ae-hairline-x, 1px)) 0 0 var(--ae-border);
+  letter-spacing: -0.01em;
+}
+
+/* The actions stay one row; on a phone the song title gives way instead. */
+.navbar > .end {
+  flex: none;
+  flex-wrap: nowrap;
+
+  & > * {
+    flex: none;
+  }
+}
+
+/* Tips in the trailing group hang from their button's end edge, not its centre,
+   so they never run past the window. */
+.navbar .end [data-tip-side="bottom"]::after {
+  --_at: 0 0;
+  --_from: 0 calc(var(--ae-space-1) * -1);
+  inset-inline: auto 0;
+}
+
 .navbar .song {
   display: flex;
   flex-direction: column;
@@ -37,6 +90,18 @@
 }
 
 /* ── stage ─────────────────────────────────────────────────────────────── */
+
+/* The stage is workspace, not picture: a faint dot grid around the video, which
+   lifts off it as the one lit thing on the page. */
+main > .stage {
+  background:
+    radial-gradient(circle, var(--ae-border-strong) 1px, transparent 1.5px) center / var(--ae-space-5) var(--ae-space-5),
+    var(--ae-bg-sunken);
+
+  & > :is(canvas, video) {
+    box-shadow: var(--ae-shadow-l);
+  }
+}
 
 /* Stacked, nothing gives the stage a height, and a stage with only its intrinsic
    size scales its canvas to nothing. Cut it to the video's own frame instead. */
@@ -89,7 +154,8 @@
    ring their pick. */
 .swatch-custom {
   &:not([data-active]) {
-    background: conic-gradient(in oklch longer hue, oklch(0.75 0.15 0), oklch(0.75 0.15 0));
+    /* Low chroma: it says "any colour" without outshining the amber. */
+    background: conic-gradient(in oklch longer hue, oklch(0.72 0.06 0), oklch(0.72 0.06 0));
 
     &::-webkit-color-swatch {
       opacity: 0;
@@ -146,7 +212,7 @@
   }
 
   & span {
-    font-size: var(--ae-text-xs);
+    font-size: var(--ae-text-s);
     color: var(--ae-text-muted);
   }
 }
@@ -156,7 +222,6 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--ae-space-2) var(--ae-space-4);
   font-size: var(--ae-text-s);
 }
@@ -212,14 +277,24 @@
 .bar-strip-bar {
   position: absolute;
   inset-block: 0;
-  box-shadow: inset 1px 0 0 var(--ae-border-strong);
+
+  /* A barline per cell, thinned out where cells get too narrow for one each. */
+  &[data-line] {
+    box-shadow: inset 1px 0 0 var(--ae-border-strong);
+  }
+
+  /* Where the play goes back in the score (a repeat or a jump), a thick line,
+     as a repeat sign is drawn in print. */
+  &[data-back] {
+    box-shadow: inset calc(2 * var(--ae-edge)) 0 0 var(--ae-text-muted);
+  }
 
   & > span {
     position: absolute;
     inset-block-start: var(--ae-space-1);
     inset-inline-start: var(--ae-space-2);
     font-family: var(--ae-font-mono);
-    font-size: var(--ae-text-xs);
+    font-size: var(--ae-text-s);
     font-variant-numeric: tabular-nums;
     line-height: 1;
     color: var(--ae-text-muted);
@@ -251,6 +326,9 @@
   inline-size: 2px;
   translate: -1px 0;
   background: var(--strip-head);
+  /* The video's cursor colour may suit the video's paper, not this strip: a
+     thin halo keeps it visible either way. */
+  filter: drop-shadow(0 0 1px var(--ae-text-muted));
   pointer-events: none;
 
   &::before {
@@ -348,5 +426,84 @@
 
   & progress {
     inline-size: 100%;
+  }
+
+  /* File facts wrap between whole facts, in even lines, never mid-name. */
+  & .font-mono {
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Controls an export is reading hold still and step back until it ends. */
+[inert] {
+  opacity: 0.45;
+  transition: opacity var(--ae-duration) var(--ae-ease);
+}
+
+/* Captions say what a control does: they read at hint size, as <small> does.
+   Only the uppercase group labels stay at the smallest step. */
+:is(.inspector, .transport) .caption {
+  font-size: var(--ae-text-s);
+}
+
+/* ── amber stays "now" and "on" ────────────────────────────────────────── */
+
+/* Credits, the sample badge and the theme toggle are neither: they read in
+   ink, so the amber left on the page is the playing bar, what is switched on,
+   and Export. */
+.shell :is(main > footer, .shell-credits) a {
+  color: inherit;
+  text-decoration-color: var(--ae-border-strong);
+
+  &:hover {
+    color: var(--ae-text);
+    text-decoration-color: currentColor;
+  }
+}
+
+.navbar .badge {
+  color: var(--ae-text-muted);
+  background: var(--ae-fill);
+}
+
+.navbar .btn[data-variant="ghost"] {
+  color: var(--ae-text-muted);
+
+  &:hover {
+    color: var(--ae-text);
+  }
+}
+
+/* Leaving a finished video is not "on" either. */
+.export-panel .btn[data-variant="ghost"] {
+  color: var(--ae-text-muted);
+
+  &:hover {
+    color: var(--ae-text);
+  }
+}
+
+/* An off switch's knob is muted, so it no longer outshines the ones that are on. */
+input[role="switch"]:not(:checked)::after {
+  background: var(--ae-text-muted);
+  box-shadow: none;
+}
+
+/* The credits sit under the transport on a desktop; stacked, they would split
+   the transport from the settings, so a second copy closes the page instead. */
+.shell > .shell-credits {
+  display: none;
+}
+
+@media (width < 48rem) {
+  .shell > main > footer {
+    display: none;
+  }
+
+  .shell > .shell-credits {
+    display: flex;
+    grid-column: 1 / -1;
+    padding: var(--ae-space-4);
   }
 }

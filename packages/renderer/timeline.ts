@@ -9,6 +9,14 @@ export interface Timeline {
   /** First-play onset (ms) of each rendered master bar; `bars.length` is the
    * rendered bar count. Onsets are rebased so the clip starts at 0. */
   bars: number[]
+  /** Every bar in the order it is played, repeats included: its rendered bar
+   * index and onset (ms, rebased). Unlike `bars`, this lines up with time. */
+  plays: Play[]
+}
+
+export interface Play {
+  bar: number
+  startMs: number
 }
 
 /** Walk the played beats and place each on the tempo curve. When `range` is set
@@ -43,6 +51,7 @@ export function buildTimeline(
     e: number
     ms: number
     bar: number
+    first: boolean
   }[] = []
   let cur = lookup.findBeat(trackSet, 0)
   let last = -1
@@ -68,7 +77,8 @@ export function buildTimeline(
       s: cur.start,
       e: cur.end,
       ms: cur.duration > 0 ? cur.duration : 1,
-      bar: cur.beat.voice.bar.masterBar.index
+      bar: cur.beat.voice.bar.masterBar.index,
+      first: cur.beat.index === 0 // opens a play of its bar (repeats included)
     })
     cur = lookup.findBeat(trackSet, cur.end)
   }
@@ -83,6 +93,9 @@ export function buildTimeline(
 
   const beats: Beat[] = []
   const barOnset = new Array<number>(score.masterBars.length) // rebased onset per bar
+  const plays: Play[] = []
+  const firstBar = range?.fromBar ?? 0
+  let prevBar = -1
   let flatMs = 0
   let offset: number | null = null // first in-range onset (ms)
   let durationMs = 0
@@ -93,6 +106,10 @@ export function buildTimeline(
       offset ??= startMs
       beats.push({ startMs: startMs - offset, x: span.x, barX: span.barX, barY: span.barY, barW: span.barW, barH: span.barH, heads: span.heads })
       barOnset[span.bar] ??= startMs - offset // repeats revisit bars — keep the earliest
+      // A new play starts when the bar changes, or the same bar restarts (a
+      // one-bar repeat).
+      if (span.bar !== prevBar || span.first) plays.push({ bar: span.bar - firstBar, startMs: startMs - offset })
+      prevBar = span.bar
       durationMs = Math.max(durationMs, endMs - offset)
     }
     if (!tempo.hasRamp) flatMs += span.ms
@@ -101,7 +118,8 @@ export function buildTimeline(
   return {
     beats,
     durationMs,
-    bars: range ? bars.slice(range.fromBar, range.toBar + 1) : bars
+    bars: range ? bars.slice(range.fromBar, range.toBar + 1) : bars,
+    plays
   }
 }
 

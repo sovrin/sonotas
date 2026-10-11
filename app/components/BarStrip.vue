@@ -1,9 +1,11 @@
 <script setup>
-// The song as a strip of bars on a tab staff. Each bar is as wide as it lasts,
-// so tempo changes show; the current bar and the playhead take the video's own
-// highlight and cursor colours. Dragging scrubs; with a bar range on, two
-// brackets set which bars are exported, and an export fills the bars as it
-// renders them.
+// The song as a strip of bars on a tab staff, in the order they are played:
+// a repeat plays its bars again, so they appear again, and every cell is as
+// wide as that play lasts. Time and cells line up, so the playhead is always
+// in the cell being played. The current bar and the playhead take the video's
+// own highlight and cursor colours. Dragging scrubs; with a bar range on, two
+// brackets set which bars are exported, and an export fills the clip as it
+// renders.
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const { s, v, seekTo } = useSonotas()
@@ -21,26 +23,40 @@ onMounted(() => {
 onBeforeUnmount(() => observer?.disconnect())
 
 // The whole song when it's known, else whatever is rendered.
-const starts = computed(() => (s.songBars.length ? s.songBars : s.barStarts))
-const totalMs = computed(() => (s.songBars.length ? s.songMs : s.duration * 1000) || 1)
-const count = computed(() => starts.value.length)
+const plays = computed(() => (s.songPlays.length ? s.songPlays : s.plays))
+const totalMs = computed(() => (s.songPlays.length ? s.songMs : s.duration * 1000) || 1)
+// Distinct bars in the score (a range is picked in these, not in plays).
+const count = computed(() => s.songBars.length || s.barStarts.length)
 
-const startOf = i => starts.value[i] ?? totalMs.value
-const endOf = i => (i + 1 < count.value ? starts.value[i + 1] : totalMs.value)
+const startOf = i => plays.value[i]?.startMs ?? totalMs.value
+const endOf = i => (i + 1 < plays.value.length ? plays.value[i + 1].startMs : totalMs.value)
 const pct = ms => (ms / totalMs.value) * 100
+
+// Where a bar's first play starts and its last play ends, for range brackets.
+function barSpan(bar) {
+  let from = totalMs.value
+  let to = 0
+  plays.value.forEach((p, i) => {
+    if (p.bar !== bar) return
+    from = Math.min(from, startOf(i))
+    to = Math.max(to, endOf(i))
+  })
+  return [from, to]
+}
 
 // A range is only rendered once its rebuild lands; until then the preview's
 // time still counts from the song's start.
 const cropped = computed(() => s.renderOnlyBars && s.songBars.length > 0 && s.barStarts.length !== s.songBars.length)
-const offsetMs = computed(() => (cropped.value ? startOf(s.fromBar - 1) : 0))
+const offsetMs = computed(() => (cropped.value ? barSpan(s.fromBar - 1)[0] : 0))
 const headMs = computed(() => offsetMs.value + s.time * 1000)
 
-function barAt(ms) {
+function playAt(ms) {
   let i = 0
-  while (i + 1 < count.value && starts.value[i + 1] <= ms) i++
+  while (i + 1 < plays.value.length && plays.value[i + 1].startMs <= ms) i++
   return i
 }
-const current = computed(() => barAt(headMs.value))
+const current = computed(() => playAt(headMs.value))
+const currentBar = computed(() => plays.value[current.value]?.bar ?? 0)
 
 // While a bracket is dragged its bar is a draft, committed on release so the
 // score is rebuilt once, not on every bar the pointer crosses.
@@ -52,27 +68,49 @@ const range = computed(() => {
   return { from: Math.min(s.fromBar - 1, to), to }
 })
 
-// Bar numbers stay at least ~2rem apart, every 1st, 2nd, 4th… bar.
-const labelEvery = computed(() => {
-  const avg = width.value / Math.max(count.value, 1)
-  let step = 1
-  while (avg * step < 32 && step < 256) step *= 2
-  return step
+// Bar numbers at least ~2rem apart, placed by where they land, not by index,
+// so long and short bars both read. Where a repeat jumps back always gets its
+// number; the rest fill in around those. Barlines thin out the same way when
+// the cells get too narrow to draw one each.
+const LABEL_GAP = 32
+const dense = computed(() => width.value / Math.max(plays.value.length, 1) < 6)
+
+const cells = computed(() => {
+  const list = plays.value.map((p, i) => {
+    const left = pct(startOf(i))
+    return {
+      key: i,
+      n: p.bar + 1,
+      left,
+      px: (left / 100) * width.value,
+      width: pct(endOf(i) - startOf(i)),
+      // The play goes back in the score: a repeat or a jump starts here.
+      back: i > 0 && p.bar <= plays.value[i - 1].bar,
+      current: i === current.value && !v.value.isRendering,
+      out: p.bar < range.value.from || p.bar > range.value.to
+    }
+  })
+  const anchors = list.filter((c, i) => i === 0 || c.back).map(c => c.px)
+  let lastLabel = -Infinity
+  let lastLine = -Infinity
+  let next = 0 // index into anchors of the first one at or after this cell
+  for (const c of list) {
+    while (next < anchors.length && anchors[next] < c.px) next++
+    const anchor = c.key === 0 || c.back
+    // The strip's end counts as an anchor too, so no number sits on the final barline.
+    const room = c.px - lastLabel >= LABEL_GAP && (anchors[next] ?? width.value) - c.px >= LABEL_GAP
+    c.label = anchor || room
+    if (c.label) lastLabel = c.px
+    c.line = !dense.value || c.px - lastLine >= 8
+    if (c.line) lastLine = c.px
+  }
+  return list
 })
 
-const bars = computed(() => starts.value.map((ms, i) => ({
-  n: i + 1,
-  left: pct(ms),
-  width: pct(endOf(i) - ms),
-  label: i % labelEvery.value === 0,
-  current: i === current.value && !v.value.isRendering,
-  out: i < range.value.from || i > range.value.to
-})))
+const rangeLeft = computed(() => pct(barSpan(range.value.from)[0]))
+const rangeRight = computed(() => pct(barSpan(range.value.to)[1]))
 
-const rangeLeft = computed(() => pct(startOf(range.value.from)))
-const rangeRight = computed(() => pct(endOf(range.value.to)))
-
-// Export progress runs across the bars being exported.
+// Export progress runs across the clip being exported.
 const progressWidth = computed(() => (rangeRight.value - rangeLeft.value) * (v.value.pct / 100))
 
 // ── scrubbing ───────────────────────────────────────────────────────────────
@@ -84,8 +122,8 @@ function msAt(clientX) {
 }
 
 function seekMs(ms) {
-  const lo = startOf(range.value.from)
-  const hi = endOf(range.value.to)
+  const lo = barSpan(range.value.from)[0]
+  const hi = barSpan(range.value.to)[1]
   seekTo((Math.min(Math.max(ms, lo), hi) - offsetMs.value) / 1000)
 }
 
@@ -104,32 +142,32 @@ function onUp() {
   scrubbing = false
 }
 
-// The strip is the seek slider: arrows step a bar, Home/End jump to the ends.
+// The strip is the seek slider: arrows step a played bar, Home/End jump to
+// the ends of what is exported.
 function onKeydown(e) {
-  const { from, to } = range.value
   const i = current.value
-  const target = {
-    ArrowRight: Math.min(i + 1, to),
-    ArrowUp: Math.min(i + 1, to),
-    ArrowLeft: headMs.value - startOf(i) > 250 ? i : Math.max(i - 1, from),
-    ArrowDown: headMs.value - startOf(i) > 250 ? i : Math.max(i - 1, from),
-    Home: from,
-    End: to
-  }[e.key]
-  if (target === undefined || s.videoUrl) return
+  const back = headMs.value - startOf(i) > 250 ? i : i - 1
+  const target = { ArrowRight: i + 1, ArrowUp: i + 1, ArrowLeft: back, ArrowDown: back }[e.key]
+  if (s.videoUrl) return
+  if (e.key === 'Home' || e.key === 'End') {
+    e.preventDefault()
+    seekMs(e.key === 'Home' ? 0 : totalMs.value)
+    return
+  }
+  if (target === undefined) return
   e.preventDefault()
-  seekMs(e.key === 'End' ? endOf(to) : startOf(target))
+  seekMs(startOf(Math.min(Math.max(target, 0), plays.value.length - 1)))
 }
 
 // ── range brackets ──────────────────────────────────────────────────────────
 let dragging = null
 
+// The bar whose first play starts (or last play ends) nearest to `ms`.
 function nearestBoundary(ms, edge) {
+  const at = bar => barSpan(bar)[edge === 'from' ? 0 : 1]
   let best = 0
-  for (let i = 0; i < count.value; i++) {
-    const at = edge === 'from' ? startOf(i) : endOf(i)
-    const bestAt = edge === 'from' ? startOf(best) : endOf(best)
-    if (Math.abs(at - ms) < Math.abs(bestAt - ms)) best = i
+  for (let bar = 1; bar < count.value; bar++) {
+    if (Math.abs(at(bar) - ms) < Math.abs(at(best) - ms)) best = bar
   }
   return best
 }
@@ -195,8 +233,8 @@ const fmt = (ms) => {
       aria-label="Song position"
       :aria-valuemin="1"
       :aria-valuemax="Math.max(count, 1)"
-      :aria-valuenow="current + 1"
-      :aria-valuetext="`Bar ${current + 1} of ${count}, ${fmt(headMs)}`"
+      :aria-valuenow="currentBar + 1"
+      :aria-valuetext="`Bar ${currentBar + 1} of ${count}, ${fmt(headMs)}`"
       :aria-busy="!s.ready ? 'true' : undefined"
       @pointerdown="onDown"
       @pointermove="onMove"
@@ -205,14 +243,19 @@ const fmt = (ms) => {
       @keydown="onKeydown"
     >
       <div
-        v-for="b in bars"
-        :key="b.n"
+        v-for="b in cells"
+        :key="b.key"
         class="bar-strip-bar"
         :style="{ left: b.left + '%', width: b.width + '%' }"
+        :data-line="b.line || undefined"
+        :data-back="b.back || undefined"
         :data-current="b.current || undefined"
         :data-out="b.out || undefined"
       >
-        <span v-if="b.label">{{ b.n }}</span>
+        <span
+          v-if="b.label"
+          aria-hidden="true"
+        >{{ b.n }}</span>
       </div>
 
       <div
@@ -238,6 +281,7 @@ const fmt = (ms) => {
         :aria-valuemin="1"
         :aria-valuemax="range.to + 1"
         :aria-valuenow="range.from + 1"
+        :aria-valuetext="`Bar ${range.from + 1}, ${fmt(barSpan(range.from)[0])}`"
         @pointerdown="onHandleDown($event, 'from')"
         @pointermove="onHandleMove"
         @pointerup="onHandleUp"
@@ -254,6 +298,7 @@ const fmt = (ms) => {
         :aria-valuemin="range.from + 1"
         :aria-valuemax="count"
         :aria-valuenow="range.to + 1"
+        :aria-valuetext="`Bar ${range.to + 1}, ends ${fmt(barSpan(range.to)[1])}`"
         @pointerdown="onHandleDown($event, 'to')"
         @pointermove="onHandleMove"
         @pointerup="onHandleUp"

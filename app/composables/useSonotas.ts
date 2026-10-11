@@ -13,6 +13,9 @@ const KEY: InjectionKey<SonotasStore> = Symbol('sonotas')
 type Dynamic = Record<string, unknown>
 
 // The bundled demo tab, served from public/.
+// Ink per canvas theme: the playhead's "Ink" preset follows it.
+export const INK = { dark: '#e9eaec', light: '#13161c' }
+
 const SAMPLE_URL = '/tabs/Catastrophic.gp'
 
 // UI resolution → short edge (px). The renderer derives the other edge from the
@@ -61,7 +64,7 @@ function createSonotas() {
     fg: '#e8e9eb', // notation color (build-time)
     barNum: '#e8e9eb', // bar-number color (build-time)
     uiTheme: 'dark', // page theme
-    cursorColor: '#8f97ac',
+    cursorColor: '#737b87', // a grey that holds 3:1 on both canvas themes
     cursorOpacity: 70,
     cursorWidth: 3,
     cursorHeight: 100,
@@ -87,6 +90,9 @@ function createSonotas() {
     ready: false,
     building: false,
     engineError: '',
+    exportError: '', // why the last export failed ('' if it didn't)
+    canExport: true, // false where the browser has no WebCodecs encoder
+    downloaded: false, // whether the finished video has been saved yet
     render: { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 },
     // Real output geometry (set on build) + produced-file size + still frame.
     sheetW: 0,
@@ -99,6 +105,10 @@ function createSonotas() {
     // can show every bar while only a range is rendered.
     songBars: [] as number[],
     songMs: 0,
+    // Bars as played, repeats included ({ bar, startMs }): the rendered clip's,
+    // and the whole song's from the last uncropped build. The strip draws these.
+    plays: [] as { bar: number, startMs: number }[],
+    songPlays: [] as { bar: number, startMs: number }[],
     outBytes: 0,
     estBytes: 0, // probed size of the export for the current settings (0 = not yet known)
     posterUrl: '',
@@ -303,8 +313,10 @@ function createSonotas() {
       s.artist = inst.artist
       s.hasChords = inst.hasChords
       s.barStarts = [...inst.bars]
+      s.plays = [...inst.plays]
       if (!s.renderOnlyBars) {
         s.songBars = [...inst.bars]
+        s.songPlays = [...inst.plays]
         s.songMs = inst.durationMs
       }
       if (s.time > s.duration) s.time = s.duration
@@ -331,7 +343,7 @@ function createSonotas() {
   // tracks up front so a bad file surfaces an error without wiping the current
   // sheet; only swaps in the new bytes once listTracks succeeds.
   async function loadFile(file: File) {
-    if (!import.meta.client || !file) return
+    if (!import.meta.client || !file || s.render.status === 'rendering') return
     s.loadError = ''
     try {
       const buf = new Uint8Array(await file.arrayBuffer())
@@ -347,6 +359,7 @@ function createSonotas() {
       // A bar range belongs to the old file's bars.
       s.renderOnlyBars = false
       s.songBars = []
+      s.songPlays = []
       if (s.render.status === 'done') closeRender()
       await rebuild()
     } catch (err) {
@@ -439,6 +452,8 @@ function createSonotas() {
   }
 
   function setCanvasTheme(t: string) {
+    // A playhead in the old theme's ink would vanish on the new paper.
+    if (s.cursorColor === INK[s.theme as 'dark' | 'light'] && t !== s.theme) s.cursorColor = INK[t as 'dark' | 'light']
     s.theme = t
     // Presets set all three colors; the Advanced pickers can override afterward.
     if (t === 'dark') {
@@ -446,9 +461,9 @@ function createSonotas() {
       s.fg = '#e8e9eb'
       s.barNum = '#e8e9eb'
     } else {
-      s.bg = '#f7f7f4'
-      s.fg = '#1c1c24'
-      s.barNum = '#1c1c24'
+      s.bg = '#f5f7f9'
+      s.fg = '#13161c'
+      s.barNum = '#13161c'
     }
   }
 
@@ -476,6 +491,8 @@ function createSonotas() {
     rendering?.abort()
     const ctl = (rendering = new AbortController())
     s.render = { status: 'rendering', pct: 0, phase: 'Preparing score…', frame: 0, total: 0 }
+    s.exportError = ''
+    s.downloaded = false
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl)
       blobUrl = null
@@ -501,7 +518,7 @@ function createSonotas() {
     } catch (err) {
       if (ctl.signal.aborted) return // cancelled: the AbortError is expected
       rendering = null
-      s.engineError = (err as Error).message
+      s.exportError = (err as Error).message || 'The encoder stopped.'
       s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     }
   }
@@ -544,10 +561,20 @@ function createSonotas() {
     document.body.appendChild(a)
     a.click()
     a.remove()
+    s.downloaded = true
   }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
-  onMounted(rebuild)
+  // Leaving mid-export, or before the finished video is saved, loses it.
+  function onBeforeUnload(e: BeforeUnloadEvent) {
+    if (s.render.status === 'rendering' || (s.render.status === 'done' && !s.downloaded)) e.preventDefault()
+  }
+
+  onMounted(() => {
+    s.canExport = typeof VideoEncoder !== 'undefined'
+    window.addEventListener('beforeunload', onBeforeUnload)
+    rebuild()
+  })
 
   // A finished export belongs to the settings it was made with; changing any
   // of them drops it and shows the live preview again.
@@ -582,6 +609,7 @@ function createSonotas() {
   watch(() => [s.playing, s.render.status], scheduleEstimate)
 
   onBeforeUnmount(() => {
+    window.removeEventListener('beforeunload', onBeforeUnload)
     stopLoop()
     if (rebuildTimer) clearTimeout(rebuildTimer)
     abortEstimate()
@@ -630,7 +658,9 @@ function createSonotas() {
       barLabel: barLabel(),
       scrubPct: s.duration ? (s.time / s.duration) * 100 : 0,
       // "1920×1080 · 30 fps · 0:08 · ~1.2 MB"
-      estLine: resPx + ' · ' + fpsNum() + ' fps · ' + fmt(eff) + ' · ~' + estSize,
+      // The size is probed only while the preview is still ("~…" read as truncated text).
+      // A no-break space keeps each dot on its fact's line when the line wraps.
+      estLine: resPx + '\u00a0· ' + fpsNum() + '\u00a0fps\u00a0· ' + fmt(eff) + '\u00a0· ' + (s.estBytes ? '~' + estSize : s.playing ? 'size once paused' : 'estimating size…'),
       resPx,
       sizeLabel,
       outName: outName(),

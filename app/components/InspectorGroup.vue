@@ -14,12 +14,12 @@ const id = useId()
     :aria-labelledby="id"
   >
     <div class="flex items-center justify-between gap-3">
-      <h6
+      <h2
         :id="id"
         class="eyebrow"
       >
         {{ title }}
-      </h6>
+      </h2>
       <slot
         name="toggle"
         :labelledby="id"

@@ -2,10 +2,11 @@
 // How the score looks: a theme first, then which staves, then what is drawn.
 // Exact colours wait behind a fold. Where it sits is the Frame tab's job.
 const { s, setField, setCanvasTheme, toggle } = useSonotas()
+const route = useRoute()
 
 const THEMES = [
   { v: 'dark', label: 'Dark', note: 'Light notation on near-black', bg: '#121316', fg: '#e8e9eb' },
-  { v: 'light', label: 'Light', note: 'Ink on paper', bg: '#f7f7f4', fg: '#1c1c24' }
+  { v: 'light', label: 'Light', note: 'Ink on paper', bg: '#f5f7f9', fg: '#13161c' }
 ]
 
 const STAVES = [
@@ -21,7 +22,8 @@ const SHOW = [
   { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords, note: 'none in this file' },
   // Only meaningful when the export starts mid-song.
   { key: 'showTimeSig', label: 'Time signature at the first bar', when: () => s.renderOnlyBars && s.fromBar > 1 },
-  { key: 'showAttribution', label: '“rendered by alphaTab” line' }
+  // Hidden unless the page is opened with ?attribution, so the line stays on by default.
+  { key: 'showAttribution', label: '“rendered by alphaTab” line', when: () => 'attribution' in route.query }
 ]
 const shown = computed(() => SHOW.filter(i => !i.when || i.when()))
 
@@ -77,7 +79,7 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
           >
             <label :for="row.name">{{ row.label }}</label>
             <span class="cluster gap-2">
-              <span class="text-xs text-muted font-mono uppercase">{{ s[row.name] }}</span>
+              <span class="text-s text-muted font-mono uppercase">{{ s[row.name] }}</span>
               <input
                 :id="row.name"
                 type="color"
@@ -110,7 +112,8 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
           <input
             type="checkbox"
             role="switch"
-            :checked="s[item.key]"
+            :checked="s[item.key] && !(s.ready && item.missing?.())"
+            :disabled="s.ready && item.missing?.()"
             @change="toggle(item.key)"
           >
           <span>
