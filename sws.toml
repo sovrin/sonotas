@@ -1,0 +1,23 @@
+# static-web-server config for the production image (see Dockerfile).
+[general]
+host = "0.0.0.0"
+port = 3000
+root = "/public"
+
+# The built-in per-type defaults cache index.html for a day, which would pin
+# browsers to stale chunk hashes after a redeploy. Set the headers explicitly.
+cache-control-headers = false
+
+[advanced]
+
+# Unhashed files (index.html, fonts, sample tabs, favicons): revalidate.
+[[advanced.headers]]
+source = "**"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
+
+# Nuxt's content-hashed build output never changes under the same name.
+[[advanced.headers]]
+source = "/_nuxt/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"

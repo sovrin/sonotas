@@ -3,5 +3,18 @@
 node_modules
 **/node_modules
 .nuxt
+.output
 .git
+.github
+.idea
+.context
+.playwright-mcp
+*.log
+.DS_Store
+.env
+.env.*
+Dockerfile
+.dockerignore
+docker-compose.yml
+# regenerated inside the image by the font-build stage
 public/fonts

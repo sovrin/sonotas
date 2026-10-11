@@ -13,22 +13,17 @@ const KEY: InjectionKey<SonotasStore> = Symbol('sonotas')
 type Dynamic = Record<string, unknown>
 
 // The bundled demo tab, served from public/.
-const SAMPLE_URL = '/tabs/test.gp'
+const SAMPLE_URL = '/tabs/Catastrophic.gp'
 
 // UI resolution → short edge (px). The renderer derives the other edge from the
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
-const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Continuous': 'smooth', 'Off': 'none' }
+const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Bar pan': 'pan', 'Continuous': 'smooth', 'Centered': 'center' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
-// mediabunny's bitrate factor per preset: 0.3·e^(2.5538·level) for levels
-// .25/.5/.75/1 (see encode.js qualityToBitrateFactor).
-const QUALITY_FACTOR: Record<string, number> = { low: 0.57, medium: 1.07, high: 2.03, max: 3.85 }
-// Fraction of the target bitrate near-static notation actually spends. H.264 is
-// VBR: bar-snap holds a still image between bars so it undershoots the target
-// heavily; continuous scroll moves every frame and lands much closer. Empirical.
-const MOTION_BY_SCROLL: Record<string, number> = { bar: 0.06, smooth: 0.55, pan: 0.4, none: 0.06 }
+// Quiet time after the last settings change before the size probe runs.
+const ESTIMATE_DELAY_MS = 400
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '')
@@ -41,7 +36,7 @@ function hexToRgba(hex: string, alpha: number): string {
 function createSonotas() {
   // ── state ─────────────────────────────────────────────────────────────────
   const s = reactive({
-    sourceName: 'Ritardando (demo)',
+    sourceName: 'Catastrophic (demo)',
     isDemo: true, // false once the user loads their own file
     loadError: '', // surfaced when a picked file can't be parsed
     tracks: [] as { index: number, name: string }[],
@@ -52,10 +47,13 @@ function createSonotas() {
     staves: 'Tab only',
     fps: '30 fps',
     quality: 'High',
+    fastExport: false, // parallel software encoders: much faster, larger files
     scroll: 'Bar snap',
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
-    highlightNotes: true,
+    highlightBar: true, // played-bar highlight (paint-time)
+    currentBarOnly: false, // hide everything but the bar(s) being played (paint-time; implies fitting ≥1 bar)
+    fitBars: 'Off', // line layout: size the widest run of N bars to the frame width (build-time)
     showTitle: true, // title/artist overlay (paint-time; needs the file to carry one)
     showChords: false, // chord diagrams above chord-named beats (build-time)
     theme: 'dark', // canvas preset selector (Dark/Light) — sets the colors below
@@ -69,13 +67,15 @@ function createSonotas() {
     cursorHeight: 100,
     cursorOffset: 0, // screen-space px nudged onto the playhead (can be negative)
     cursorMatchBar: false, // cursor height spans the played bar box instead of the frame
-    highlightColor: '#e0a94c', // played-bar highlight (paint-time)
+    highlightColor: '#e0a94c',
     highlightOpacity: 22,
     highlightPadding: 6,
     recolorNote: false, // recolor the currently-playing note (paint-time)
     activeNoteColor: '#e5484d',
     activeNoteOpacity: 90,
     showTrackName: true,
+    showBarNumbers: true,
+    showAttribution: true, // alphaTab's "rendered by alphaTab" line (build-time)
     showTempo: true,
     showTimeSig: true,
     fromBar: 1,
@@ -100,6 +100,7 @@ function createSonotas() {
     songBars: [] as number[],
     songMs: 0,
     outBytes: 0,
+    estBytes: 0, // probed size of the export for the current settings (0 = not yet known)
     posterUrl: '',
     videoUrl: '' // object URL of the produced MP4; the stage shows it while set
   })
@@ -111,8 +112,10 @@ function createSonotas() {
   let raf: number | null = null
   let lastTs = 0
   let buildToken = 0
-  let renderToken = 0
+  let rendering: AbortController | null = null // the in-flight export
   let rebuildTimer: ReturnType<typeof setTimeout> | null = null
+  let estimating: AbortController | null = null // the in-flight size probe
+  let estTimer: ReturnType<typeof setTimeout> | null = null
   let blobUrl: string | null = null
 
   // ── option mapping (UI state → renderer options) ────────────────────────────
@@ -135,6 +138,14 @@ function createSonotas() {
 
   function layoutMode() {
     return LAYOUT_BY_UI[s.layout] ?? 'line'
+  }
+
+  // Bars fit across the frame (0 = off). Line layout only; showing just the
+  // current bar always fits at least that one.
+  function fitBarsNum() {
+    if (layoutMode() !== 'line') return 0
+    const n = parseInt(s.fitBars, 10) || 0
+    return s.currentBarOnly ? Math.max(1, n) : n
   }
 
   function qualityMode() {
@@ -161,8 +172,11 @@ function createSonotas() {
       scale: scaleNum(),
       notation: notationMode(),
       layout: layoutMode(),
+      fitBars: fitBarsNum(),
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
+      showBarNumbers: s.showBarNumbers,
+      showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
       foreground: s.fg,
@@ -174,8 +188,9 @@ function createSonotas() {
   function paintOpts() {
     return {
       scroll: scrollMode(),
+      currentBarOnly: s.currentBarOnly,
       cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset, heightMode: s.cursorMatchBar ? 'bar' : 'frame' },
-      highlight: { enabled: s.highlightNotes, color: highlightCss(), padding: s.highlightPadding },
+      highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg },
       title: { enabled: s.showTitle, color: s.fg }
@@ -202,16 +217,53 @@ function createSonotas() {
     s.posterUrl = c.toDataURL('image/png')
   }
 
-  // Estimated output size (bytes) using mediabunny's own target-bitrate model
-  // on the real sheet dimensions. It's a ceiling — VBR undershoots on the mostly
-  // static notation, so the real file is usually well below this.
-  function estBytes() {
-    if (!s.sheetW || !s.sheetH) return 0
-    const factor = QUALITY_FACTOR[qualityMode()] ?? 1
-    const motion = MOTION_BY_SCROLL[scrollMode()] ?? 0.2
-    const pixels = s.sheetW * s.sheetH
-    const target = factor * 3_000_000 * Math.pow(pixels / (1920 * 1080), 0.95) // avc target bitrate
-    return (target / 8) * s.duration * motion
+  // Export size estimate: the renderer really encodes a few 2s slices of the
+  // clip with the export's exact settings and scales up. The size depends on
+  // the content (the encoder runs at a constant quantizer, not a bitrate), so
+  // no formula gets close. The probe costs a few hundred frames of main-thread
+  // work, so it waits for the settings to settle and never runs while the
+  // preview plays or an export renders; it aborts as soon as anything changes.
+  function encodeOpts() {
+    return {
+      fps: fpsNum(),
+      speed: speedNum(),
+      quality: qualityMode(),
+      fast: s.fastExport,
+      startMs: 0,
+      endMs: s.duration * 1000,
+      ...paintOpts()
+    }
+  }
+
+  function abortEstimate() {
+    estimating?.abort()
+    estimating = null
+    if (estTimer) clearTimeout(estTimer)
+    estTimer = null
+  }
+
+  function scheduleEstimate() {
+    abortEstimate()
+    if (!import.meta.client || !engine || s.estBytes || s.building || s.playing || s.render.status !== 'idle') return
+    estTimer = setTimeout(runEstimate, ESTIMATE_DELAY_MS)
+  }
+
+  async function runEstimate() {
+    if (!engine) return
+    const ctl = (estimating = new AbortController())
+    try {
+      const n = await engine.estimateSize({ ...encodeOpts(), signal: ctl.signal } as never)
+      if (n !== null && !ctl.signal.aborted) s.estBytes = n
+    } catch {
+      // No estimate is better than a broken export panel; the export itself
+      // surfaces encoder errors.
+    }
+  }
+
+  // Settings changed: the current estimate no longer applies.
+  function invalidateEstimate() {
+    s.estBytes = 0
+    scheduleEstimate()
   }
 
   function fmtSize(bytes: number) {
@@ -232,6 +284,7 @@ function createSonotas() {
     if (!import.meta.client) return
     const token = ++buildToken
     s.building = true
+    abortEstimate()
     s.engineError = ''
     try {
       const mod = await import('renderer')
@@ -257,10 +310,14 @@ function createSonotas() {
       if (s.time > s.duration) s.time = s.duration
       s.ready = true
       paintFrame()
+      s.estBytes = 0 // new sheet → new estimate (scheduled once building clears)
     } catch (err) {
       if (token === buildToken) s.engineError = (err as Error).message
     } finally {
-      if (token === buildToken) s.building = false
+      if (token === buildToken) {
+        s.building = false
+        scheduleEstimate()
+      }
     }
   }
 
@@ -416,7 +473,8 @@ function createSonotas() {
     if (!import.meta.client || !engine) return
     stopLoop()
     s.playing = false
-    const token = ++renderToken
+    rendering?.abort()
+    const ctl = (rendering = new AbortController())
     s.render = { status: 'rendering', pct: 0, phase: 'Preparing score…', frame: 0, total: 0 }
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl)
@@ -425,38 +483,42 @@ function createSonotas() {
     s.videoUrl = ''
     try {
       const out = await engine.encode({
-        fps: parseInt(s.fps, 10) || 30,
-        quality: qualityMode() as never,
-        startMs: 0,
-        endMs: s.duration * 1000,
-        ...paintOpts(),
+        ...encodeOpts(),
+        signal: ctl.signal,
         onProgress: (frame: number, total: number) => {
-          if (token !== renderToken) return
+          if (ctl.signal.aborted) return
           const pct = total ? (frame / total) * 100 : 0
           s.render = { status: 'rendering', pct, phase: phaseFor(pct), frame, total }
         }
       } as never)
-      if (token !== renderToken) return // cancelled
+      if (ctl.signal.aborted) return // cancelled
+      rendering = null
       blobUrl = URL.createObjectURL(out)
       s.videoUrl = blobUrl
       s.outBytes = out.size
       makePoster()
       s.render = { ...s.render, status: 'done', pct: 100 }
     } catch (err) {
-      if (token === renderToken) {
-        s.engineError = (err as Error).message
-        s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
-      }
+      if (ctl.signal.aborted) return // cancelled: the AbortError is expected
+      rendering = null
+      s.engineError = (err as Error).message
+      s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     }
   }
 
+  // Stop the in-flight export, if any: the renderer closes its encoders.
+  function abortRender() {
+    rendering?.abort()
+    rendering = null
+  }
+
   function cancelRender() {
-    renderToken++ // invalidate any in-flight encode result
+    abortRender()
     s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
   }
 
   function closeRender() {
-    renderToken++
+    abortRender()
     s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl)
@@ -466,11 +528,11 @@ function createSonotas() {
     s.posterUrl = ''
   }
 
-  // e.g. "ritardando-16x9-1080p.mp4": the loaded file's name (sans extension
-  // and demo tag), the frame and the resolution.
+  // e.g. "catastrophic-16x9-1080p.mp4": the loaded file's name (sans
+  // extension, demo tag and accents), the frame and the resolution.
   function outName() {
-    const base = s.sourceName.replace(/\.[^.]+$/, '').replace(/\(demo\)/i, '')
-    const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
+    const base = s.sourceName.replace(/\(demo\)/i, '').trim().replace(/\.\w+$/, '')
+    const slug = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
     return `${slug}-${s.aspect.replace(':', 'x')}-${s.resolution}.mp4`
   }
 
@@ -495,7 +557,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()
@@ -503,20 +565,28 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.showTitle, s.highlightNotes, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => {
       invalidateResult()
+      invalidateEstimate()
       if (!s.playing) paintFrame()
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.speed].join('|'), invalidateResult)
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed].join('|'), () => {
+    invalidateResult()
+    invalidateEstimate()
+  })
+  // The probe yields to neither playback nor an export: pause it for both and
+  // pick it up again once they stop (a finished estimate is kept).
+  watch(() => [s.playing, s.render.status], scheduleEstimate)
 
   onBeforeUnmount(() => {
     stopLoop()
     if (rebuildTimer) clearTimeout(rebuildTimer)
+    abortEstimate()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
-    renderToken++
+    abortRender()
     buildToken++
   })
 
@@ -546,14 +616,15 @@ function createSonotas() {
     }
     const r = s.render
     const done = r.status === 'done'
-    // Real output geometry once built; the target-bitrate estimate before a
-    // render, the produced file's real size once done.
+    // Real output geometry once built; the probed estimate before a render
+    // ('…' while it runs), the produced file's real size once done.
     const resPx = s.sheetW ? `${s.sheetW}×${s.sheetH}` : resPxMap[s.resolution]
-    const estSize = fmtSize(estBytes())
+    const estSize = s.estBytes ? fmtSize(s.estBytes) : '…'
     const sizeLabel = done && s.outBytes ? fmtSize(s.outBytes) : estSize
 
     return {
       isPage: s.layout === 'Page',
+      fitBars: fitBarsNum(),
       timeLabel: fmt(s.time),
       durLabel: fmt(s.duration),
       barLabel: barLabel(),

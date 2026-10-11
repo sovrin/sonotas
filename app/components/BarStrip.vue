@@ -176,7 +176,7 @@ function onHandleKey(e, edge) {
   commit()
 }
 
-const fmt = ms => {
+const fmt = (ms) => {
   const t = ms / 1000
   return Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0')
 }
@@ -185,7 +185,7 @@ const fmt = ms => {
 <template>
   <div
     class="bar-strip"
-    :style="{ '--strip-now': s.highlightNotes ? s.highlightColor : 'var(--ae-text)', '--strip-head': s.cursorColor }"
+    :style="{ '--strip-now': s.highlightBar ? s.highlightColor : 'var(--ae-text)', '--strip-head': s.cursorColor }"
   >
     <div
       ref="strip"
