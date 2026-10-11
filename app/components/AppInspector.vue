@@ -1,13 +1,15 @@
 <script setup>
-// Every setting, in three tabs by what it changes: the file that comes out,
-// how the score looks, and what moves with the music. Export sits pinned below.
+// Every setting, in tabs ordered the way a video is made: where the score sits
+// in the picture, how it looks, what marks the playing note, and the file that
+// comes out, right above the Export button pinned below.
 const TABS = [
-  { id: 'video', label: 'Output' },
-  { id: 'score', label: 'Look' },
-  { id: 'playhead', label: 'Motion' }
+  { id: 'frame', label: 'Frame' },
+  { id: 'look', label: 'Look' },
+  { id: 'playhead', label: 'Playhead' },
+  { id: 'output', label: 'Output' }
 ]
 
-const current = ref('video')
+const current = ref('frame')
 const tabEls = ref([])
 
 // Arrow keys move along the tabs (wrapping), Home/End jump to the ends.
@@ -48,23 +50,29 @@ function onKeydown(e, i) {
     </div>
 
     <div>
-      <VideoTab
-        id="panel-video"
+      <FrameTab
+        id="panel-frame"
         role="tabpanel"
-        aria-labelledby="tab-video"
-        :hidden="current !== 'video'"
+        aria-labelledby="tab-frame"
+        :hidden="current !== 'frame'"
       />
       <LookTab
-        id="panel-score"
+        id="panel-look"
         role="tabpanel"
-        aria-labelledby="tab-score"
-        :hidden="current !== 'score'"
+        aria-labelledby="tab-look"
+        :hidden="current !== 'look'"
       />
-      <MotionTab
+      <PlayheadTab
         id="panel-playhead"
         role="tabpanel"
         aria-labelledby="tab-playhead"
         :hidden="current !== 'playhead'"
+      />
+      <OutputTab
+        id="panel-output"
+        role="tabpanel"
+        aria-labelledby="tab-output"
+        :hidden="current !== 'output'"
       />
     </div>
 

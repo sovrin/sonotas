@@ -1,34 +1,18 @@
 <script setup>
-// How the score looks in the frame: a theme first, then the notation, then
-// what is drawn. Exact colours wait behind a fold.
-const { s, v, setField, setLayout, setCanvasTheme, toggle } = useSonotas()
+// How the score looks: a theme first, then which staves, then what is drawn.
+// Exact colours wait behind a fold. Where it sits is the Frame tab's job.
+const { s, setField, setCanvasTheme, toggle } = useSonotas()
 
 const THEMES = [
   { v: 'dark', label: 'Dark', note: 'Light notation on near-black', bg: '#121316', fg: '#e8e9eb' },
   { v: 'light', label: 'Light', note: 'Ink on paper', bg: '#f7f7f4', fg: '#1c1c24' }
 ]
 
-const LAYOUTS = [
-  { v: 'Scrolling line', label: 'Line', hint: 'One line of notation that scrolls along.' },
-  { v: 'Page', label: 'Page', hint: 'Systems stack like a printed page; the view follows down.' }
-]
-const layoutHint = computed(() => LAYOUTS.find(l => l.v === s.layout)?.hint)
-
 const STAVES = [
   { v: 'Tab only', label: 'Tab' },
   { v: 'Standard + Tab', label: 'Both' },
   { v: 'Standard only', label: 'Notes' }
 ]
-const SIZES = [
-  { v: '80%', label: 'S' },
-  { v: '100%', label: 'M' },
-  { v: '120%', label: 'L' },
-  { v: '150%', label: 'XL' }
-]
-
-// Off, or 1–8 bars sized to span the frame (line layout only).
-const FIT_BARS = ['Off', '1 bar', ...[2, 3, 4, 5, 6, 7, 8].map(n => `${n} bars`)]
-
 const SHOW = [
   { key: 'showTitle', label: 'Song title', missing: () => !s.title, note: 'none in this file' },
   { key: 'showTrackName', label: 'Track name' },
@@ -110,74 +94,11 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
     </InspectorGroup>
 
     <InspectorGroup title="Notation">
-      <div class="field">
-        <label id="layout-label">Layout</label>
-        <div
-          class="segmented"
-          data-fill
-          role="radiogroup"
-          aria-labelledby="layout-label"
-        >
-          <label
-            v-for="l in LAYOUTS"
-            :key="l.v"
-          >
-            <input
-              type="radio"
-              name="layout"
-              :checked="s.layout === l.v"
-              @change="setLayout(l.v)"
-            >
-            <span>{{ l.label }}</span>
-          </label>
-        </div>
-        <small>{{ layoutHint }}</small>
-      </div>
       <SegmentedField
         name="staves"
         label="Staves"
         :options="STAVES"
       />
-      <div
-        v-if="!v.isPage"
-        class="field"
-      >
-        <label for="fitBars">Fit to width</label>
-        <div class="select">
-          <select
-            id="fitBars"
-            name="fitBars"
-            class="input"
-            data-size="s"
-            :value="v.fitBars ? (v.fitBars === 1 ? '1 bar' : `${v.fitBars} bars`) : 'Off'"
-            @change="setField"
-          >
-            <option
-              v-for="o in FIT_BARS"
-              :key="o"
-              :disabled="o === 'Off' && s.currentBarOnly"
-            >
-              {{ o }}
-            </option>
-          </select>
-        </div>
-        <small>Sizes the notation so this many bars span the frame.</small>
-      </div>
-      <SegmentedField
-        v-if="!v.fitBars"
-        name="notationSize"
-        label="Size"
-        :options="SIZES"
-      />
-      <label>
-        <input
-          type="checkbox"
-          role="switch"
-          :checked="s.currentBarOnly"
-          @change="toggle('currentBarOnly')"
-        >
-        {{ v.fitBars > 1 ? `Show only the current ${v.fitBars} bars` : 'Show only the current bar' }}
-      </label>
     </InspectorGroup>
 
     <InspectorGroup title="Show">

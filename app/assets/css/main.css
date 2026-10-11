@@ -82,6 +82,31 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--fg) 20%, transparent);
 }
 
+/* ── custom swatch ───────────────────────────────────────────────────────── */
+
+/* The swatch after the presets opens the system picker. Until it holds a colour
+   of its own it shows a colour wheel; then that colour, ringed as the presets
+   ring their pick. */
+.swatch-custom {
+  &:not([data-active]) {
+    background: conic-gradient(in oklch longer hue, oklch(0.75 0.15 0), oklch(0.75 0.15 0));
+
+    &::-webkit-color-swatch {
+      opacity: 0;
+    }
+
+    &::-moz-color-swatch {
+      opacity: 0;
+    }
+  }
+
+  &[data-active] {
+    box-shadow:
+      inset 0 0 0 2px var(--ae-bg),
+      0 0 0 2px var(--ae-text);
+  }
+}
+
 /* ── frame glyphs ──────────────────────────────────────────────────────── */
 
 /* Glyph and ratio stay on one line, even in a narrow, filled segment. */
@@ -285,6 +310,29 @@
 
 .shell > .inspector {
   font-size: var(--ae-text-s);
+
+  /* Four tabs and four-way choices have to fit a φ⁶-wide column. */
+  & > .tabs {
+    gap: var(--ae-space-4);
+
+    & > [role="tab"] {
+      font-size: var(--ae-text-s);
+    }
+  }
+
+  & .segmented[data-fill] {
+    & > label {
+      flex: 1 1 0;
+      min-inline-size: 0;
+    }
+
+    /* The label is a flex row here, so the span must grow to centre its text. */
+    & span {
+      flex: 1;
+      padding-inline: var(--ae-space-2);
+      text-align: center;
+    }
+  }
 
   /* Tabs on top, the open panel scrolling, export pinned at the foot. */
   & > :not(.tabs, .export-panel) {

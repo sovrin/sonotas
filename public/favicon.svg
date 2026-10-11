@@ -1,8 +1,9 @@
+<!-- sonotas: one bar of a tab staff, lit amber as the video lights the bar being
+     played, with the playhead running through it. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#16171a"/>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 9h2m9 0h2M4 16h2m9 0h2M4 23h2m9 0h2" stroke="#8b8f98" stroke-width="1.5"/>
-    <path d="M12.5 9H10a1.5 1.5 0 0 1 0-3h1a1.5 1.5 0 0 1 1.5 1.5v3A1.5 1.5 0 0 1 11 12H9m-.5 2 4 4m0-4-4 4M8.5 20H13l-4 6" stroke="#ececef" stroke-width="1.5"/>
-  </g>
-  <path d="m21 9 8 7-8 7Z" fill="#ececef"/>
+  <rect width="32" height="32" fill="#15161a"/>
+  <path d="M0 9h32v2H0zM0 15h32v2H0zM0 21h32v2H0z" fill="#5a5f6c"/>
+  <rect x="8" y="5" width="14" height="22" fill="#e0a94c"/>
+  <path d="M8 9h14v2H8zM8 15h14v2H8zM8 21h14v2H8z" fill="#a47a36"/>
+  <path d="M16 2h6v5h-2v23h-2V7h-2z" fill="#f2f2f0"/>
 </svg>
