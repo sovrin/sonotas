@@ -4,7 +4,7 @@
 // store paints straight into it.
 import { onMounted, ref } from 'vue'
 
-const { s, v, registerCanvas, cancelRender } = useSonotas()
+const { s, v, registerCanvas } = useSonotas()
 const canvasRef = ref(null)
 
 onMounted(() => {
@@ -13,7 +13,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="stage">
+  <section
+    class="stage"
+    data-grow
+    :style="{ '--frame': s.aspect.replace(':', ' / ') }"
+    aria-label="Preview"
+  >
     <canvas
       v-show="s.ready && !s.videoUrl"
       ref="canvasRef"
@@ -30,43 +35,35 @@ onMounted(() => {
 
     <div
       v-if="!s.ready && !s.engineError"
-      class="stage-msg"
+      class="cluster gap-2 text-s text-muted"
     >
-      <span class="spinner" />
-      Loading score…
+      <span
+        class="spinner"
+        aria-hidden="true"
+      ><span /></span>
+      Reading the score…
     </div>
 
     <div
       v-if="s.engineError"
-      class="stage-msg"
-      style="flex-direction:column"
+      class="alert"
+      data-tone="danger"
+      role="alert"
     >
-      <span>Couldn’t render the score.</span>
-      <span class="err">{{ s.engineError }}</span>
+      <div><strong>Couldn’t render the score.</strong> {{ s.engineError }}</div>
     </div>
 
     <div
       v-if="v.isRendering"
-      class="stage-overlay"
+      class="overlay"
     >
-      <div class="mono">
-        Exporting… {{ v.pct }}%
-      </div>
-      <div class="progress">
-        <i :style="{ width: v.pct + '%' }" />
-      </div>
       <div
-        class="mono"
-        style="font-size:12px;color:var(--t3)"
+        class="stack gap-2 items-center text-center"
+        role="status"
       >
-        frame {{ v.frame }} / {{ v.totalFrames }}
+        <span class="render-pct">{{ v.pct }}%</span>
+        <span class="text-s text-muted">{{ v.phase }} <span class="font-mono tabular">{{ v.frame }} / {{ v.totalFrames }}</span> frames</span>
       </div>
-      <button
-        class="btn"
-        @click="cancelRender"
-      >
-        Cancel
-      </button>
     </div>
-  </div>
+  </section>
 </template>

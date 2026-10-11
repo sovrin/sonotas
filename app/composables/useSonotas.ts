@@ -63,7 +63,6 @@ function createSonotas() {
     fg: '#e8e9eb', // notation color (build-time)
     barNum: '#e8e9eb', // bar-number color (build-time)
     uiTheme: 'dark', // page theme
-    advanced: false, // "More options" disclosure open
     cursorColor: '#8f97ac',
     cursorOpacity: 70,
     cursorWidth: 3,
@@ -96,6 +95,10 @@ function createSonotas() {
     artist: '',
     hasChords: false, // whether the rendered track defines any chords
     barStarts: [] as number[], // start-ms of each rendered bar (from the renderer)
+    // The whole song's bars, kept from the last uncropped build so the timeline
+    // can show every bar while only a range is rendered.
+    songBars: [] as number[],
+    songMs: 0,
     outBytes: 0,
     posterUrl: '',
     videoUrl: '' // object URL of the produced MP4; the stage shows it while set
@@ -247,6 +250,10 @@ function createSonotas() {
       s.artist = inst.artist
       s.hasChords = inst.hasChords
       s.barStarts = [...inst.bars]
+      if (!s.renderOnlyBars) {
+        s.songBars = [...inst.bars]
+        s.songMs = inst.durationMs
+      }
       if (s.time > s.duration) s.time = s.duration
       s.ready = true
       paintFrame()
@@ -280,6 +287,9 @@ function createSonotas() {
       s.playing = false
       s.sourceName = file.name
       s.isDemo = false
+      // A bar range belongs to the old file's bars.
+      s.renderOnlyBars = false
+      s.songBars = []
       if (s.render.status === 'done') closeRender()
       await rebuild()
     } catch (err) {
@@ -332,10 +342,10 @@ function createSonotas() {
     raf = requestAnimationFrame(tick)
   }
 
-  function seek(e: Event) {
+  function seekTo(seconds: number) {
     stopLoop()
     s.playing = false
-    s.time = parseFloat((e.target as HTMLInputElement).value)
+    s.time = Math.min(Math.max(seconds, 0), s.duration)
     paintFrame()
   }
 
@@ -361,10 +371,6 @@ function createSonotas() {
 
   function toggleTheme() {
     s.uiTheme = s.uiTheme === 'dark' ? 'light' : 'dark'
-  }
-
-  function toggleAdvanced() {
-    s.advanced = !s.advanced
   }
 
   function setAspect(a: string) {
@@ -575,7 +581,6 @@ function createSonotas() {
     setTrack,
     toggle,
     toggleTheme,
-    toggleAdvanced,
     setAspect,
     setLayout,
     setCanvasTheme,
@@ -583,7 +588,7 @@ function createSonotas() {
     setHighlightColor,
     setActiveNoteColor,
     togglePlay,
-    seek,
+    seekTo,
     startRender,
     cancelRender,
     closeRender,

@@ -1,15 +1,20 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui'
+    '@nuxt/eslint'
   ],
 
   devtools: {
     enabled: true
   },
 
-  css: ['~/assets/css/main.css'],
+  // aequitas is vendored from its dist/ (`pnpm aequitas:sync` refreshes it);
+  // main.css is unlayered, so it wins over aequitas' @layer ae.* rules.
+  css: [
+    '~/assets/aequitas/aequitas.css',
+    '~/assets/aequitas/aequitas.icons.css',
+    '~/assets/css/main.css'
+  ],
 
   // The renderer package ships raw .ts and pulls browser-only deps
   // (alphaTab, mediabunny/WebCodecs); Nuxt must transpile it, and it is only
