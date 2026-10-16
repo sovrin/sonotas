@@ -262,6 +262,11 @@ main > .stage {
   font-size: var(--ae-text-s);
 }
 
+/* Back to the whole song, at the row's far end under the bar readout. */
+.transport-zoom {
+  margin-inline-start: auto;
+}
+
 /* On a phone the strip takes its own full row under the readouts. */
 @media (width < 48rem) {
   .transport {
@@ -283,8 +288,105 @@ main > .stage {
 /* The song on a tab staff: one cell per bar, as wide as the bar lasts. The
    six lines are the strings; the end is a final barline, thick as in print. */
 .bar-strip {
+  --strip-h: calc(1rem * pow(var(--ae-phi), 3));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ae-space-2);
+}
+
+/* Zoomed in, the strip scrolls sideways; the overview under it stands in for
+   a scrollbar. Room above and below keeps the playhead's cap and the range
+   brackets from being clipped by the scroll. */
+.bar-strip-scroller {
+  margin-block: calc(-1 * var(--ae-space-1));
+  padding-block: var(--ae-space-1);
+  overflow: auto hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.bar-strip-content {
   position: relative;
-  block-size: calc(1rem * pow(var(--ae-phi), 3));
+  min-inline-size: 100%;
+  block-size: var(--strip-h);
+}
+
+/* The whole song, thin: where the playhead is, the export range, and a window
+   over the part in view. Its ends are grips that zoom. */
+.bar-strip-overview {
+  position: relative;
+  block-size: var(--ae-space-3);
+  background: var(--ae-bg-sunken);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.bar-strip-overview-range {
+  position: absolute;
+  inset-block: 0;
+  background: color-mix(in oklch, var(--ae-accent) 24%, transparent);
+}
+
+.bar-strip-overview-head {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 2px;
+  translate: -1px 0;
+  background: var(--strip-head);
+  filter: drop-shadow(0 0 1px var(--ae-text-muted));
+}
+
+.bar-strip-overview-window {
+  position: absolute;
+  inset-block: 0;
+  min-inline-size: var(--ae-space-4);
+  background: color-mix(in oklch, var(--ae-text) 10%, transparent);
+  box-shadow: inset 0 0 0 1px var(--ae-border-strong);
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--ae-border-strong), var(--ae-ring);
+  }
+
+  /* End grips: a short bar inside each end, with a wider hit area. */
+  & > span {
+    position: absolute;
+    inset-block: 0;
+    inline-size: var(--ae-space-3);
+    cursor: ew-resize;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block: 2px;
+      inset-inline-start: 50%;
+      inline-size: 2px;
+      translate: -50% 0;
+      background: var(--ae-text-muted);
+    }
+  }
+
+  & > [data-edge="from"] {
+    inset-inline-start: calc(-1 * var(--ae-space-1));
+  }
+
+  & > [data-edge="to"] {
+    inset-inline-end: calc(-1 * var(--ae-space-1));
+  }
+
+  &:hover > span::before {
+    background: var(--ae-text);
+  }
 }
 
 .bar-strip-track {

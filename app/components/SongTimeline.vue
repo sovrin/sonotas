@@ -1,7 +1,8 @@
 <script setup>
 // Play, where you are (as a timecode and as a bar), the strip of bars, and
-// whether the export covers the whole song or only some of its bars.
-const { s, v, togglePlay, seekTo } = useSonotas()
+// whether the export covers the whole song or only some of its bars. A long
+// song's strip zooms in, so its bars stay readable; one click shows it whole.
+const { s, v, togglePlay, seekTo, zoomStrip } = useSonotas()
 
 const count = computed(() => (s.songBars.length || s.barStarts.length))
 
@@ -117,6 +118,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         v-if="s.renderOnlyBars"
         class="caption"
       >Drag the brackets, or press I and O at the playhead.</span>
+      <button
+        v-if="s.stripZoom > 1"
+        class="btn transport-zoom"
+        data-size="s"
+        data-variant="ghost"
+        data-tip="Double-click the window under the strip, too"
+        @click="zoomStrip(1)"
+      >
+        <i
+          class="icon"
+          data-icon="zoom-out"
+        />
+        Whole song
+      </button>
     </div>
   </section>
 </template>

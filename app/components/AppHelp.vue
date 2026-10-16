@@ -68,6 +68,8 @@ function lightDismiss(e) {
         <dd>On the bar strip: jump to the start or end</dd>
         <dt><kbd>PgUp</kbd> <kbd>PgDn</kbd></dt>
         <dd>On a bracket: move it four bars</dd>
+        <dt><kbd>+</kbd> <kbd>−</kbd></dt>
+        <dd>On the bar strip or its overview: zoom in or out. Pinch or Ctrl-scroll over the strip, or drag an end of the overview window</dd>
       </dl>
       <button class="btn self-end">
         Close

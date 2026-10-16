@@ -115,6 +115,7 @@ function createSonotas() {
     // and the whole song's from the last uncropped build. The strip draws these.
     plays: [] as { bar: number, startMs: number }[],
     songPlays: [] as { bar: number, startMs: number }[],
+    stripZoom: 1, // timeline strip zoom: 1 fits the whole song
     outBytes: 0,
     estBytes: 0, // probed size of the export for the current settings (0 = not yet known)
     posterUrl: '',
@@ -370,6 +371,7 @@ function createSonotas() {
       s.renderOnlyBars = false
       s.songBars = []
       s.songPlays = []
+      s.stripZoom = 1
       if (s.render.status === 'done') closeRender()
       await rebuild()
     } catch (err) {
@@ -447,6 +449,10 @@ function createSonotas() {
 
   function toggle(k: string) {
     (s as Dynamic)[k] = !(s as Dynamic)[k]
+  }
+
+  function zoomStrip(z: number) {
+    s.stripZoom = Math.min(Math.max(z, 1), v.value.stripMaxZoom)
   }
 
   function toggleTheme() {
@@ -662,6 +668,8 @@ function createSonotas() {
 
     return {
       isPage: s.layout === 'Page',
+      // Zoomed all the way in, about a dozen bars span the strip.
+      stripMaxZoom: Math.max(1, (s.songPlays.length || s.plays.length) / 12),
       fitBars: fitBarsNum(),
       timeLabel: fmt(s.time),
       durLabel: fmt(s.duration),
@@ -692,6 +700,7 @@ function createSonotas() {
     setTrack,
     toggle,
     toggleTheme,
+    zoomStrip,
     setAspect,
     setLayout,
     setCanvasTheme,
