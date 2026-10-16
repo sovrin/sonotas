@@ -11,6 +11,9 @@ on:
 permissions:
   contents: write
 
+env:
+  BROWSER_CACHE: 1 # bump to throw away the cached browser
+
 concurrency:
   group: screenshots
   cancel-in-progress: true
@@ -43,7 +46,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ env.BROWSER_CACHE }}
 
       - name: Install browser
         if: steps.browser-cache.outputs.cache-hit != 'true'
