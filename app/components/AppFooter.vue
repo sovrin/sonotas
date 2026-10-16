@@ -1,3 +1,8 @@
+<script setup>
+// Bumped by the release PR, so it names the release this build belongs to.
+import { version } from '~~/package.json'
+</script>
+
 <template>
   <footer class="cluster gap-2 text-s text-muted">
     <span>
@@ -19,11 +24,12 @@
         rel="noopener"
       >Licenses</a>
     </span>
-    <a
-      class="end"
-      href="https://sovrin.de"
-      target="_blank"
-      rel="noopener"
-    >sovrin.de</a>
+    <span class="end">
+      <span class="font-mono">v{{ version }}</span> · <a
+        href="https://sovrin.de"
+        target="_blank"
+        rel="noopener"
+      >sovrin.de</a>
+    </span>
   </footer>
 </template>
