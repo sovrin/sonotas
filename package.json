@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "build-font": "pnpm --filter renderer build-font",
+    "screenshots": "node scripts/screenshots.ts",
     "aequitas:sync": "cp ../aequitas/dist/aequitas.css ../aequitas/dist/aequitas.icons.css app/assets/aequitas/ && cp ../aequitas/dist/fonts/*.woff2 app/assets/aequitas/fonts/"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "eslint": "^10.11.0",
+    "playwright-core": "1.63.0",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.3.11"
   },

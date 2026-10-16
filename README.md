@@ -91,6 +91,7 @@ Other scripts:
 | `pnpm generate`               | Prerender the static site into `.output/public` |
 | `pnpm preview`                | Serve the production build locally              |
 | `pnpm --filter renderer test` | Run the renderer unit tests                     |
+| `pnpm screenshots`            | Refresh the README screenshots in `docs/`       |
 
 ## Self-hosting with Docker
 
