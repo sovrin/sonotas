@@ -1,25 +1,18 @@
 // Refresh the README screenshots (docs/screenshot-{dark,light}.png): the demo
-// tab at bar 22, both staves, four bars across, in each theme. Runs in
-// Playwright's headless shell, which has no Google services to call home (once:
-// `pnpm exec playwright-core install chromium-headless-shell`). Starts a dev
-// server unless SONOTAS_URL points at a running one.
-import { spawn, type ChildProcess } from 'node:child_process'
+// tab at bar 22, both staves, four bars across, in each theme. Run by the
+// screenshots workflow on each push to master, in Playwright's headless shell
+// against a dev server it starts.
+import { spawn } from 'node:child_process'
 import { chromium, type Page } from 'playwright-core'
 
 const PORT = 3123
 const SEEK = 0.302 // fraction of the song: 0:43 of 2:23, bar 22
 
-let server: ChildProcess | undefined
-let url = process.env.SONOTAS_URL
-if (!url) {
-  url = `http://localhost:${PORT}`
-  // Own process group, so stopping it takes nuxt down with pnpm.
-  server = spawn('pnpm', ['exec', 'nuxt', 'dev', '--port', String(PORT)], { stdio: 'ignore', detached: true })
-  const stop = () => server?.pid && process.kill(-server.pid)
-  process.on('exit', stop)
-  process.on('SIGINT', () => process.exit(130))
-  await waitFor(url)
-}
+const url = `http://localhost:${PORT}`
+// Own process group, so stopping it takes nuxt down with pnpm.
+const server = spawn('pnpm', ['exec', 'nuxt', 'dev', '--port', String(PORT)], { stdio: 'ignore', detached: true })
+process.on('exit', () => server.pid && process.kill(-server.pid))
+await waitFor(url)
 
 const browser = await chromium.launch()
 try {

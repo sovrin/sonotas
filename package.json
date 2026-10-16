@@ -13,7 +13,6 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "build-font": "pnpm --filter renderer build-font",
-    "screenshots": "node scripts/screenshots.ts",
     "test": "node --test tests/*_test.ts && pnpm --filter renderer test",
     "settings:lock": "UPDATE_LOCK=1 node --test tests/settings-code_test.ts",
     "aequitas:sync": "cp ../aequitas/dist/aequitas.css ../aequitas/dist/aequitas.icons.css app/assets/aequitas/ && cp ../aequitas/dist/fonts/*.woff2 app/assets/aequitas/fonts/"

@@ -1,0 +1,66 @@
+name: screenshots
+
+# Re-shoots the README screenshots after each push to master and commits them
+# when they changed. The push goes out with GITHUB_TOKEN, so it triggers no
+# workflows; paths-ignore keeps it from looping here if that ever changes.
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['docs/*.png']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache browser
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install browser
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright-core install --with-deps chromium-headless-shell
+
+      # The cache holds the browser, not the system libraries it needs.
+      - name: Install browser dependencies
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright-core install-deps chromium-headless-shell
+
+      - name: Take screenshots
+        run: node scripts/screenshots.ts
+
+      - name: Commit changed screenshots
+        run: |
+          git diff --quiet -- docs/*.png && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: refresh the screenshots' -- docs/*.png
+          git push

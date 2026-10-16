@@ -94,7 +94,6 @@ Other scripts:
 | `pnpm generate`               | Prerender the static site into `.output/public` |
 | `pnpm preview`                | Serve the production build locally              |
 | `pnpm test`                   | Run all unit tests                              |
-| `pnpm screenshots`            | Refresh the README screenshots in `docs/`       |
 
 ### Settings links
 
