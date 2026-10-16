@@ -93,21 +93,19 @@ function setAt(e) {
   s.followAt = Number(e.target.value)
 }
 // Each view has its own natural spot (a bar near the left edge, the playhead
-// or a line mid-frame); switching starts there again.
-watch(() => `${s.view}|${v.value.isPage}`, () => {
+// or a line mid-frame); picking a view or a layout starts there again. Only
+// when picked here: a link's settings keep their own spot.
+function resetAt() {
   s.followAt = v.value.isPage || s.view === 'track' ? 50 : 5
-})
-
-// A page has no bars-across zoom to isolate, and nothing to track across:
-// drop both, since their switches are hidden there.
-watch(() => v.value.isPage, (page) => {
-  if (!page) return
-  s.currentBarOnly = false
-  if (s.view === 'track') s.view = 'bar'
-})
-watch(() => s.currentBarOnly, (only) => {
-  if (only && s.view === 'screen') s.view = 'bar'
-})
+}
+function pickView(x) {
+  s.view = x
+  resetAt()
+}
+function pickLayout(l) {
+  setLayout(l)
+  resetAt()
+}
 </script>
 
 <template>
@@ -163,7 +161,7 @@ watch(() => s.currentBarOnly, (only) => {
               type="radio"
               name="layout"
               :checked="s.layout === l.v"
-              @change="setLayout(l.v)"
+              @change="pickLayout(l.v)"
             >
             <span>{{ l.label }}</span>
           </label>
@@ -259,6 +257,7 @@ watch(() => s.currentBarOnly, (only) => {
         name="view"
         label="View"
         :options="views"
+        :set="pickView"
       >
         <small>{{ viewHint }}</small>
       </SegmentedField>

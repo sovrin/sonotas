@@ -2,7 +2,7 @@
 // One toolbar: the app, then — past a hairline — the song being worked on,
 // its track, and the way to open another. Export is not up here; it waits
 // under the settings.
-const { s, v, loadFile, setTrack, toggleTheme } = useSonotas()
+const { s, v, loadFile, setTrack, toggleTheme, copyLink } = useSonotas()
 
 const ACCEPT = '.gp,.gpx,.gp3,.gp4,.gp5,.xml,.musicxml,.mxl'
 const OPEN_TIP = 'Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML. Or drop a file anywhere. It stays in your browser.'
@@ -104,6 +104,25 @@ const facts = computed(() => [
           data-icon="folder-open"
         />
         <span class="s:hidden">Open a tab…</span>
+      </button>
+      <button
+        class="btn"
+        data-icon
+        data-size="s"
+        data-variant="ghost"
+        aria-label="Copy a link to these settings"
+        :data-tip="s.linkCopied ? 'Link copied' : 'Copy a link to these settings'"
+        data-tip-side="bottom"
+        @click="copyLink"
+      >
+        <i
+          class="icon"
+          :data-icon="s.linkCopied ? 'check' : 'link'"
+        />
+        <span
+          class="sr-only"
+          role="status"
+        >{{ s.linkCopied ? 'Link copied' : '' }}</span>
       </button>
       <AppHelp />
       <button

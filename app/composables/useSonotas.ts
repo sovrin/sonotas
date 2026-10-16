@@ -5,6 +5,7 @@
 // it is guarded to the client and the module is imported dynamically.
 import { computed, inject, onBeforeUnmount, onMounted, provide, reactive, watch } from 'vue'
 import type { InjectionKey } from 'vue'
+import { APP_DEFAULTS, THEMES, decodeSettings, encodeSettings, type Settings } from '~/utils/settings-code'
 
 export type SonotasStore = ReturnType<typeof createSonotas>
 
@@ -38,55 +39,18 @@ function hexToRgba(hex: string, alpha: number): string {
 function createSonotas() {
   // ── state ─────────────────────────────────────────────────────────────────
   const s = reactive({
+    // The video's settings: the app's defaults, until a link's ?s= or the UI
+    // changes them. New ones go in APP_DEFAULTS and FIELDS (app/utils/settings-code.ts),
+    // never straight in here, or links drop them. See AGENTS.md.
+    ...APP_DEFAULTS,
+    settingsNotice: '', // why a link's settings didn't (all) apply ('' if they did)
+    linkCopied: false, // the settings link was just copied
     sourceName: 'Catastrophic (demo)',
     isDemo: true, // false once the user loads their own file
     loadError: '', // surfaced when a picked file can't be parsed
     tracks: [] as { index: number, name: string }[],
     trackIndex: 0,
-    aspect: '16:9', // framed output ratio (drives renderer output dims)
-    resolution: '1080p',
-    notationSize: '100%',
-    staves: 'Tab only',
-    fps: '30 fps',
-    quality: 'High',
-    fastExport: false, // parallel software encoders: much faster, larger files
-    // Follow: the playhead and the view set apart (paint-time).
-    playhead: 'jump', // 'jump' note to note | 'glide' through the bar
-    view: 'bar', // 'bar' (page: per line) | 'screen' | 'track'
-    transition: 0, // ms the view takes to move; 0 cuts
-    followAt: 5, // % where now sits in the view (Follow resets it per view)
-    turnEarly: true, // screen: turn on the last bar that fits
-    runPast: false, // track: keep the playhead put past the sheet's ends
-    steady: true, // track: an even pace instead of every note's spacing
-    layout: 'Scrolling line', // one endless system, or page-style wrapped systems
-    speed: '1×',
-    highlightBar: true, // played-bar highlight (paint-time)
-    currentBarOnly: false, // hide everything but the bar(s) being played (paint-time; implies fitting ≥1 bar)
-    fitBars: 'Off', // line layout: size the widest run of N bars to the frame width (build-time)
-    showTitle: true, // title/artist overlay (paint-time; needs the file to carry one)
-    showChords: false, // chord diagrams above chord-named beats (build-time)
-    theme: 'dark', // canvas preset selector (Dark/Light) — sets the colors below
-    bg: '#121316', // canvas background (paint-time)
-    fg: '#e8e9eb', // notation color (build-time)
-    barNum: '#e8e9eb', // bar-number color (build-time)
     uiTheme: 'dark', // page theme
-    cursorColor: '#737b87', // a grey that holds 3:1 on both canvas themes
-    cursorOpacity: 70,
-    cursorWidth: 3,
-    cursorHeight: 100,
-    cursorOffset: 0, // screen-space px nudged onto the playhead (can be negative)
-    cursorMatchBar: false, // cursor height spans the played bar box instead of the frame
-    highlightColor: '#e0a94c',
-    highlightOpacity: 22,
-    highlightPadding: 6,
-    recolorNote: false, // recolor the currently-playing note (paint-time)
-    activeNoteColor: '#e5484d',
-    activeNoteOpacity: 90,
-    showTrackName: true,
-    showBarNumbers: true,
-    showAttribution: true, // alphaTab's "rendered by alphaTab" line (build-time)
-    showTempo: true,
-    showTimeSig: true,
     fromBar: 1,
     toBar: 4,
     renderOnlyBars: false,
@@ -461,6 +425,19 @@ function createSonotas() {
 
   function toggle(k: string) {
     (s as Dynamic)[k] = !(s as Dynamic)[k]
+    normalise()
+  }
+
+  // Combinations the controls never offer, put right however they arose (a
+  // switch, or a link): a page has nothing to track across or isolate, a lone
+  // bar needs bars across to frame it and leaves no screen to turn.
+  function normalise() {
+    if (s.layout === 'Page') {
+      s.currentBarOnly = false
+      if (s.view === 'track') s.view = 'bar'
+    }
+    if (s.fitBars === 'Off') s.currentBarOnly = false
+    if (s.currentBarOnly && s.view === 'screen') s.view = 'bar'
   }
 
   function zoomStrip(z: number) {
@@ -477,6 +454,7 @@ function createSonotas() {
 
   function setLayout(l: string) {
     s.layout = l
+    normalise()
   }
 
   function setCanvasTheme(t: string) {
@@ -484,15 +462,7 @@ function createSonotas() {
     if (s.cursorColor === INK[s.theme as 'dark' | 'light'] && t !== s.theme) s.cursorColor = INK[t as 'dark' | 'light']
     s.theme = t
     // Presets set all three colors; the Advanced pickers can override afterward.
-    if (t === 'dark') {
-      s.bg = '#121316'
-      s.fg = '#e8e9eb'
-      s.barNum = '#e8e9eb'
-    } else {
-      s.bg = '#f5f7f9'
-      s.fg = '#13161c'
-      s.barNum = '#13161c'
-    }
+    Object.assign(s, THEMES[t])
   }
 
   function setCursorColor(c: string) {
@@ -592,6 +562,67 @@ function createSonotas() {
     s.downloaded = true
   }
 
+  // ── settings link (?s=) ───────────────────────────────────────────────────
+  // The URL always carries the video's settings as a code (nothing at the
+  // app's defaults), so copying it shares them and a reload keeps them. A
+  // link's code is applied before the first build; what can't apply keeps
+  // its value from the code's baseline.
+  const route = useRoute()
+  const router = useRouter()
+  const settingsCode = computed(() => {
+    const keys = Object.keys(APP_DEFAULTS) as (keyof Settings)[]
+    if (keys.every(k => s[k] === APP_DEFAULTS[k])) return ''
+    return encodeSettings(Object.fromEntries(keys.map(k => [k, s[k]])) as Settings)
+  })
+  let linkTimer: ReturnType<typeof setTimeout> | null = null
+  let copiedTimer: ReturnType<typeof setTimeout> | null = null
+
+  function readLink() {
+    const code = route.query.s
+    if (typeof code !== 'string' || !code) return
+    const d = decodeSettings(code)
+    if (!d) {
+      s.settingsNotice = 'The settings in this link couldn’t be read, so the defaults are used.'
+      return
+    }
+    Object.assign(s, d.settings)
+    normalise()
+    if (d.skipped) s.settingsNotice = `${d.skipped === 1 ? 'One setting' : `${d.skipped} settings`} in this link couldn’t be used here, perhaps from a newer sonotas. The rest applied.`
+  }
+
+  function writeLink() {
+    if (!import.meta.client) return
+    const query = { ...route.query, s: settingsCode.value || undefined }
+    if (query.s !== route.query.s) router.replace({ query })
+  }
+
+  watch(settingsCode, () => {
+    if (linkTimer) clearTimeout(linkTimer)
+    linkTimer = setTimeout(writeLink, 300)
+  })
+
+  async function copyLink() {
+    writeLink()
+    const url = location.origin + router.resolve({ query: { ...route.query, s: settingsCode.value || undefined } }).href
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // No clipboard access (an embed, or permission refused): the old way.
+      const field = Object.assign(document.createElement('textarea'), { value: url })
+      document.body.append(field)
+      field.select()
+      const ok = document.execCommand('copy')
+      field.remove()
+      if (!ok) {
+        s.settingsNotice = `Couldn’t copy the link. It’s in the address bar: ${url}`
+        return
+      }
+    }
+    s.linkCopied = true
+    if (copiedTimer) clearTimeout(copiedTimer)
+    copiedTimer = setTimeout(() => (s.linkCopied = false), 2000)
+  }
+
   // ── lifecycle ─────────────────────────────────────────────────────────────
   // Leaving mid-export, or before the finished video is saved, loses it.
   function onBeforeUnload(e: BeforeUnloadEvent) {
@@ -601,6 +632,8 @@ function createSonotas() {
   onMounted(() => {
     s.canExport = typeof VideoEncoder !== 'undefined'
     window.addEventListener('beforeunload', onBeforeUnload)
+    readLink()
+    writeLink() // a link's code, cleaned up (or dropped when it was unreadable)
     rebuild()
   })
 
@@ -713,6 +746,7 @@ function createSonotas() {
     toggle,
     toggleTheme,
     zoomStrip,
+    copyLink,
     setAspect,
     setLayout,
     setCanvasTheme,

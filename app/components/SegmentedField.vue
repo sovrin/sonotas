@@ -4,13 +4,15 @@
 const props = defineProps({
   name: { type: String, required: true },
   label: { type: String, required: true },
-  options: { type: Array, required: true } // [{ v, label }]
+  options: { type: Array, required: true }, // [{ v, label }]
+  set: { type: Function, default: null } // picks instead of writing the field, for side effects
 })
 
 const { s } = useSonotas()
 const id = useId()
 function pick(v) {
-  s[props.name] = v
+  if (props.set) props.set(v)
+  else s[props.name] = v
 }
 </script>
 
