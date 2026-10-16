@@ -105,6 +105,7 @@ const facts = computed(() => [
         />
         <span class="s:hidden">Open a tab…</span>
       </button>
+      <AppHelp />
       <button
         class="btn"
         data-icon

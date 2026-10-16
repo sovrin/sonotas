@@ -178,7 +178,7 @@ The scale is φ-based on a fluid base of about 15–17px (`clamp(0.95rem, 0.92re
 
 ## Layout
 
-The page is aequitas' editor shell. A single toolbar runs across the top: the brand, a hairline, then the song (title and badge above a line of facts) and, at the far end, track select, Open and the theme toggle. Below it, the working column holds the stage, which grows to fill the height, then the transport. A floating inspector sits on the right, a little wider than aequitas' default (φ⁶ rem plus space-4, about 300px).
+The page is aequitas' editor shell, framed as one window: on a desktop it sits a space-4 step inside the viewport (padding on the app root, never a margin on the shell, which would scroll the page), edged by a single hairline on a page one tone deeper. Inside, its parts join by hairlines. A single toolbar runs across the top: the brand, a hairline, then the song (title and badge above a line of facts) and, at the far end, track select, Open, keyboard shortcuts, How it works and the theme toggle; the last three are ghost icons, and the shortcuts icon goes on a phone. Below it, the working column (sunken ink) holds the dot-grid stage, which grows to fill the height, then the transport in its own flat box. The inspector runs the full height on the right, a little wider than aequitas' default (φ⁶ rem plus space-4, about 300px), with Export at its foot.
 
 The inspector stacks four tabs (Frame, Look, Playhead, Output) over a scrolling panel. Export is pinned at its foot behind a hairline, so the goal of the page is always in view. Groups inside a tab are separated by dividers, and each group follows the pattern label heading, control, one-line hint.
 
@@ -188,7 +188,7 @@ Below 48rem (768px) everything stacks in one column: the stage takes the video's
 
 ## Elevation & Depth
 
-The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows. The live preview canvas (or the finished video) carries aequitas' large shadow and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
+The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows: the app window, the inspector and the transport box are all flat. The live preview canvas (or the finished video) carries aequitas' large shadow and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
 
 Atmosphere comes from a custom aurora replacing aequitas' default: one faint amber radial spill over the stage (55% × 45% at 38% 0%) and one cool ink field behind the inspector (45% × 60% at the bottom-right corner).
 
@@ -200,7 +200,7 @@ Atmosphere comes from a custom aurora replacing aequitas' default: one faint amb
 
 ## Shapes
 
-Every corner is square (`--ae-radius-m: 0`, `--ae-radius-full: 0`), including buttons, switches, swatches, segmented controls and the logo. Lines carry the form language: 1px hairlines for dividers and barlines, a 1.5px stroke for glyphs such as the ratio icons, and a 2px "edge" for emphasis (repeat barlines, the strip's final barline, range brackets, the export progress line).
+Every corner is square (`--ae-radius-m: 0`, `--ae-radius-full: 0`), including buttons, switches, swatches, segmented controls and the logo. Lines carry the form language: 1px hairlines for dividers and barlines, a 1.5px stroke for glyphs such as the ratio icons, and a 2px "edge" for emphasis (repeat barlines, the strip's final barline, range brackets, the export progress line). On the bar strip those edges are drawn in Hairline Strong, so the brackets and the lit bar carry the strip.
 
 Recurring geometry is drawn from tab notation: six-line staves, barlines, a thick double barline where the music jumps back, and the playhead with a square cap.
 
@@ -217,8 +217,12 @@ Square and exact; only Export speaks up.
 ### Segmented choices
 The default control for two to four options, with every option visible and one click to choose. The track is a hairline fill; the selected option lifts to the surface tone with an amber underline. In the inspector they always fill the width with equal segments. Shape options carry a small outline glyph at the option's own aspect ratio.
 
-### Switches
-Square switches for on/off settings. On is amber with an ink knob; off has a muted knob, so off never outshines on. A setting the file can't use (no title, no chords) shows its switch off and disabled. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
+### Switches, chips and the range checkbox
+Square switches for settings that change how a group behaves. On is amber with an ink knob; off has a muted knob, so off never outshines on. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
+
+What the video shows is a set of filter chips under **Show elements**, wrapping as whole chips, with the count of active ones in the heading row. A chip that is on is tinted with an amber edge and a check; off shows a plus. An element the file can't have (no title, no chords) is disabled with a minus, and one caption under the chips names what is missing.
+
+"Export only some bars" under the bar strip is a plain checkbox.
 
 ### Swatch picker
 A row of square preset colours (a radio group with each colour named for screen readers), followed by one custom swatch. The custom swatch shows a colour wheel until it holds its own colour; then it shows that colour, ringed like a selected preset.
@@ -230,10 +234,10 @@ The video's canvas theme is chosen with two full-width choice cards: a label, a 
 The inspector tabs are a text tablist (Frame, Look, Playhead, Output) in body size. The selected tab is in ink with an amber underline; the others are muted. Arrow keys, Home and End move between tabs.
 
 ### Bar strip (signature)
-The song as a strip of tab staff, in **play order**: repeats play again, so their bars appear again, and each cell is as wide as that play lasts. Six hairline strings run across a sunken track; each cell has a barline, a thick 2px line where the play jumps back, and a final thick barline at the end. Bar numbers in mono are spaced by where they land (at least 32px apart, never on the final barline), and jump-backs always keep their number. The current bar is tinted with the video's own highlight colour and the playhead uses the video's own cursor colour with a square cap and a thin halo. Dragging scrubs. With a bar range on, two amber brackets `[` `]` set the export range, bars outside it sit behind a veil, and during export an amber fill runs across the range.
+The song as a strip of tab staff, in **play order**: repeats play again, so their bars appear again, and each cell is as wide as that play lasts. Six faint hairline strings run across a sunken track; each cell has a barline, a 2px line in Hairline Strong where the play jumps back, and the same at the end. Bar numbers in mono are spaced by where they land (at least 32px apart, never on the final barline), and jump-backs always keep their number. The current bar is tinted with the video's own highlight colour and the playhead uses the video's own cursor colour with a square cap and a thin halo. Dragging scrubs. With a bar range on, two amber brackets `[` `]` set the export range, bars outside it sit behind a veil, and during export an amber fill runs across the range.
 
 ### Transport
-Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), with the "Export only some bars" switch beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
+Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), in one flat box (window tone, hairline edge), with the "Export only some bars" checkbox on a full-width row beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
 
 ### Export panel
 Pinned at the inspector's foot. Errors appear here, above the button: an unsupported browser disables Export and says why, and a failed export says what failed and what to try. At rest: the scope ("Whole song · 16:9"), a mono line of facts (resolution, fps, length and the estimated size once known) and the Export button. While rendering: phase, percentage, a progress bar and Cancel. When done: "Your video is ready", the file name and size, Download, and a muted secondary action that reads "Discard video" until the file has been downloaded, then "Back to preview". While an export runs, the inspector, transport, track select and Open hold still at 45% opacity, and leaving the page asks first. Progress is announced once per phase, not per frame.

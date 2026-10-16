@@ -105,7 +105,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <label>
         <input
           type="checkbox"
-          role="switch"
           :checked="s.renderOnlyBars"
           :disabled="!count"
           @change="toggleRange"

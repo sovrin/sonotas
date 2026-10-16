@@ -15,17 +15,20 @@ const STAVES = [
   { v: 'Standard only', label: 'Notes' }
 ]
 const SHOW = [
-  { key: 'showTitle', label: 'Song title', missing: () => !s.title, note: 'none in this file' },
+  { key: 'showTitle', label: 'Song title', missing: () => !s.title },
   { key: 'showTrackName', label: 'Track name' },
   { key: 'showBarNumbers', label: 'Bar numbers' },
   { key: 'showTempo', label: 'Tempo marking' },
-  { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords, note: 'none in this file' },
+  { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords },
   // Only meaningful when the export starts mid-song.
   { key: 'showTimeSig', label: 'Time signature at the first bar', when: () => s.renderOnlyBars && s.fromBar > 1 },
   // Hidden unless the page is opened with ?attribution, so the line stays on by default.
-  { key: 'showAttribution', label: '“rendered by alphaTab” line', when: () => 'attribution' in route.query }
+  { key: 'showAttribution', label: '“rendered by alphaTab”', when: () => 'attribution' in route.query }
 ]
 const shown = computed(() => SHOW.filter(i => !i.when || i.when()))
+const isOn = item => s[item.key] && !(s.ready && item.missing?.())
+const activeCount = computed(() => shown.value.filter(isOn).length)
+const missing = computed(() => s.ready ? shown.value.filter(i => i.missing?.()).map(i => i.label) : [])
 
 const COLOR_ROWS = [
   { name: 'bg', label: 'Background' },
@@ -103,28 +106,34 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
       />
     </InspectorGroup>
 
-    <InspectorGroup title="Show">
-      <div class="stack gap-2">
+    <InspectorGroup title="Show elements">
+      <template #toggle>
+        <span class="text-s text-muted tabular">{{ activeCount }} active</span>
+      </template>
+      <div class="cluster gap-2">
         <label
           v-for="item in shown"
           :key="item.key"
+          class="chip"
         >
           <input
             type="checkbox"
-            role="switch"
-            :checked="s[item.key] && !(s.ready && item.missing?.())"
+            :checked="isOn(item)"
             :disabled="s.ready && item.missing?.()"
             @change="toggle(item.key)"
           >
-          <span>
-            {{ item.label }}
-            <small
-              v-if="s.ready && item.missing?.()"
-              class="text-muted"
-            >· {{ item.note }}</small>
-          </span>
+          <i
+            class="icon"
+            :data-icon="isOn(item) ? 'check' : s.ready && item.missing?.() ? 'minus' : 'plus'"
+            aria-hidden="true"
+          />
+          {{ item.label }}
         </label>
       </div>
+      <small
+        v-if="missing.length"
+        class="text-muted"
+      >{{ missing.join(' and ') }}: none in this file.</small>
     </InspectorGroup>
   </div>
 </template>

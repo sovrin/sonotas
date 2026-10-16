@@ -14,6 +14,12 @@ const { v } = useSonotas()
 
 const current = ref('frame')
 const tabEls = ref([])
+const panels = ref(null)
+
+// The tabs share one scroller; each opens at its top, not at the last one's offset.
+watch(current, () => {
+  if (panels.value) panels.value.scrollTop = 0
+})
 
 // Arrow keys move along the tabs (wrapping), Home/End jump to the ends.
 function onKeydown(e, i) {
@@ -53,7 +59,10 @@ function onKeydown(e, i) {
       </button>
     </div>
 
-    <div :inert="v.isRendering">
+    <div
+      ref="panels"
+      :inert="v.isRendering"
+    >
       <FrameTab
         id="panel-frame"
         role="tabpanel"

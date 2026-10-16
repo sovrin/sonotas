@@ -31,7 +31,6 @@ function onDrop(e) {
     class="shell"
     data-header
     data-inspector
-    data-float
     data-fill
     @dragenter.prevent="onDragEnter"
     @dragover.prevent

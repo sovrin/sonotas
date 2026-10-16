@@ -32,10 +32,20 @@
 
 /* ── frame ─────────────────────────────────────────────────────────────── */
 
-/* An editor frame (header, a working column one viewport tall, a floating
-   inspector) is all aequitas' .shell; only the inspector is a little wider. */
+/* An editor frame (header, a working column one viewport tall, an inspector)
+   is aequitas' .shell; only the inspector is a little wider. */
 .shell {
   --inspector: calc(1rem * pow(var(--ae-phi), 6) + var(--ae-space-4));
+
+  /* One window on the page, edged by a hairline, never lifted: only the video
+     casts a shadow. Stacked, it is the page itself. */
+  @media (width >= 48rem) {
+    background: var(--ae-bg);
+    block-size: calc(100dvh - 2 * var(--ae-space-4));
+    min-block-size: 0;
+    box-shadow: 0 0 0 1px var(--ae-border);
+    overflow: clip;
+  }
 
   /* The navbar's page gutter would push the brand off the work's left edge. */
   & > .navbar {
@@ -45,6 +55,29 @@
       gap: var(--ae-space-3);
       padding-inline: var(--ae-space-4);
     }
+  }
+
+  /* The work sits a step deeper than the chrome around it. */
+  & > main {
+    padding: var(--ae-space-5) var(--ae-space-5) var(--ae-space-4);
+    background: var(--ae-bg-sunken);
+
+    @media (width < 48rem) {
+      padding: var(--ae-space-4);
+    }
+  }
+}
+
+/* The window's gap to the viewport is padding on the app root: a margin on the
+   shell would collapse through body and scroll the page. The page around it is
+   a step deeper, so the window reads by tone as well as by its hairline. */
+@media (width >= 48rem) {
+  html {
+    background: var(--ae-bg-sunken);
+  }
+
+  #__nuxt {
+    padding: var(--ae-space-4);
   }
 }
 
@@ -94,9 +127,7 @@
 /* The stage is workspace, not picture: a faint dot grid around the video, which
    lifts off it as the one lit thing on the page. */
 main > .stage {
-  background:
-    radial-gradient(circle, var(--ae-border-strong) 1px, transparent 1.5px) center / var(--ae-space-5) var(--ae-space-5),
-    var(--ae-bg-sunken);
+  background: radial-gradient(circle, var(--ae-border-strong) 1px, transparent 1.5px) center / var(--ae-space-5) var(--ae-space-5);
 
   & > :is(canvas, video) {
     box-shadow: var(--ae-shadow-l);
@@ -191,11 +222,16 @@ main > .stage {
 
 /* ── timeline ──────────────────────────────────────────────────────────── */
 
+/* Play, readouts, strip and range sit in one box of their own under the stage:
+   the window's tone and a hairline, flat, so the video stays the one lit thing. */
 .transport {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--ae-space-2) var(--ae-space-4);
+  padding: var(--ae-space-4);
+  background: var(--ae-bg);
+  box-shadow: inset 0 0 0 1px var(--ae-border);
 }
 
 .transport-readout {
@@ -218,7 +254,7 @@ main > .stage {
 }
 
 .transport-range {
-  grid-column: 3;
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -255,7 +291,7 @@ main > .stage {
   position: absolute;
   inset: 0;
   background-color: var(--ae-bg-sunken);
-  box-shadow: inset calc(-2 * var(--ae-edge)) 0 0 var(--ae-text-muted);
+  box-shadow: inset calc(-1 * var(--ae-edge)) 0 0 var(--ae-border-strong);
   cursor: pointer;
   touch-action: none;
   user-select: none;
@@ -264,13 +300,13 @@ main > .stage {
     content: "";
     position: absolute;
     inset: var(--ae-space-5) 0 var(--ae-space-2);
-    background: linear-gradient(var(--ae-border-strong) 0 1px, transparent 1px) 0 0 / 100% calc((100% - 1px) / 5) repeat-y;
+    background: linear-gradient(var(--ae-border) 0 1px, transparent 1px) 0 0 / 100% calc((100% - 1px) / 5) repeat-y;
     pointer-events: none;
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: inset calc(-2 * var(--ae-edge)) 0 0 var(--ae-text-muted), var(--ae-ring);
+    box-shadow: inset calc(-1 * var(--ae-edge)) 0 0 var(--ae-border-strong), var(--ae-ring);
   }
 }
 
@@ -286,7 +322,7 @@ main > .stage {
   /* Where the play goes back in the score (a repeat or a jump), a thick line,
      as a repeat sign is drawn in print. */
   &[data-back] {
-    box-shadow: inset calc(2 * var(--ae-edge)) 0 0 var(--ae-text-muted);
+    box-shadow: inset var(--ae-edge) 0 0 var(--ae-border-strong);
   }
 
   & > span {
@@ -386,7 +422,14 @@ main > .stage {
 
 /* ── inspector ─────────────────────────────────────────────────────────── */
 
+/* A show-element chip wraps as a whole, never inside its name. */
+.inspector .chip {
+  white-space: nowrap;
+}
+
 .shell > .inspector {
+  /* The full column height, so its hairline runs down and Export sits at the foot. */
+  align-self: stretch;
   font-size: var(--ae-text-s);
 
   /* Four tabs and four-way choices have to fit a φ⁶-wide column. */
