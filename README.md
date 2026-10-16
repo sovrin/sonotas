@@ -35,6 +35,9 @@ entirely on your machine, so nothing gets uploaded.
 - **Live preview:** scrub and play the exact frames that end up in the video. The
   timeline shows the song in play order, repeats included; Space plays and pauses,
   and I and O set the first and last exported bar at the playhead.
+- **Settings in the link:** the address bar always carries your settings as a
+  short code (`?s=…`), so a reload keeps them and the link shares them. The
+  song itself never leaves your machine.
 
 ## Built on alphaTab
 
@@ -75,7 +78,7 @@ through WebCodecs and muxed with [mediabunny](https://mediabunny.dev).
 
 ## Getting started
 
-You need Node 22+ and pnpm (`corepack enable` sets up the pinned version).
+You need Node 22.18+ (24 recommended) and pnpm (`corepack enable` sets up the pinned version).
 
 ```bash
 pnpm install
@@ -90,8 +93,25 @@ Other scripts:
 | `pnpm typecheck`              | Type-check the Nuxt app                         |
 | `pnpm generate`               | Prerender the static site into `.output/public` |
 | `pnpm preview`                | Serve the production build locally              |
-| `pnpm --filter renderer test` | Run the renderer unit tests                     |
+| `pnpm test`                   | Run all unit tests                              |
 | `pnpm screenshots`            | Refresh the README screenshots in `docs/`       |
+
+### Settings links
+
+A settings link has to keep working forever, so the code in
+`app/utils/settings-code.ts` only ever grows. Each setting has one line in
+`FIELDS`: a permanent id, what it can hold, and `absent`, what a code that
+leaves it out means. Codes write only what differs from that, so they need no
+version. To add a setting, append a field with a new id and `absent` set to how
+videos looked before it existed. To change a default, change `APP_DEFAULTS`
+(and `THEMES` for the canvas presets), never `absent`.
+`tests/settings-code_test.ts` holds this against
+`tests/settings-code.lock.json` and decodes every sample code ever locked.
+After an intended addition, refresh the lock with `pnpm settings:lock`
+(it refuses while anything locked has changed) and commit it; until then
+`pnpm test` fails, so the lock is current whenever the tests pass. The lock itself
+only grows: the test compares it with its committed version, and CI with the
+commit before each push. The rules for agents are in [AGENTS.md](AGENTS.md).
 
 ## Self-hosting with Docker
 
