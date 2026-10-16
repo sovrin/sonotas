@@ -223,6 +223,9 @@ export async function createRenderer(
       if (canvas.height !== height) canvas.height = height
       painter.paint(canvas.getContext('2d')!, atMs, opts)
     },
+    timeAt(atMs, x, y, opts) {
+      return painter.timeAt(atMs, x, y, opts)
+    },
     encode(opts: EncodeOptions = {}) {
       return encodeVideo(painter, encodeParams(opts))
     },

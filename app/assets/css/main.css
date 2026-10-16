@@ -132,6 +132,11 @@ main > .stage {
   & > :is(canvas, video) {
     box-shadow: var(--ae-shadow-l);
   }
+
+  /* Click the notation to jump there. */
+  & > canvas {
+    cursor: pointer;
+  }
 }
 
 /* Stacked, nothing gives the stage a height, and a stage with only its intrinsic

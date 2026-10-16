@@ -431,6 +431,18 @@ function createSonotas() {
     paintFrame()
   }
 
+  // Clicking the preview seeks to the beat drawn under the pointer.
+  function seekAtCanvas(clientX: number, clientY: number) {
+    if (!engine || !canvasEl || !s.ready || s.videoUrl) return
+    const r = canvasEl.getBoundingClientRect()
+    // Client px → frame px, allowing for the frame letterboxed in its box.
+    const scale = Math.min(r.width / canvasEl.width, r.height / canvasEl.height)
+    const x = (clientX - r.left - (r.width - canvasEl.width * scale) / 2) / scale
+    const y = (clientY - r.top - (r.height - canvasEl.height * scale) / 2) / scale
+    const ms = engine.timeAt(s.time * 1000, x, y, paintOpts() as never)
+    if (ms !== null) seekTo(ms / 1000)
+  }
+
   // ── form handlers ───────────────────────────────────────────────────────────
   function setField(e: Event) {
     const el = e.target as HTMLInputElement | HTMLSelectElement
@@ -709,6 +721,7 @@ function createSonotas() {
     setActiveNoteColor,
     togglePlay,
     seekTo,
+    seekAtCanvas,
     startRender,
     cancelRender,
     closeRender,

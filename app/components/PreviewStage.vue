@@ -1,10 +1,10 @@
 <script setup>
 // The stage shows the live preview canvas, and the finished MP4 in its place
 // once an export completes. The canvas stays mounted (v-show) because the
-// store paints straight into it.
+// store paints straight into it. Clicking the notation seeks to that beat.
 import { onMounted, ref } from 'vue'
 
-const { s, v, registerCanvas } = useSonotas()
+const { s, v, registerCanvas, seekAtCanvas } = useSonotas()
 const canvasRef = ref(null)
 
 onMounted(() => {
@@ -22,6 +22,7 @@ onMounted(() => {
     <canvas
       v-show="s.ready && !s.videoUrl"
       ref="canvasRef"
+      @click="seekAtCanvas($event.clientX, $event.clientY)"
     />
 
     <video

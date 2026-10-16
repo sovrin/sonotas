@@ -152,6 +152,11 @@ export interface Renderer {
     atMs: number,
     opts?: PaintOptions,
   ): void
+  /** The onset (ms) of the beat under output pixel (`x`, `y`) in the frame
+   * `frame(…, atMs, opts)` paints, or null off the notation — for clicking the
+   * preview to seek. A bar played more than once resolves to the play nearest
+   * `atMs`. */
+  timeAt(atMs: number, x: number, y: number, opts?: PaintOptions): number | null
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its

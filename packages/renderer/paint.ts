@@ -57,6 +57,9 @@ export interface Painter {
   /** Draw the frame at time `t` (ms). Pass `opts` to tune crop, scroll, cursor,
    * and background; every knob defaults to today's output. */
   paint(ctx: Ctx, t: number, opts?: PaintOptions): void
+  /** The onset (ms) of the beat drawn at output pixel (`x`, `y`) in the frame
+   * `paint(…, t, opts)` draws, or null off the notation. */
+  timeAt(t: number, x: number, y: number, opts?: PaintOptions): number | null
 }
 
 export function createPainter(view: SheetView): Painter {
@@ -161,8 +164,70 @@ export function createPainter(view: SheetView): Painter {
     }
   }
 
-  function paint(ctx: Ctx, t: number, opts?: PaintOptions): void {
+  /** Where the view is at time `t` (clamped already): the played beat, the
+   * playhead's sheet x, the scroll, where the sheet starts down the frame, and
+   * the bar under the playhead. Shared by paint and timeAt, so a click maps
+   * through exactly what was drawn. */
+  function viewAt(t: number, opts?: PaintOptions) {
     const follow = resolveFollow(opts?.scroll, opts?.follow)
+    const currentBarOnly = opts?.currentBarOnly ?? false
+    const i = indexAt(t)
+
+    // Line layout scrolls along x, bounded a margin *outside* the content, so
+    // the first/last bar keeps the same left/right breathing room instead of
+    // sitting flush against the frame edge; the margin stays blank (no tiles
+    // live there). Page layout is as wide as the frame and scrolls along y,
+    // below the title block, bounded by the sheet itself. The bar(s) in focus
+    // are centered — when they're the only ones drawn (every scroll mode, both
+    // axes), or fit to the frame in the bar view — and then left unbounded, so
+    // the first and last bars center like the rest. Overscroll tracking is left
+    // unbounded too, keeping the cursor at its anchor from first note to last.
+    const center = currentBarOnly || (!!fitBars && follow.view === 'bar')
+    const focus = center ? focusMid : undefined
+    const { noteX, scrollX: wantedX } = scrollState(follow, beats, i, t, viewportSheet, focus)
+    const top = page ? titleBlockHeight(opts?.title?.enabled ?? false) : bandTop
+    const viewportH = height - top
+    const scrollX = center || (follow.view === 'track' && follow.overscroll && !page)
+      ? wantedX
+      : page
+        ? 0
+        : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
+    const wantedY = page ? scrollStateY(follow, beats, i, t, viewportH) : 0
+    const scrollY = page && !currentBarOnly
+      ? clampScroll(wantedY, 0, contentBottom, viewportH)
+      : wantedY
+    // The bar the playhead is over — highlighted, and the lone bar drawn.
+    return { i, noteX, scrollX, scrollY, top, viewportH, hb: barAt(beats, i, noteX) }
+  }
+
+  function timeAt(t: number, x: number, y: number, opts?: PaintOptions): number | null {
+    t = Math.max(0, Math.min(t, durationMs))
+    const { scrollX, scrollY, top, hb } = viewAt(t, opts)
+    const sx = x / k + scrollX
+    const sy = (y - top) / k + scrollY
+    if (opts?.currentBarOnly && hb.barW > 0) {
+      const [x0, x1] = focusSpan(hb)
+      if (sx < x0 || sx >= x1) return null // hidden around the lone bar(s)
+    }
+    // Within each play of the bar under the point, the last beat at or left of
+    // it (or the play's first); a repeated bar takes the play nearest `t`. The
+    // line layout is one system, so any height of the frame counts.
+    const run = (a: Beat | undefined, b: Beat) => !!a && a.barX === b.barX && a.barY === b.barY
+    let best: Beat | undefined
+    for (let j = 0; j < beats.length; j++) {
+      const b = beats[j]!
+      if (sx < b.barX || sx >= b.barX + b.barW) continue
+      if (page && (sy < b.barY || sy >= b.barY + b.barH)) continue
+      const prev = beats[j - 1]
+      const next = beats[j + 1]
+      if (b.x > sx && run(prev, b) && b.x > prev!.x) continue
+      if (next && run(b, next) && next.x > b.x && next.x <= sx) continue
+      if (!best || Math.abs(b.startMs - t) < Math.abs(best.startMs - t)) best = b
+    }
+    return best?.startMs ?? null
+  }
+
+  function paint(ctx: Ctx, t: number, opts?: PaintOptions): void {
     const cursorColor = opts?.cursor?.color ?? DEFAULT_CURSOR_COLOR
     const cursorWidth = opts?.cursor?.width ?? DEFAULT_CURSOR_WIDTH
     const cursorOffsetX = opts?.cursor?.offsetX ?? DEFAULT_CURSOR_OFFSET_X
@@ -182,39 +247,12 @@ export function createPainter(view: SheetView): Painter {
     const currentBarOnly = opts?.currentBarOnly ?? false
 
     t = Math.max(0, Math.min(t, durationMs))
-    const i = indexAt(t)
-
-    // Line layout scrolls along x, bounded a margin *outside* the content, so
-    // the first/last bar keeps the same left/right breathing room instead of
-    // sitting flush against the frame edge; the margin stays blank (no tiles
-    // live there). Page layout is as wide as the frame and scrolls along y,
-    // below the title block, bounded by the sheet itself. The bar(s) in focus
-    // are centered — when they're the only ones drawn (every scroll mode, both
-    // axes), or fit to the frame in the bar view — and then left unbounded, so
-    // the first and last bars center like the rest. Overscroll tracking is left
-    // unbounded too, keeping the cursor at its anchor from first note to last.
-    const center = currentBarOnly || (!!fitBars && follow.view === 'bar')
-    const focus = center ? focusMid : undefined
-    const { noteX, scrollX: wantedX } = scrollState(follow, beats, i, t, viewportSheet, focus)
-    const top = page ? titleBlockHeight(titleEnabled) : bandTop
-    const viewportH = height - top
-    const scrollX = center || (follow.view === 'track' && follow.overscroll && !page)
-      ? wantedX
-      : page
-        ? 0
-        : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
-    const wantedY = page ? scrollStateY(follow, beats, i, t, viewportH) : 0
-    const scrollY = page && !currentBarOnly
-      ? clampScroll(wantedY, 0, contentBottom, viewportH)
-      : wantedY
+    const { i, noteX, scrollX, scrollY, top, viewportH, hb } = viewAt(t, opts)
     // Map sheet pixels → output pixels: subtract scroll, scale by the band fit.
     const X = (x: number) => (x - scrollX) * k
     const Y = (y: number) => top + (y - scrollY) * k
     // Cursor offset is screen-space (after scroll/scale), so scroll-independent.
     const cursorX = X(noteX) + cursorOffsetX
-
-    // The bar the playhead is over — highlighted, and the lone bar drawn.
-    const hb = barAt(beats, i, noteX)
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, width, height)
@@ -295,5 +333,5 @@ export function createPainter(view: SheetView): Painter {
     if (titleEnabled && title) paintTitle(ctx, titleColor)
   }
 
-  return { width, height, durationMs, paint }
+  return { width, height, durationMs, paint, timeAt }
 }
