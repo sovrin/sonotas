@@ -3,6 +3,14 @@
 // icon in the toolbar and shown in a dialog.
 const keysDlg = ref(null)
 const helpDlg = ref(null)
+const newsDlg = ref(null)
+
+// Baked in at build time, so it always matches what is deployed. Before the
+// first release there is no CHANGELOG.md and no button.
+const changelog = Object.values(import.meta.glob('../../CHANGELOG.md', { query: '?raw', import: 'default', eager: true }))[0] ?? ''
+const releases = parseChangelog(changelog)
+// A fixed locale and zone, so the prerendered page and the browser agree.
+const longDate = d => new Date(d).toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
 // No aequitas.js here, so a click on the backdrop closes the dialog by hand.
 function lightDismiss(e) {
@@ -40,6 +48,22 @@ function lightDismiss(e) {
     <i
       class="icon"
       data-icon="help"
+    />
+  </button>
+  <button
+    v-if="releases.length"
+    class="btn"
+    data-icon
+    data-size="s"
+    data-variant="ghost"
+    aria-label="What's new"
+    data-tip="What's new"
+    data-tip-side="bottom"
+    @click="newsDlg?.showModal()"
+  >
+    <i
+      class="icon"
+      data-icon="sparkles"
     />
   </button>
 
@@ -101,6 +125,75 @@ function lightDismiss(e) {
       <button class="btn self-end">
         Close
       </button>
+    </form>
+  </dialog>
+
+  <dialog
+    v-if="releases.length"
+    ref="newsDlg"
+    aria-labelledby="news-title"
+    @click="lightDismiss"
+  >
+    <form
+      method="dialog"
+      class="stack gap-4"
+    >
+      <h3 id="news-title">
+        What's new
+      </h3>
+      <!-- Newest first, a hairline between releases; inside one, the
+           inspector's eyebrow labels name what kind of change it is. -->
+      <div
+        class="stack"
+        data-divided
+      >
+        <section
+          v-for="r in releases"
+          :key="r.version"
+          class="stack gap-3"
+        >
+          <h4 class="flex items-baseline justify-between gap-3 text-m">
+            {{ longDate(r.date) }}
+            <span class="text-s text-muted font-mono">v{{ r.version }}</span>
+          </h4>
+          <div
+            v-for="s in r.sections"
+            :key="s.title"
+            class="stack gap-2"
+          >
+            <h5 class="eyebrow">
+              {{ s.title }}
+            </h5>
+            <ul class="stack gap-1">
+              <li
+                v-for="item in s.items"
+                :key="item"
+              >
+                {{ item }}
+              </li>
+            </ul>
+          </div>
+        </section>
+      </div>
+      <div class="flex items-center justify-between gap-3">
+        <a
+          class="cluster gap-1 text-s"
+          href="https://github.com/sovrin/sonotas/blob/master/CHANGELOG.md"
+          target="_blank"
+          rel="noopener"
+        >Every release<i
+          class="icon"
+          data-icon="external"
+          data-size="s"
+          aria-hidden="true"
+        /></a>
+        <button
+          class="btn"
+          autofocus
+        >
+          Close
+        </button>
+      </div>
     </form>
   </dialog>
 </template>

@@ -57,3 +57,11 @@ scope and silently drops the commit from the next version and the changelog.
 `feat` bumps the minor version, `fix` the patch; mark a change that breaks
 shared settings links with `!` (`feat(settings)!: …`). Don't edit the version
 in `package.json` or `CHANGELOG.md` by hand; the release PR does that.
+
+`feat`, `fix` and `perf` subjects are shown to users word for word in the
+app's "What's new" (the scope is dropped). Write them as what a user notices,
+in plain words: `feat(timeline): zoom the bar strip, with an overview`, not
+`feat(timeline): split zoom state into a composable`. A change nobody using
+the app would notice is `refactor`, `test`, `chore`, `ci` or `docs`, which stay
+out of it. Fold follow-ups to a feature into its commit, or type them
+`refactor`, so one feature is one line.
