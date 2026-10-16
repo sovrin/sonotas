@@ -47,3 +47,13 @@ they decode against `absent`, which never changes.
 
 If a test in `tests/settings-code_test.ts` fails, the change breaks links that
 people have shared. Fix the change, not the test or the lock.
+
+## Commits and releases
+
+Commit messages are [conventional](https://www.conventionalcommits.org):
+`feat(timeline): …`, `fix: …`, `docs(readme): …`. Give a scope or leave the
+parentheses out; never write `feat(): …`. release-please can't parse an empty
+scope and silently drops the commit from the next version and the changelog.
+`feat` bumps the minor version, `fix` the patch; mark a change that breaks
+shared settings links with `!` (`feat(settings)!: …`). Don't edit the version
+in `package.json` or `CHANGELOG.md` by hand; the release PR does that.

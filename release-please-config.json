@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "7c6b8d593f3f4632c49b5d2d824e40528631ce0e",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "sonotas",
+      "include-component-in-tag": false,
+      "bump-minor-pre-major": true
+    }
+  }
+}
