@@ -9,11 +9,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [22]
+        node: [24]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the settings-code lock is checked against the commit before the push
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -32,3 +34,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
+
+      # Includes the settings-code lock: old settings links must keep working.
+      - name: Test
+        run: pnpm test
+        env:
+          LOCK_BASE: ${{ github.event.before }}
