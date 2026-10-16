@@ -3,6 +3,7 @@
 // screenshots workflow on each push to master, in Playwright's headless shell
 // against a dev server it starts.
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { chromium, type Page } from 'playwright-core'
 
@@ -51,9 +52,23 @@ process.exit() // also stops the dev server
 
 async function save(path: string, png: Buffer) {
   const old = await readFile(path).catch(() => undefined)
-  if (old && !(await differs(old, png))) return console.log(`Kept ${path}, nothing changed`)
-  await writeFile(path, png)
-  console.log(`Wrote ${path}`)
+  if (old && !(await differs(old, png))) {
+    console.log(`Kept ${path}, nothing changed`)
+    png = old
+  } else {
+    await writeFile(path, png)
+    console.log(`Wrote ${path}`)
+  }
+  await stamp(path, png)
+}
+
+// Versions the README's links to a shot by its content, so browsers and
+// GitHub's image proxy fetch a new shot instead of a cached one.
+async function stamp(path: string, png: Buffer) {
+  const v = createHash('sha1').update(png).digest('hex').slice(0, 8)
+  const link = new RegExp(`${path.replaceAll('.', '\\.')}(\\?v=\\w+)?`, 'g')
+  const readme = await readFile('README.md', 'utf8')
+  await writeFile('README.md', readme.replace(link, `${path}?v=${v}`))
 }
 
 // Decodes both PNGs in the browser, which saves a PNG dependency.
