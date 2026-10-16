@@ -1,4 +1,4 @@
-import type { ScrollMode } from './scroll.ts'
+import type { Follow, ScrollMode } from './scroll.ts'
 import type { Layout, Notation } from './settings.ts'
 
 /** Encoder quality preset. Mapped to mediabunny constants inside encode.ts. */
@@ -35,7 +35,7 @@ export interface RendererOptions {
   crop?: Crop // render only these bars, default whole sheet
   // Line layout: engrave the notation so the widest run of this many
   // consecutive bars spans nearly the whole frame width (capped by the frame
-  // height); bar/pan scroll then centers the current bar and the ones after it
+  // height); the bar view then centers the current bar and the ones after it
   // (see PaintOptions.currentBarOnly). Overrides `scale`; ignored in page
   // layout. 0 (default) = off.
   fitBars?: number
@@ -100,7 +100,8 @@ export interface TitleOptions {
 
 /** Per-call paint knobs (scroll/cursor/highlight/activeNote/background/title). All optional. */
 export interface PaintOptions {
-  scroll?: ScrollMode // viewport behavior, default 'bar'
+  scroll?: ScrollMode // viewport behavior preset, default 'bar'
+  follow?: Follow // playhead and view set apart; overrides the preset's fields
   // Draw only the bar being played — with fitBars, the run of that many bars
   // from it — centered in the frame, hiding the rest of the sheet. Default false.
   currentBarOnly?: boolean

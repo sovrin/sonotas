@@ -21,7 +21,7 @@ import type { EncodeParams } from './encode.ts'
 import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions } from './types.ts'
 
 export { countBars, listTracks } from './score.ts'
-export type { ScrollMode } from './scroll.ts'
+export type { Follow, PlayheadMotion, ScrollMode, ViewMode } from './scroll.ts'
 export type { Layout, Notation } from './settings.ts'
 export type {
   ActiveNoteOptions,
@@ -197,6 +197,7 @@ export async function createRenderer(
     fast: opts.fast ?? false,
     paint: {
       scroll: opts.scroll,
+      follow: opts.follow,
       currentBarOnly: opts.currentBarOnly,
       cursor: opts.cursor,
       highlight: opts.highlight,

@@ -1,6 +1,6 @@
 import type { Beat } from './types.ts'
 
-/** How the viewport follows playback.
+/** How the viewport follows playback, as one-word presets of {@link Follow}.
  *
  * - `bar`: the view snaps to the current bar; the cursor jumps note-to-note.
  * - `pan`: like `bar`, but the view quick-pans from the previous bar when the
@@ -14,9 +14,66 @@ import type { Beat } from './types.ts'
  *   and ends half blank). On a jump the cursor rewinds with the sheet. */
 export type ScrollMode = 'bar' | 'pan' | 'smooth' | 'center'
 
-const BAR_MARGIN = 80 // px gap left of the current bar (bar/pan modes)
-const PAN_MS = 250 // pan transition time when crossing into a new bar (pan mode) or jumping (smooth/center)
+/** How the playhead moves through the score: note to note, or sweeping
+ * continuously between them. */
+export type PlayheadMotion = 'jump' | 'glide'
+
+/** When the view moves: once per bar (page layout: per line), once per
+ * screenful (it holds still until the music runs off it, then turns), or all
+ * the time, tracking the playhead. Page layout treats `track` as `bar`. */
+export type ViewMode = 'bar' | 'screen' | 'track'
+
+/** The playhead and the view, set apart. Unset fields come from the `scroll`
+ * preset. */
+export interface Follow {
+  playhead?: PlayheadMotion
+  view?: ViewMode
+  /** How long the view takes to move when it steps (and, tracking, when the
+   * music jumps), in ms. 0 cuts. */
+  transitionMs?: number
+  /** Where "now" sits in the view, 0–1 across it (page layout: down it, for
+   * the current line's middle). `bar`/`screen`: the leading bar's left edge,
+   * default 80px in; `track`: the playhead, default the middle. */
+  anchor?: number
+  /** `screen`: turn as the playhead enters the last bar (line) that fits, so it
+   * leads the next screen and what follows is already in view. */
+  early?: boolean
+  /** `track`, line layout: hold the playhead at the anchor past the sheet's
+   * ends instead of stopping the view there. */
+  overscroll?: boolean
+  /** `track`: follow a smoothed path at an even pace instead of every change
+   * in note spacing. */
+  steady?: boolean
+}
+
+export type ResolvedFollow = Required<Omit<Follow, 'anchor'>> & Pick<Follow, 'anchor'>
+
+const BAR_MARGIN = 80 // px gap left of the leading bar (bar/screen views)
+const PAN_MS = 250 // default view transition (pan preset, and jumps in smooth/center)
 const ABUT_PX = 1 // tolerance for consecutive bar boxes touching (they abut exactly)
+const STEADY_MS = 2000 // moving-average window of the steady track path
+const STEP_MS = 10 // sample spacing of the steady track path
+
+const PRESETS: Record<ScrollMode, Follow> = {
+  bar: { playhead: 'jump', view: 'bar', transitionMs: 0 },
+  pan: { playhead: 'jump', view: 'bar' },
+  smooth: { playhead: 'glide', view: 'track' },
+  center: { playhead: 'glide', view: 'track', overscroll: true }
+}
+
+/** The `scroll` preset with `follow`'s set fields on top. */
+export function resolveFollow(scroll: ScrollMode = 'bar', follow: Follow = {}): ResolvedFollow {
+  const p = PRESETS[scroll] ?? PRESETS.bar
+  return {
+    playhead: follow.playhead ?? p.playhead!,
+    view: follow.view ?? p.view!,
+    transitionMs: follow.transitionMs ?? p.transitionMs ?? PAN_MS,
+    anchor: follow.anchor,
+    early: follow.early ?? false,
+    overscroll: follow.overscroll ?? p.overscroll ?? false,
+    steady: follow.steady ?? false
+  }
+}
 
 /** Viewport geometry for one frame, before any crop clamping. */
 export interface ScrollState {
@@ -28,20 +85,21 @@ export interface ScrollState {
 
 /** View geometry at time `t` (ms) for beat `i` in the played `beats` list.
  *
- * `smooth` interpolates the note x between beat `i` and the next so the cursor
- * glides (only while both sit on the same system — across a line break it holds
- * rather than sweeping back over the page). Ahead of a jump it glides to the
- * bar's end instead, and once the jump lands the view eases over from there in
- * PAN_MS rather than sweeping back across the repeat. `center` does the same
- * with the note pinned mid-view (the caller leaves it unclamped), so across a
- * jump the note eases over too. `bar`/`pan` keep it on beat `i` and
- * anchor the view to the bar (`pan` eases the anchor across bar changes). With
- * `focus` — the sheet x to center for a beat, e.g. the middle of its bar or of
- * the bars fit around it — the view centers that instead: `bar`/`pan` rather
- * than pinning the bar a margin from the left, `smooth` rather than following
- * the note (the view holds still and the cursor glides across it). */
+ * The playhead `glide`s between beat `i` and the next while both sit on the
+ * same system (across a line break it holds rather than sweeping back over the
+ * page); ahead of a jump it glides to the bar's end instead. `jump` keeps it on
+ * beat `i`.
+ *
+ * The view, `track`ing, follows the gliding x at the anchor (even when the
+ * playhead jumps, so the view stays smooth); once a jump lands it eases over
+ * from the bar end in `transitionMs` rather than sweeping back across the
+ * repeat, and with `overscroll` the playhead eases along so it stays put. `bar`
+ * and `screen` hold on the leading bar and ease to the next in `transitionMs`.
+ * With `focus` — the sheet x to center for a beat, e.g. the middle of its bar
+ * or of the bars fit around it — the view centers that bar instead (`screen`
+ * then steps per bar like `bar`). */
 export function scrollState(
-  mode: ScrollMode,
+  f: ResolvedFollow,
   beats: Beat[],
   i: number,
   t: number,
@@ -49,39 +107,48 @@ export function scrollState(
   focus?: (b: Beat) => number
 ): ScrollState {
   const b = beats[i]!
-  if (mode === 'smooth' || mode === 'center') {
-    const next = beats[i + 1]
-    const glide = next && next.barY === b.barY
-    const toX = glide ? (continues(b, next) ? next.x : b.barX + b.barW) : b.x
-    const dur = glide ? next.startMs - b.startMs : 0
-    const f = dur > 0 ? Math.min(1, Math.max(0, (t - b.startMs) / dur)) : 0
-    const noteX = b.x + (toX - b.x) * f
-    if (focus) return { noteX, scrollX: focus(barAt(beats, i, noteX)) - width / 2 }
+  const gx = glideX(beats, i, t)
+  const noteX = f.playhead === 'glide' ? gx : b.x
+  const ms = f.transitionMs
+  if (f.view === 'track') {
+    if (focus) return { noteX, scrollX: focus(barAt(beats, i, gx)) - width / 2 }
+    const at = (f.anchor ?? 0.5) * width
+    const cam = (k: number, tt: number) => (f.steady ? steadyX(beats, k, tt) : glideX(beats, k, tt))
+    const to = cam(i, t)
     // Just jumped here from the end of another bar on this system: ease over.
     const prev = beats[i - 1]
-    const into = t - b.startMs
-    if (!prev || prev.barY !== b.barY || continues(prev, b) || into >= PAN_MS) {
-      return { noteX, scrollX: noteX - width / 2 }
+    const e = ease(t - b.startMs, ms)
+    if (!prev || prev.barY !== b.barY || continues(prev, b) || e >= 1) {
+      return { noteX, scrollX: to - at }
     }
-    const from = prev.barX + prev.barW
-    const e = 1 - (1 - Math.max(0, into) / PAN_MS) ** 2 // ease-out
-    const eased = from + (noteX - from) * e
-    // `smooth` eases the view and lets the cursor land; `center` keeps the
-    // cursor mid-view, so it rewinds with the sheet.
-    return { noteX: mode === 'center' ? eased : noteX, scrollX: eased - width / 2 }
+    const from = cam(i - 1, b.startMs)
+    // The playhead held at the anchor rides the ease with the sheet.
+    const pinned = f.overscroll && f.playhead === 'glide'
+    const end = prev.barX + prev.barW
+    return {
+      noteX: pinned ? end + (gx - end) * e : noteX,
+      scrollX: from + (to - from) * e - at
+    }
   }
-  const anchor = focus
-    ? (a: Beat) => focus(a) - width / 2
-    : (a: Beat) => a.barX - BAR_MARGIN
-  const scrollX = mode === 'pan' ? panAnchorX(beats, i, t, anchor) : anchor(b)
-  return { noteX: b.x, scrollX }
+  // A gliding playhead crosses the barline a little before the next onset;
+  // step with it, not a note behind.
+  const j = f.playhead === 'glide' && barAt(beats, i, gx) !== b ? i + 1 : i
+  const margin = f.anchor === undefined ? BAR_MARGIN : f.anchor * width
+  const left = focus
+    ? (k: number) => focus(beats[k]!) - width / 2
+    : (k: number) => beats[k]!.barX - margin
+  if (f.view === 'screen' && !focus) {
+    const leads = cached(beats, `x|${width}|${margin}|${f.early}`, () => screenLeads(beats, width, margin, f.early, false))
+    return { noteX, scrollX: stepped(beats, j, t, k => leads[k], k => left(leads[k]!), ms) }
+  }
+  return { noteX, scrollX: stepped(beats, j, t, k => beats[k]!.barX, left, ms) }
 }
 
-/** The beat whose bar the playhead is over at note x `noteX` for beat `i`. In
- * `smooth` scroll the cursor glides between notes and can cross a barline
- * before the next beat's onset; pick the bar by note x, not the last beat's
- * bar, so it advances with the cursor instead of trailing a note behind. In
- * `bar`/`pan` modes the note sits on the beat, so this is beat `i`. */
+/** The beat whose bar the playhead is over at note x `noteX` for beat `i`. A
+ * gliding playhead can cross a barline before the next beat's onset; pick the
+ * bar by note x, not the last beat's bar, so it advances with the cursor
+ * instead of trailing a note behind. A jumping one sits on the beat, so this is
+ * beat `i`. */
 export function barAt(beats: Beat[], i: number, noteX: number): Beat {
   const b = beats[i]!
   const next = beats[i + 1]
@@ -98,53 +165,158 @@ function continues(b: Beat, next: Beat): boolean {
   return Math.abs(next.barX - (b.barX + b.barW)) <= ABUT_PX
 }
 
+/** The gliding playhead's x for beat `i` at `t`: toward the next note, or to
+ * the bar's end ahead of a jump; held across a line break. */
+function glideX(beats: Beat[], i: number, t: number): number {
+  const b = beats[i]!
+  const next = beats[i + 1]
+  if (!next || next.barY !== b.barY) return b.x
+  const toX = continues(b, next) ? next.x : b.barX + b.barW
+  const dur = next.startMs - b.startMs
+  const f = dur > 0 ? Math.min(1, Math.max(0, (t - b.startMs) / dur)) : 0
+  return b.x + (toX - b.x) * f
+}
+
+/** Ease-out progress `into` ms of an `ms`-long move; 1 once it's over (or for a cut). */
+function ease(into: number, ms: number): number {
+  if (ms <= 0 || into >= ms) return 1
+  return 1 - (1 - Math.max(0, into) / ms) ** 2
+}
+
+/** A view position that holds on `target(i)` and, when `key` changed where the
+ * current run of equal keys began, eases there from wherever it was then. A
+ * run's beats are contiguous in play order, so walking back over it finds this
+ * play's start — correct across repeats. A move cut short by the next one
+ * starts the next from where it got to, so the view never jumps. */
+function stepped(
+  beats: Beat[],
+  i: number,
+  t: number,
+  key: (k: number) => unknown,
+  target: (k: number) => number,
+  ms: number
+): number {
+  const to = target(i)
+  if (ms <= 0) return to
+  let start = i
+  while (start > 0 && key(start - 1) === key(i)) start--
+  if (start === 0) return to // first run — nothing to move from
+  const e = ease(t - beats[start]!.startMs, ms)
+  if (e >= 1) return to
+  const from = stepped(beats, start - 1, beats[start]!.startMs, key, target, ms)
+  return from + (to - from) * e
+}
+
+/** For each beat, the index of the beat whose bar (`vertical`: line) leads the
+ * screen it's shown on. A screen spans `extent` from a `margin` before its
+ * leading bar and holds until the playhead enters a bar that doesn't fit, which
+ * then leads the next — or, `early`, until it enters the last bar that fits
+ * with the music running straight on past it. */
+function screenLeads(
+  beats: Beat[],
+  extent: number,
+  margin: number,
+  early: boolean,
+  vertical: boolean
+): Int32Array {
+  const pos = (b: Beat) => (vertical ? b.barY : b.barX)
+  const size = (b: Beat) => (vertical ? b.barH : b.barW)
+  const onward = (b: Beat, next: Beat) => (vertical ? next.barY > b.barY : continues(b, next))
+  const leads = new Int32Array(beats.length)
+  let lead = 0
+  let lo = beats.length ? pos(beats[0]!) - margin : 0
+  const fits = (b: Beat) => pos(b) >= lo && pos(b) + size(b) <= lo + extent + ABUT_PX
+  for (let k = 1; k < beats.length; k++) {
+    const b = beats[k]!
+    if (pos(b) !== pos(beats[k - 1]!)) {
+      let n = k + 1
+      while (n < beats.length && pos(beats[n]!) === pos(b)) n++
+      const next = beats[n]
+      const turn = !fits(b) || (early && pos(beats[lead]!) !== pos(b) && !!next && onward(beats[n - 1]!, next) && !fits(next))
+      if (turn) {
+        lead = k
+        lo = pos(b) - margin
+      }
+    }
+    leads[k] = lead
+  }
+  return leads
+}
+
+/** The track view's x for beat `i` at `t` on the steady path: the gliding x
+ * averaged over STEADY_MS, so the view keeps an even pace through dense and
+ * sparse passages. Each straight run between jumps is smoothed on its own,
+ * the window narrowing toward its ends, so the path still meets each jump. */
+function steadyX(beats: Beat[], i: number, t: number): number {
+  const { segOf, segs } = cached(beats, 'steady', () => steadyPath(beats))
+  const s = segs[segOf[i]!]!
+  const p = Math.min(Math.max((t - s.t0) / STEP_MS, 0), s.xs.length - 1)
+  const k = Math.floor(p)
+  const x0 = s.xs[k]!
+  return x0 + ((s.xs[k + 1] ?? x0) - x0) * (p - k)
+}
+
+function steadyPath(beats: Beat[]) {
+  const segOf = new Int32Array(beats.length)
+  const segs: { t0: number, xs: Float64Array }[] = []
+  let first = 0
+  for (let end = 1; end <= beats.length; end++) {
+    if (end < beats.length && continues(beats[end - 1]!, beats[end]!)) continue
+    const t0 = beats[first]!.startMs
+    const t1 = beats[end]?.startMs ?? beats[end - 1]!.startMs
+    const n = Math.floor((t1 - t0) / STEP_MS) + 1
+    const raw = new Float64Array(n)
+    for (let m = 0, j = first; m < n; m++) {
+      const tt = t0 + m * STEP_MS
+      while (j + 1 < end && beats[j + 1]!.startMs <= tt) j++
+      raw[m] = glideX(beats, j, tt)
+    }
+    const sum = new Float64Array(n + 1)
+    for (let m = 0; m < n; m++) sum[m + 1] = sum[m]! + raw[m]!
+    const half = Math.round(STEADY_MS / 2 / STEP_MS)
+    const xs = new Float64Array(n)
+    for (let m = 0; m < n; m++) {
+      const h = Math.min(half, m, n - 1 - m)
+      xs[m] = (sum[m + h + 1]! - sum[m - h]!) / (2 * h + 1)
+    }
+    segOf.fill(segs.length, first, end)
+    segs.push({ t0, xs })
+    first = end
+  }
+  return { segOf, segs }
+}
+
+// Per-beats-list memo for the precomputed screen leads and steady path, so
+// every frame stays a pure function of `t` without redoing them.
+const memo = new WeakMap<Beat[], Map<string, unknown>>()
+function cached<T>(beats: Beat[], key: string, make: () => T): T {
+  let m = memo.get(beats)
+  if (!m) memo.set(beats, (m = new Map()))
+  if (!m.has(key)) {
+    if (m.size > 16) m.clear() // e.g. a dragged anchor; keeps it bounded
+    m.set(key, make())
+  }
+  return m.get(key) as T
+}
+
 /** Wanted viewport top at time `t` for beat `i` when systems stack vertically
- * (page layout): the current bar's system centered in a `viewportH`-tall view.
- * `bar` cuts to it; `pan` and `smooth` ease from the previous system's position
- * over the first PAN_MS after crossing into a new one. Before any clamping. */
+ * (page layout). `bar`/`track` put the current line's middle at the anchor
+ * (default the view's middle); `screen` holds a screenful of lines with the
+ * leading one on top until the playhead runs off it. Either eases over
+ * `transitionMs` from where it was. Before any clamping. */
 export function scrollStateY(
-  mode: ScrollMode,
+  f: ResolvedFollow,
   beats: Beat[],
   i: number,
   t: number,
   viewportH: number
 ): number {
-  const center = (b: Beat) => b.barY + b.barH / 2 - viewportH / 2
-  const target = center(beats[i]!)
-  if (mode === 'bar') return target
-  // Walk back over this system's contiguous run of beats to find when the
-  // cursor entered it; a system's beats are contiguous in play order.
-  const barY = beats[i]!.barY
-  let start = i
-  while (start > 0 && beats[start - 1]!.barY === barY) start--
-  if (start === 0) return target
-  const into = t - beats[start]!.startMs
-  if (into >= PAN_MS) return target
-  const prev = center(beats[start - 1]!)
-  const e = 1 - (1 - into / PAN_MS) ** 2 // ease-out
-  return prev + (target - prev) * e
-}
-
-/** Eased view-left x for `pan` mode: the view holds on the current bar's
- * `anchor` and quick-pans from the previous bar's when the cursor has just
- * crossed in. A bar's beats are contiguous in play order, so walking back over
- * the equal-`barX` run finds this play's start — correct across repeats. */
-function panAnchorX(
-  beats: Beat[],
-  i: number,
-  t: number,
-  anchor: (b: Beat) => number
-): number {
-  const barX = beats[i]!.barX
-  const target = anchor(beats[i]!)
-  let start = i
-  while (start > 0 && beats[start - 1]!.barX === barX) start--
-  if (start === 0) return target // first bar — nothing to pan from
-  const into = t - beats[start]!.startMs
-  if (into >= PAN_MS) return target
-  const prev = anchor(beats[start - 1]!)
-  const e = 1 - (1 - into / PAN_MS) ** 2 // ease-out
-  return prev + (target - prev) * e
+  if (f.view === 'screen') {
+    const leads = cached(beats, `y|${viewportH}|${f.early}`, () => screenLeads(beats, viewportH, 0, f.early, true))
+    return stepped(beats, i, t, k => leads[k], k => beats[leads[k]!]!.barY, f.transitionMs)
+  }
+  const at = (f.anchor ?? 0.5) * viewportH
+  return stepped(beats, i, t, k => beats[k]!.barY, k => beats[k]!.barY + beats[k]!.barH / 2 - at, f.transitionMs)
 }
 
 /** Clamp a wanted viewport-left `x` into the scrollable range for a `width`-wide

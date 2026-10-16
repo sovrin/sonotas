@@ -22,7 +22,6 @@ const SAMPLE_URL = '/tabs/Catastrophic.gp'
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
-const SCROLL_BY_UI: Record<string, string> = { 'Bar snap': 'bar', 'Bar pan': 'pan', 'Continuous': 'smooth', 'Centered': 'center' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
 // Quiet time after the last settings change before the size probe runs.
@@ -51,7 +50,14 @@ function createSonotas() {
     fps: '30 fps',
     quality: 'High',
     fastExport: false, // parallel software encoders: much faster, larger files
-    scroll: 'Bar snap',
+    // Follow: the playhead and the view set apart (paint-time).
+    playhead: 'jump', // 'jump' note to note | 'glide' through the bar
+    view: 'bar', // 'bar' (page: per line) | 'screen' | 'track'
+    transition: 0, // ms the view takes to move; 0 cuts
+    followAt: 5, // % where now sits in the view (Follow resets it per view)
+    turnEarly: true, // screen: turn on the last bar that fits
+    runPast: false, // track: keep the playhead put past the sheet's ends
+    steady: true, // track: an even pace instead of every note's spacing
     layout: 'Scrolling line', // one endless system, or page-style wrapped systems
     speed: '1×',
     highlightBar: true, // played-bar highlight (paint-time)
@@ -142,10 +148,6 @@ function createSonotas() {
     return NOTATION_BY_STAVES[s.staves] ?? 'tab'
   }
 
-  function scrollMode() {
-    return SCROLL_BY_UI[s.scroll] ?? 'bar'
-  }
-
   function layoutMode() {
     return LAYOUT_BY_UI[s.layout] ?? 'line'
   }
@@ -197,7 +199,15 @@ function createSonotas() {
 
   function paintOpts() {
     return {
-      scroll: scrollMode(),
+      follow: {
+        playhead: s.playhead,
+        view: s.view,
+        transitionMs: s.transition,
+        anchor: s.followAt / 100,
+        early: s.turnEarly,
+        overscroll: s.runPast,
+        steady: s.steady
+      },
       currentBarOnly: s.currentBarOnly,
       cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset, heightMode: s.cursorMatchBar ? 'bar' : 'frame' },
       highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
@@ -592,7 +602,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.scroll, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => {
       invalidateResult()
       invalidateEstimate()

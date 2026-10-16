@@ -43,28 +43,70 @@ const SIZES = [
   { v: '150%', label: 'XL' }
 ]
 
-// Page layout moves down, not across: centring has nothing to centre there.
-const FOLLOWS = [
-  { v: 'Bar snap', label: 'Snap', hint: 'The view cuts to each new bar.', centred: 'The view cuts to each new bar, centred.', page: 'The view cuts to each new line.' },
-  { v: 'Bar pan', label: 'Pan', hint: 'The view slides over to each new bar.', centred: 'The view slides over to each new bar, centred.', page: 'The view slides down to each new line.' },
-  { v: 'Continuous', label: 'Smooth', hint: 'The view glides along with the music.', page: 'The playhead glides; the view slides down to each new line.' },
-  { v: 'Centered', label: 'Center', hint: 'The playhead stays mid-frame and the score runs under it.', line: true }
+// Follow sets the playhead and the view apart; the knobs under them only show
+// where they do something. Page layout moves down, not across: it steps per
+// line, and has nothing to track or run past.
+const PLAYHEADS = [
+  { v: 'jump', label: 'Jump', hint: 'The playhead steps from note to note.' },
+  { v: 'glide', label: 'Glide', hint: 'The playhead sweeps through each bar in time.' }
 ]
-const follows = computed(() => FOLLOWS.filter(f => !v.value.isPage || !f.line))
-const followHint = computed(() => {
-  const f = FOLLOWS.find(o => o.v === s.scroll)
-  if (!f) return ''
-  if (v.value.isPage) return f.page ?? f.hint
-  // Framed bars are centred instead of pinned left when snapping or panning.
-  return (byBars.value && f.centred) || f.hint
+const playheadHint = computed(() => PLAYHEADS.find(p => p.v === s.playhead)?.hint)
+
+const VIEWS = [
+  { v: 'bar', label: 'Bar', hint: 'The view moves once per bar.', centred: 'The view moves once per bar, keeping the bars centred.', page: 'The view moves once per line.', pageLabel: 'Line' },
+  { v: 'screen', label: 'Screen', hint: 'The view holds still, then turns a whole screen.', page: 'The view holds a screenful of lines, then turns the page.' },
+  { v: 'track', label: 'Track', hint: 'The view moves all the time, keeping the playhead in place.', line: true }
+]
+// Showing only the current bars leaves no screen to turn.
+const views = computed(() => VIEWS
+  .filter(o => !(v.value.isPage && o.line) && !(s.currentBarOnly && o.v === 'screen'))
+  .map(o => ({ ...o, label: (v.value.isPage && o.pageLabel) || o.label })))
+const viewHint = computed(() => {
+  const o = VIEWS.find(x => x.v === s.view)
+  if (!o) return ''
+  if (v.value.isPage) return o.page ?? o.hint
+  // Framed bars are centred instead of pinned left in the bar view.
+  return (byBars.value && o.centred) || o.hint
 })
 
-// A page has no bars-across zoom to isolate, and nothing to centre across:
+const TRANSITIONS = [
+  { v: 0, label: 'Cut' },
+  { v: 250, label: 'Quick' },
+  { v: 600, label: 'Slow' }
+]
+const transitionHint = computed(() => {
+  if (s.view === 'track') return s.transition ? 'How the view moves over to repeats and jumps.' : 'The view cuts to repeats and jumps.'
+  return s.transition ? 'How long the view takes to move over.' : 'The view cuts straight to its new place.'
+})
+
+// Where now sits: the leading bar's left edge, the playhead, or the current
+// line's middle. Centred bars (framed or alone) leave nothing to place.
+const showAt = computed(() => s.view !== 'screen' && !s.currentBarOnly && !(byBars.value && s.view === 'bar'))
+const at = computed(() => s.followAt)
+const atLabel = computed(() => v.value.isPage ? 'Current line sits at' : s.view === 'track' ? 'Playhead sits at' : 'Current bar starts at')
+const atHint = computed(() => {
+  if (v.value.isPage) return `${at.value}% down the frame.`
+  if (s.view === 'track') return at.value < 50 ? `${at.value}% across, leaving more of what is coming in view.` : `${at.value}% across the frame.`
+  return `${at.value}% in from the left edge.`
+})
+function setAt(e) {
+  s.followAt = Number(e.target.value)
+}
+// Each view has its own natural spot (a bar near the left edge, the playhead
+// or a line mid-frame); switching starts there again.
+watch(() => `${s.view}|${v.value.isPage}`, () => {
+  s.followAt = v.value.isPage || s.view === 'track' ? 50 : 5
+})
+
+// A page has no bars-across zoom to isolate, and nothing to track across:
 // drop both, since their switches are hidden there.
 watch(() => v.value.isPage, (page) => {
   if (!page) return
   s.currentBarOnly = false
-  if (s.scroll === 'Centered') s.scroll = 'Continuous'
+  if (s.view === 'track') s.view = 'bar'
+})
+watch(() => s.currentBarOnly, (only) => {
+  if (only && s.view === 'screen') s.view = 'bar'
 })
 </script>
 
@@ -206,12 +248,83 @@ watch(() => v.value.isPage, (page) => {
 
     <InspectorGroup title="Follow">
       <SegmentedField
-        name="scroll"
-        label="How the view follows the music"
-        :options="follows"
+        name="playhead"
+        label="Playhead"
+        :options="PLAYHEADS"
       >
-        <small>{{ followHint }}</small>
+        <small>{{ playheadHint }}</small>
       </SegmentedField>
+
+      <SegmentedField
+        name="view"
+        label="View"
+        :options="views"
+      >
+        <small>{{ viewHint }}</small>
+      </SegmentedField>
+
+      <SegmentedField
+        name="transition"
+        label="Transition"
+        :options="TRANSITIONS"
+      >
+        <small>{{ transitionHint }}</small>
+      </SegmentedField>
+
+      <div
+        v-if="showAt"
+        class="field"
+      >
+        <label
+          for="followAt"
+          class="flex justify-between"
+        >
+          <span>{{ atLabel }}</span>
+          <span class="tabular">{{ at }}%</span>
+        </label>
+        <input
+          id="followAt"
+          type="range"
+          min="0"
+          max="90"
+          step="5"
+          :value="at"
+          :style="{ '--value': (at / 90) * 100 + '%' }"
+          @input="setAt"
+        >
+        <small>{{ atHint }}</small>
+      </div>
+
+      <label v-if="s.view === 'screen'">
+        <input
+          type="checkbox"
+          role="switch"
+          :checked="s.turnEarly"
+          @change="toggle('turnEarly')"
+        >
+        Turn a {{ v.isPage ? 'line' : 'bar' }} early, so what comes next is in view
+      </label>
+
+      <template v-if="s.view === 'track' && !v.isPage">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.steady"
+            @change="toggle('steady')"
+          >
+          Steady speed through busy and sparse passages
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.runPast"
+            @change="toggle('runPast')"
+          >
+          Keep the playhead in place past the song's ends
+        </label>
+      </template>
     </InspectorGroup>
   </div>
 </template>

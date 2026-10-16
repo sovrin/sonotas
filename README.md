@@ -20,8 +20,11 @@ entirely on your machine, so nothing gets uploaded.
   across several encoders at once; *Fast export* switches to software encoders
   on half your CPU cores for roughly 3× faster exports and larger files.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
-- **Two layouts:** a single *line* that scrolls (bar snap, bar pan, continuous or
-  centered), or a *page* of wrapped systems that the view follows down.
+- **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
+  that the view follows down.
+- **Follow, your way:** a playhead that jumps or glides, and a view that moves
+  per bar, turns a screen at a time or tracks the playhead, with cut, quick or
+  slow transitions and where in the frame *now* sits.
 - **Fit to width:** size the notation so 1–8 bars span the frame, optionally
   showing only the current bars.
 - **Styling:** tab only, standard notation or both. Dark or light canvas, custom

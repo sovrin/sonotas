@@ -1,6 +1,6 @@
 import type { Beat, Box, PaintOptions, Tile } from './types.ts'
 import type { Layout } from './settings.ts'
-import { barAt, clampScroll, scrollState, scrollStateY } from './scroll.ts'
+import { barAt, clampScroll, resolveFollow, scrollState, scrollStateY } from './scroll.ts'
 import { cursorRect } from './cursor.ts'
 import { barWindow } from './fit.ts'
 
@@ -41,7 +41,7 @@ export interface SheetView {
   layout?: Layout
   /** Line layout engraved so the widest run of this many bars nearly fills the
    * frame: the bar boxes (not the whole band) are centered vertically, and
-   * `bar`/`pan` scroll center the current bar and the ones after it instead of
+   * the bar view centers the current bar and the ones after it instead of
    * pinning the bar near the left edge. 0/undefined: off. */
   fitBars?: number
   /** Song metadata for the title overlay ('' draws nothing). */
@@ -162,7 +162,7 @@ export function createPainter(view: SheetView): Painter {
   }
 
   function paint(ctx: Ctx, t: number, opts?: PaintOptions): void {
-    const scroll = opts?.scroll ?? 'bar'
+    const follow = resolveFollow(opts?.scroll, opts?.follow)
     const cursorColor = opts?.cursor?.color ?? DEFAULT_CURSOR_COLOR
     const cursorWidth = opts?.cursor?.width ?? DEFAULT_CURSOR_WIDTH
     const cursorOffsetX = opts?.cursor?.offsetX ?? DEFAULT_CURSOR_OFFSET_X
@@ -190,20 +190,20 @@ export function createPainter(view: SheetView): Painter {
     // live there). Page layout is as wide as the frame and scrolls along y,
     // below the title block, bounded by the sheet itself. The bar(s) in focus
     // are centered — when they're the only ones drawn (every scroll mode, both
-    // axes), or fit to the frame in bar/pan scroll — and then left unbounded, so
-    // the first and last bars center like the rest. `center` scroll is left
-    // unbounded too, keeping the cursor mid-frame from first note to last.
-    const center = currentBarOnly || (!!fitBars && (scroll === 'bar' || scroll === 'pan'))
+    // axes), or fit to the frame in the bar view — and then left unbounded, so
+    // the first and last bars center like the rest. Overscroll tracking is left
+    // unbounded too, keeping the cursor at its anchor from first note to last.
+    const center = currentBarOnly || (!!fitBars && follow.view === 'bar')
     const focus = center ? focusMid : undefined
-    const { noteX, scrollX: wantedX } = scrollState(scroll, beats, i, t, viewportSheet, focus)
+    const { noteX, scrollX: wantedX } = scrollState(follow, beats, i, t, viewportSheet, focus)
     const top = page ? titleBlockHeight(titleEnabled) : bandTop
     const viewportH = height - top
-    const scrollX = center || (scroll === 'center' && !page)
+    const scrollX = center || (follow.view === 'track' && follow.overscroll && !page)
       ? wantedX
       : page
         ? 0
         : clampScroll(wantedX, -EDGE_MARGIN, contentRight + EDGE_MARGIN, viewportSheet)
-    const wantedY = page ? scrollStateY(scroll, beats, i, t, viewportH) : 0
+    const wantedY = page ? scrollStateY(follow, beats, i, t, viewportH) : 0
     const scrollY = page && !currentBarOnly
       ? clampScroll(wantedY, 0, contentBottom, viewportH)
       : wantedY
