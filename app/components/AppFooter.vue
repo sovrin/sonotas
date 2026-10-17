@@ -26,6 +26,10 @@ import { version } from '~~/package.json'
     </span>
     <span class="end">
       <span class="font-mono">v{{ version }}</span> · <a
+        href="https://github.com/sovrin/sonotas"
+        target="_blank"
+        rel="noopener"
+      >Source</a> · <a
         href="https://sovrin.de"
         target="_blank"
         rel="noopener"
