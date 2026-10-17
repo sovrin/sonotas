@@ -45,7 +45,7 @@ function loadForm() {
 
 function openFeedback() {
   loadForm()
-  feedbackContext.value = { version, browser: navigator.userAgent.slice(0, 200) }
+  feedbackContext.value = { version, browser: navigator.userAgent }
   // A fresh form each time: a new token, and room for another message after a sent one.
   feedbackOpen.value = true
   feedbackDlg.value?.showModal()
