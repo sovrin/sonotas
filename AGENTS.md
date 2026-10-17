@@ -54,9 +54,10 @@ Commit messages are [conventional](https://www.conventionalcommits.org):
 `feat(timeline): …`, `fix: …`, `docs(readme): …`. Give a scope or leave the
 parentheses out; never write `feat(): …`. release-please can't parse an empty
 scope and silently drops the commit from the next version and the changelog.
-`feat` bumps the minor version, `fix` the patch; mark a change that breaks
-shared settings links with `!` (`feat(settings)!: …`). Don't edit the version
-in `package.json` or `CHANGELOG.md` by hand; the release PR does that.
+Before 1.0, `feat` and `fix` bump the patch version and a change marked `!`
+the minor. Mark a change that breaks shared settings links with `!`
+(`feat(settings)!: …`). Don't edit the version in `package.json` or
+`CHANGELOG.md` by hand; the release PR does that.
 
 `feat`, `fix` and `perf` subjects are shown to users word for word in the
 app's "What's new" (the scope is dropped). Write them as what a user notices,
