@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/sovrin/sonotas/compare/v0.2.1...v0.2.2) (2026-10-17)
+
+
+### Features
+
+* **app:** link the source on GitHub from the footer ([4317b4b](https://github.com/sovrin/sonotas/commit/4317b4b52081c97318a2efb32ba7c6523e7ae799))
+
 ## [0.2.1](https://github.com/sovrin/sonotas/compare/v0.2.0...v0.2.1) (2026-10-17)
 
 
