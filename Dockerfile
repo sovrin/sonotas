@@ -17,21 +17,26 @@ RUN corepack enable
 
 WORKDIR /app
 
+# hb-subset (libharfbuzz-bin) subsets the CFF outlines, ttx (fonttools) rewrites
+# the internal names away from Bravura's reserved font name, woff2_compress packs
+# the result. The wasm harfbuzz ports drop CFF outlines, so we need the real binaries.
+# Only the font stage uses them, but they go in ahead of the manifests, which change
+# every release, so they stay cached.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libharfbuzz-bin woff2 fonttools \
+    && rm -rf /var/lib/apt/lists/*
+
 # Warm the dependency cache from the workspace manifests before copying sources.
 # Scripts are skipped: `nuxt prepare` (postinstall) needs the sources, and
 # `nuxt generate` prepares on its own anyway.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/renderer/package.json ./packages/renderer/package.json
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# release-please bumps package.json every release, so this layer always reruns: keep
+# the downloaded packages in a build cache instead, and it only links them.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile --ignore-scripts --store-dir /pnpm/store
 
 FROM deps AS font-build
-
-# hb-subset (libharfbuzz-bin) subsets the CFF outlines, ttx (fonttools) rewrites
-# the internal names away from Bravura's reserved font name, woff2_compress packs
-# the result. The wasm harfbuzz ports drop CFF outlines, so we need the real binaries.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      libharfbuzz-bin woff2 fonttools \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY packages/renderer ./packages/renderer
 RUN pnpm --filter renderer build-font
