@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/sovrin/sonotas/compare/v0.2.0...v0.2.1) (2026-10-17)
+
+
+### Features
+
+* **app:** send feedback from inside sonotas ([0c33669](https://github.com/sovrin/sonotas/commit/0c33669d9adece38ff27e92bce9c61df10c00cf8))
+
 ## [0.2.0](https://github.com/sovrin/sonotas/compare/v0.1.0...v0.2.0) (2026-10-16)
 
 
