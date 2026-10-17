@@ -16,6 +16,13 @@ export default defineNuxtConfig({
     '~/assets/css/main.css'
   ],
 
+  // <collatas-form> is the feedback form, a web component loaded from collatas (AppHelp).
+  vue: {
+    compilerOptions: {
+      isCustomElement: tag => tag === 'collatas-form'
+    }
+  },
+
   // The renderer package ships raw .ts and pulls browser-only deps
   // (alphaTab, mediabunny/WebCodecs); Nuxt must transpile it, and it is only
   // ever imported dynamically on the client (see useSonotas).

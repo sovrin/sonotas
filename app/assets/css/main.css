@@ -657,3 +657,11 @@ input[role="switch"]:not(:checked)::after {
     padding: var(--ae-space-4);
   }
 }
+
+/* The feedback form (collatas' web component, in the light DOM) sends with a primary button,
+   which would take the accent. In sonotas amber means "now" and Export, so Send reads in ink
+   like every other action. */
+collatas-form .btn[data-variant="primary"] {
+  --ae-tone: var(--ae-text);
+  --ae-tone-contrast: var(--ae-surface);
+}

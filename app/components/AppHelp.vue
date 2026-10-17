@@ -1,4 +1,6 @@
 <script setup>
+import { version } from '~~/package.json'
+
 // What is not a setting, the keys and how the app works, each behind a quiet
 // icon in the toolbar and shown in a dialog.
 const keysDlg = ref(null)
@@ -11,6 +13,43 @@ const changelog = Object.values(import.meta.glob('../../CHANGELOG.md', { query: 
 const releases = parseChangelog(changelog)
 // A fixed locale and zone, so the prerendered page and the browser agree.
 const longDate = d => new Date(d).toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+// Feedback goes to collatas, which serves the form as a web component. It is
+// loaded only once someone opens the dialog, so until then sonotas talks to no
+// other server. The form shows what it sends: the message, this page's address
+// (the settings are in it) and the context below, as far as collatas accepts it.
+const FEEDBACK_FORM = 'https://collatas.sovrin.de/v1/form.js'
+// A server that takes the connection but never answers must not leave the dialog empty.
+const FORM_TIMEOUT = 10_000
+const feedbackDlg = ref(null)
+const feedbackOpen = ref(false)
+const formState = ref('idle') // loading, ready or failed
+const feedbackContext = ref({})
+let formLoaded = null
+
+/** Loads the form component once. A failed or timed-out load is tried again on the next open;
+ *  whatever goes wrong stays in this dialog, the rest of sonotas never waits on collatas. */
+function loadForm() {
+  formLoaded ??= Promise.race([
+    import(/* @vite-ignore */ FEEDBACK_FORM),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), FORM_TIMEOUT))
+  ]).then(
+    () => (formState.value = 'ready'),
+    () => {
+      formLoaded = null
+      formState.value = 'failed'
+    }
+  )
+  if (formState.value !== 'ready') formState.value = 'loading'
+}
+
+function openFeedback() {
+  loadForm()
+  feedbackContext.value = { version, browser: navigator.userAgent.slice(0, 200) }
+  // A fresh form each time: a new token, and room for another message after a sent one.
+  feedbackOpen.value = true
+  feedbackDlg.value?.showModal()
+}
 
 // No aequitas.js here, so a click on the backdrop closes the dialog by hand.
 function lightDismiss(e) {
@@ -64,6 +103,22 @@ function lightDismiss(e) {
     <i
       class="icon"
       data-icon="sparkles"
+    />
+  </button>
+
+  <button
+    class="btn"
+    data-icon
+    data-size="s"
+    data-variant="ghost"
+    aria-label="Send feedback"
+    data-tip="Send feedback"
+    data-tip-side="bottom"
+    @click="openFeedback"
+  >
+    <i
+      class="icon"
+      data-icon="message-square"
     />
   </button>
 
@@ -195,5 +250,48 @@ function lightDismiss(e) {
         </button>
       </div>
     </form>
+  </dialog>
+
+  <dialog
+    ref="feedbackDlg"
+    aria-labelledby="feedback-title"
+    @click="lightDismiss"
+    @close="feedbackOpen = false"
+  >
+    <!-- The form is its own <form>, so the dialog's close button sits apart. -->
+    <div class="stack gap-4">
+      <h3 id="feedback-title">
+        Send feedback
+      </h3>
+      <p
+        v-if="formState === 'failed'"
+        class="text-muted"
+      >
+        The feedback form could not be loaded. Try again later.
+      </p>
+      <p
+        v-else-if="formState === 'loading'"
+        class="text-muted"
+        role="status"
+      >
+        Loading the form…
+      </p>
+      <collatas-form
+        v-else-if="feedbackOpen"
+        app="sonotas"
+        :context.prop="feedbackContext"
+      />
+      <p class="text-muted text-s">
+        Your tab file is not sent.
+      </p>
+      <form
+        method="dialog"
+        class="self-end"
+      >
+        <button class="btn">
+          Close
+        </button>
+      </form>
+    </div>
   </dialog>
 </template>
