@@ -33,11 +33,22 @@ trademark records are kept inside the file. See the README for how it is built.
 
 ## mediabunny
 
-Muxes the WebCodecs-encoded frames into the exported MP4.
+Muxes the WebCodecs-encoded frames and soundtrack into the exported MP4.
 
 - Copyright © Vanilagy
 - License: [Mozilla Public License 2.0](https://github.com/Vanilagy/mediabunny/blob/main/LICENSE)
 - Source: <https://github.com/Vanilagy/mediabunny> · <https://mediabunny.dev>
+
+## Sonivox soundfont
+
+The General MIDI instruments alphaTab's synthesizer plays when sound is on.
+sonotas ships the copy bundled with alphaTab unmodified
+(`public/soundfont/sonivox.sf3`, its license beside it). It is based on the
+Sonivox EAS synthesizer of the Android Open Source Project.
+
+- Copyright © 2004-2006 Sonic Network Inc.
+- License: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Source: <https://musical-artifacts.com/artifacts/1517> · <https://android.googlesource.com/platform/external/sonivox/>
 
 ## Nuxt
 

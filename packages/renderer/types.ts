@@ -53,6 +53,7 @@ export interface RendererOptions {
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
   fontUrl?: string // URL of the woff2 music font (a Bravura subset), default '/fonts/sonotas-music.woff2'
+  soundFontUrl?: string // URL of the sf2/sf3 soundfont for audio, default '/soundfont/sonivox.sf3'; fetched on first use
 }
 
 /** Cursor appearance knobs. All optional; omission preserves current output. */
@@ -124,6 +125,8 @@ export interface EncodeOptions extends PaintOptions {
    * larger files with slightly softer motion. Falls back to the default
    * constant-quality encoder where software H.264 isn't available. */
   fast?: boolean
+  /** Add a synthesized soundtrack (every track of the song). Default false. */
+  audio?: boolean
   onProgress?: (frame: number, total: number) => void
   /** Stops the encode: encoders are closed at once and `encode()` rejects with
    * the signal's reason (an AbortError by default). */
@@ -157,6 +160,11 @@ export interface Renderer {
    * preview to seek. A bar played more than once resolves to the play nearest
    * `atMs`. */
   timeAt(atMs: number, x: number, y: number, opts?: PaintOptions): number | null
+  /** Synthesize a clip of the song (every track) as interleaved stereo at
+   * SAMPLE_RATE, played at `speed`. `endMs` defaults to the end plus the
+   * last notes' ring-out (when the clip ends the song). Fetches the soundfont
+   * on first use. */
+  soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'>): Promise<Float32Array>
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its

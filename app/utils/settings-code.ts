@@ -34,6 +34,7 @@ export const APP_DEFAULTS = {
   fps: '30 fps',
   quality: 'High',
   fastExport: false, // parallel software encoders: much faster, larger files
+  sound: false, // synthesized soundtrack in preview and export
   speed: '1×',
   layout: 'Scrolling line', // one endless system, or page-style wrapped systems
   notationSize: '100%',
@@ -147,7 +148,8 @@ export const FIELDS: readonly Field[] = [
   { id: 39, key: 'cursorMatchBar', type: 'bool', absent: false },
   { id: 40, key: 'highlightPadding', type: 'int', min: 0, max: 20, absent: 6 },
   { id: 41, key: 'showTimeSig', type: 'bool', absent: true },
-  { id: 42, key: 'showAttribution', type: 'bool', absent: true }
+  { id: 42, key: 'showAttribution', type: 'bool', absent: true },
+  { id: 43, key: 'sound', type: 'bool', absent: false }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

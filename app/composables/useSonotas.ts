@@ -92,6 +92,12 @@ function createSonotas() {
   let canvasEl: HTMLCanvasElement | null = null
   let raf: number | null = null
   let lastTs = 0
+  let playToken = 0 // bumped on every stop, so a play still awaiting its soundtrack gives up
+  let audioCtx: AudioContext | null = null
+  let soundBuf: { engine: unknown, speed: number, buf: AudioBuffer } | null = null // engine: the sheet it was made for
+  // The soundtrack while it plays: the audio clock and song time (s) it started at.
+  let voice: { node: AudioBufferSourceNode, at: number, from: number, speed: number } | null = null
+  let ringing: AudioBufferSourceNode | null = null // a finished run's soundtrack, still ringing out
   let buildToken = 0
   let rendering: AbortController | null = null // the in-flight export
   let rebuildTimer: ReturnType<typeof setTimeout> | null = null
@@ -214,6 +220,7 @@ function createSonotas() {
       speed: speedNum(),
       quality: qualityMode(),
       fast: s.fastExport,
+      audio: s.sound,
       startMs: 0,
       endMs: s.duration * 1000,
       ...paintOpts()
@@ -353,21 +360,51 @@ function createSonotas() {
     return parseFloat(s.speed) || 1
   }
 
-  function stopLoop() {
+  // `ringOut`: playback reached the end, so let the soundtrack play its last
+  // notes' release instead of cutting it.
+  function stopLoop(ringOut = false) {
+    playToken++
     if (raf !== null) {
       cancelAnimationFrame(raf)
       raf = null
     }
+    ringing?.stop()
+    ringing = null
+    if (ringOut) ringing = voice?.node ?? null
+    else voice?.node.stop()
+    voice = null
+  }
+
+  // The whole song as an AudioBuffer at the current speed, synthesized once per
+  // sheet and speed.
+  async function soundBuffer(ctx: AudioContext): Promise<AudioBuffer> {
+    const owner = engine!
+    const speed = speedNum()
+    if (soundBuf?.engine === owner && soundBuf.speed === speed) return soundBuf.buf
+    const { CHANNELS, SAMPLE_RATE } = await import('renderer')
+    const pcm = await owner.soundtrack({ speed })
+    const frames = pcm.length / CHANNELS
+    const buf = ctx.createBuffer(CHANNELS, frames, SAMPLE_RATE)
+    for (let c = 0; c < CHANNELS; c++) {
+      const ch = buf.getChannelData(c)
+      for (let i = 0; i < frames; i++) ch[i] = pcm[i * CHANNELS + c]!
+    }
+    soundBuf = { engine: owner, speed, buf }
+    return buf
   }
 
   function tick(ts: number) {
     const dt = (ts - lastTs) / 1000
     lastTs = ts
-    const t = s.time + dt * speedNum()
+    // With sound on, the audio clock leads (less what's still in the output
+    // buffer), so the cursor can't drift from what's heard.
+    const t = voice
+      ? voice.from + Math.max(0, audioCtx!.currentTime - (audioCtx!.outputLatency || 0) - voice.at) * voice.speed
+      : s.time + dt * speedNum()
     if (t >= s.duration) {
       s.time = s.duration
       s.playing = false
-      stopLoop()
+      stopLoop(true)
       paintFrame()
       return
     }
@@ -376,7 +413,7 @@ function createSonotas() {
     raf = requestAnimationFrame(tick)
   }
 
-  function togglePlay() {
+  async function togglePlay() {
     if (s.playing) {
       stopLoop()
       s.playing = false
@@ -384,6 +421,24 @@ function createSonotas() {
     }
     if (s.time >= s.duration) s.time = 0
     s.playing = true
+    stopLoop() // silences a previous run still ringing out
+    if (s.sound && engine) {
+      const token = playToken
+      audioCtx ??= new AudioContext() // made inside the click, so the browser lets it play
+      void audioCtx.resume()
+      try {
+        const buf = await soundBuffer(audioCtx)
+        if (token !== playToken) return // paused or seeked while it rendered
+        const node = audioCtx.createBufferSource()
+        node.buffer = buf
+        node.connect(audioCtx.destination)
+        const speed = speedNum()
+        node.start(0, s.time / speed)
+        voice = { node, at: audioCtx.currentTime, from: s.time, speed }
+      } catch (err) {
+        console.warn('sonotas: no sound', err) // play on silently
+      }
+    }
     lastTs = performance.now()
     raf = requestAnimationFrame(tick)
   }
@@ -661,9 +716,16 @@ function createSonotas() {
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.fastExport, s.speed].join('|'), () => {
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed, s.sound].join('|'), () => {
     invalidateResult()
     invalidateEstimate()
+  })
+  // The playing soundtrack was made for the old speed / sound setting: pause.
+  watch(() => [s.speed, s.sound], () => {
+    if (s.playing) {
+      stopLoop()
+      s.playing = false
+    }
   })
   // The probe yields to neither playback nor an export: pause it for both and
   // pick it up again once they stop (a finished estimate is kept).
@@ -672,6 +734,7 @@ function createSonotas() {
   onBeforeUnmount(() => {
     window.removeEventListener('beforeunload', onBeforeUnload)
     stopLoop()
+    void audioCtx?.close()
     if (rebuildTimer) clearTimeout(rebuildTimer)
     abortEstimate()
     if (blobUrl) URL.revokeObjectURL(blobUrl)

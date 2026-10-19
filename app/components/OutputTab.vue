@@ -42,6 +42,18 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
         </label>
         <small>Several encoders at once: about 3× faster on multi-core machines, with 2–3× larger files and slightly softer motion.</small>
       </div>
+      <div class="field">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.sound"
+            @change="toggle('sound')"
+          >
+          Sound
+        </label>
+        <small>Plays every track with a built-in synth, in the preview and the video.</small>
+      </div>
     </InspectorGroup>
 
     <InspectorGroup title="Timing">
