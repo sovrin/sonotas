@@ -1,5 +1,6 @@
 // @sovrin/renderer — minimal, browser-only Guitar Pro → video renderer.
-// One track, a cursor, scrolling line or page layout. Render a single frame or a full mp4. No audio.
+// One track, a cursor, scrolling line or page layout. Render a single frame or a full mp4,
+// optionally with a synthesized soundtrack.
 // This module wires the per-concern modules together.
 import { musicFontCss } from './font.ts'
 import { createSettings, staveProfile } from './settings.ts'
@@ -16,11 +17,13 @@ import {
 import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
 import { widestRun } from './fit.ts'
-import { encodeVideo, estimateVideoBytes } from './encode.ts'
+import { AUDIO_BITRATE, encodeVideo, estimateVideoBytes } from './encode.ts'
+import { RELEASE_MS, renderAudio } from './audio.ts'
 import type { EncodeParams } from './encode.ts'
 import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions } from './types.ts'
 
 export { countBars, listTracks } from './score.ts'
+export { CHANNELS, SAMPLE_RATE } from './audio.ts'
 export type { Follow, PlayheadMotion, ScrollMode, ViewMode } from './scroll.ts'
 export type { Layout, Notation } from './settings.ts'
 export type {
@@ -43,6 +46,7 @@ export type {
 const DEFAULT_WIDTH = 1280
 const DEFAULT_FPS = 30
 const DEFAULT_FONT_URL = '/fonts/sonotas-music.woff2'
+const DEFAULT_SOUNDFONT_URL = '/soundfont/sonivox.sf3'
 const MIN_SCALE = 0.5
 const MAX_SCALE = 2.0
 // When framing, the sheet is rasterized at a fixed high scale for crispness
@@ -161,7 +165,7 @@ export async function createRenderer(
   )
   reattach?.()
   retie?.()
-  const { beats, durationMs, bars, plays } = buildTimeline(
+  const { beats, durationMs, bars, plays, midi, offsetMs, endsSong } = buildTimeline(
     score,
     settings,
     track,
@@ -188,10 +192,15 @@ export async function createRenderer(
 
   // Public encode options → encoder params, filling defaults. Shared by
   // encode() and estimateSize() so the probe measures exactly what exports.
+  // A clip with sound that plays to the song's end runs on while the last notes
+  // ring out; a crop ending mid-song stops where the next bar would start.
+  const releaseMs = endsSong ? RELEASE_MS : 0
+  const tailFor = (opts: EncodeOptions) => opts.audio && (opts.endMs ?? durationMs) >= durationMs - 1 ? releaseMs : 0 // 1ms: s→ms round trips
   const encodeParams = (opts: EncodeOptions): EncodeParams => ({
     fps: opts.fps ?? DEFAULT_FPS,
     startMs: opts.startMs ?? 0,
-    endMs: opts.endMs ?? durationMs,
+    endMs: (opts.endMs ?? durationMs) + tailFor(opts),
+    tailMs: tailFor(opts),
     speed: opts.speed ?? 1,
     quality: opts.quality ?? 'high',
     fast: opts.fast ?? false,
@@ -208,6 +217,18 @@ export async function createRenderer(
     onProgress: opts.onProgress,
     signal: opts.signal
   })
+
+  let soundFont: Promise<Uint8Array> | undefined
+  const loadSoundFont = () => (soundFont ??= fetch(opts.soundFontUrl ?? DEFAULT_SOUNDFONT_URL).then(async (r) => {
+    if (!r.ok) throw new Error(`Could not load the soundfont (${r.status}).`)
+    return new Uint8Array(await r.arrayBuffer())
+  }).catch((e) => {
+    soundFont = undefined // let the next export retry
+    throw e
+  }))
+  // shortcut: synthesizes on the main thread (~1s per 2 min of song); move to a worker if it janks.
+  const soundtrack: Renderer['soundtrack'] = async ({ startMs = 0, endMs = durationMs + releaseMs, speed = 1 } = {}) =>
+    renderAudio(midi, await loadSoundFont(), offsetMs + startMs, offsetMs + Math.min(endMs, durationMs + releaseMs), speed)
 
   return {
     durationMs,
@@ -226,11 +247,18 @@ export async function createRenderer(
     timeAt(atMs, x, y, opts) {
       return painter.timeAt(atMs, x, y, opts)
     },
-    encode(opts: EncodeOptions = {}) {
-      return encodeVideo(painter, encodeParams(opts))
+    soundtrack,
+    async encode(opts: EncodeOptions = {}) {
+      const params = encodeParams(opts)
+      if (opts.audio) params.audio = await soundtrack(params)
+      return encodeVideo(painter, params)
     },
-    estimateSize({ samples = 8, ...opts }: EstimateOptions = {}) {
-      return estimateVideoBytes(painter, encodeParams(opts), samples)
+    async estimateSize({ samples = 8, ...opts }: EstimateOptions = {}) {
+      const params = encodeParams(opts)
+      const video = await estimateVideoBytes(painter, params, samples)
+      if (video === null || !opts.audio) return video
+      const seconds = (Math.min(params.endMs, durationMs + releaseMs) - params.startMs) / 1000 / params.speed
+      return video + Math.round((AUDIO_BITRATE / 8) * seconds)
     }
   }
 }

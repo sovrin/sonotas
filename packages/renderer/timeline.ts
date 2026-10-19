@@ -2,6 +2,7 @@ import * as alphaTab from '@coderline/alphatab'
 import type { Beat, Box } from './types.ts'
 import type { CropRange } from './settings.ts'
 import { buildTempo } from './tempo.ts'
+import { bakeTempo } from './audio.ts'
 
 export interface Timeline {
   beats: Beat[]
@@ -12,6 +13,12 @@ export interface Timeline {
   /** Every bar in the order it is played, repeats included: its rendered bar
    * index and onset (ms, rebased). Unlike `bars`, this lines up with time. */
   plays: Play[]
+  /** The played MIDI, tempo-matched to the beats, for audio. */
+  midi: alphaTab.midi.MidiFile
+  /** Unrebased time (ms) of the clip start: where the audio for 0 lies. */
+  offsetMs: number
+  /** Whether the clip plays to the end of the song (nothing follows it). */
+  endsSong: boolean
 }
 
 export interface Play {
@@ -88,6 +95,7 @@ export function buildTimeline(
   // curve. Keep only in-range beats and rebase their times to the crop start so
   // the clip runs 0..durationMs.
   const tempo = buildTempo(score, lookup, midi.division, totalTicks)
+  if (tempo.hasRamp) bakeTempo(midi, tempo, totalTicks)
   const inRange = (bar: number) =>
     !range || (bar >= range.fromBar && bar <= range.toBar)
 
@@ -119,7 +127,10 @@ export function buildTimeline(
     beats,
     durationMs,
     bars: range ? bars.slice(range.fromBar, range.toBar + 1) : bars,
-    plays
+    plays,
+    midi,
+    offsetMs: offset ?? 0,
+    endsSong: !spans.length || inRange(spans[spans.length - 1]!.bar)
   }
 }
 

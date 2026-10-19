@@ -1,10 +1,14 @@
 import {
+  AudioSample,
+  AudioSampleSource,
   BufferTarget,
   EncodedPacket,
   EncodedVideoPacketSource,
+  getFirstEncodableAudioCodec,
   Mp4OutputFormat,
   Output
 } from 'mediabunny'
+import { CHANNELS, SAMPLE_RATE } from './audio.ts'
 import type { Painter } from './paint.ts'
 import type { PaintOptions, Quality } from './types.ts'
 
@@ -12,6 +16,9 @@ import type { PaintOptions, Quality } from './types.ts'
  * which is what lets separate encoders each take a run of GOPs and have the
  * pieces stitched back into one stream. */
 export const KEYFRAME_SECONDS = 2
+
+/** Audio track bitrate (bits/s): transparent for a synth at AAC or Opus. */
+export const AUDIO_BITRATE = 160_000
 
 /** Our quality presets on mediabunny's 0–1 quality scale (its 'low', 'medium',
  * 'high' and 'very-high'). */
@@ -80,6 +87,8 @@ export interface EncodeParams {
   paint: PaintOptions // crop/scroll/cursor/background passed through to paint()
   onProgress?: (frame: number, total: number) => void
   signal?: AbortSignal // closes the encoders and abandons the output
+  audio?: Float32Array // the clip's soundtrack: interleaved stereo at SAMPLE_RATE, already at `speed`
+  tailMs?: number // how far `endMs` may run past the song's end, holding the last frame
 }
 
 /** A run of output frames `[first, first + count)` one encoder paints in order. */
@@ -273,24 +282,54 @@ function descriptionBytes(meta?: EncodedVideoChunkMetadata): string {
   return u.join(',')
 }
 
-/** Mux the lanes' packets, in lane order, into one mp4. An mp4 track carries a
- * single avcC, so every lane must have produced the same one (they do with an
- * identical config); resolves `null` if not. */
-async function mux(lanes: LaneOutput[], fps: number): Promise<Blob | null> {
+/** Mux the lanes' packets, in lane order, into one mp4, with `audio` as a
+ * second track when given. An mp4 track carries a single avcC, so every lane
+ * must have produced the same one (they do with an identical config); resolves
+ * `null` if not. */
+async function mux(lanes: LaneOutput[], fps: number, audio?: Float32Array): Promise<Blob | null> {
   const filled = lanes.filter(l => l.packets.length)
   const avcC = descriptionBytes(filled[0]?.meta)
   if (filled.some(l => descriptionBytes(l.meta) !== avcC)) return null
   const out = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() })
   const src = new EncodedVideoPacketSource('avc')
   out.addVideoTrack(src, { frameRate: fps })
+  let sound: AudioSampleSource | undefined
+  if (audio) {
+    const codec = await getFirstEncodableAudioCodec(['aac', 'opus'], {
+      numberOfChannels: CHANNELS,
+      sampleRate: SAMPLE_RATE,
+      bitrate: AUDIO_BITRATE
+    })
+    if (!codec) throw new Error('This browser cannot encode audio.')
+    sound = new AudioSampleSource({ codec, bitrate: AUDIO_BITRATE })
+    out.addAudioTrack(sound)
+  }
   await out.start()
+  // Audio goes in one-second samples, interleaved with the video by time.
+  const second = SAMPLE_RATE * CHANNELS
+  let fed = 0
+  const feedAudio = async (untilS: number) => {
+    for (; sound && fed < audio!.length && fed / second <= untilS; fed += second) {
+      const sample = new AudioSample({
+        data: audio!.slice(fed, fed + second), // a copy: given a subarray, mediabunny reads from the buffer's start
+        format: 'f32',
+        numberOfChannels: CHANNELS,
+        sampleRate: SAMPLE_RATE,
+        timestamp: fed / second
+      })
+      await sound.add(sample)
+      sample.close()
+    }
+  }
   let meta = filled[0]?.meta
   for (const lane of filled) {
     for (const packet of lane.packets) {
+      await feedAudio(packet.timestamp)
       await src.add(packet, meta)
       meta = undefined // the decoder config goes with the first packet only
     }
   }
+  await feedAudio(Infinity)
   await out.finalize()
   return new Blob([out.target.buffer!], { type: 'video/mp4' })
 }
@@ -311,7 +350,7 @@ export async function encodeVideo(
   { endMs, onProgress, signal, ...params }: EncodeParams
 ): Promise<Blob> {
   const { fps, startMs, speed, quality, fast } = params
-  const total = clipFrames(startMs, endMs, painter.durationMs, fps, speed)
+  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   signal?.throwIfAborted()
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
@@ -326,7 +365,7 @@ export async function encodeVideo(
       { keep: true, onPacket: () => onProgress?.(++done, total), signal }
     )
     if (!outputs) throw signal!.reason
-    const blob = await mux(outputs, fps)
+    const blob = await mux(outputs, fps, params.audio)
     signal?.throwIfAborted()
     if (blob) return blob
     lanes = 1 // encoders disagreed on the stream header: redo it as one stream
@@ -355,7 +394,7 @@ export async function estimateVideoBytes(
   samples: number
 ): Promise<number | null> {
   const { fps, startMs, speed, quality, fast } = params
-  const total = clipFrames(startMs, endMs, painter.durationMs, fps, speed)
+  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
   if (signal?.aborted) return null
