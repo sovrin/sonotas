@@ -1,9 +1,9 @@
 <script setup>
 const { s, loadFile } = provideSonotas()
 
-// aequitas reads the theme from <html data-theme>.
+// aequitas reads the theme and density from <html data-theme data-density>.
 useHead({
-  htmlAttrs: { 'data-theme': () => s.uiTheme }
+  htmlAttrs: { 'data-theme': () => s.uiTheme, 'data-density': 'compact' }
 })
 
 // Page-wide drag & drop: any file dropped anywhere replaces the loaded tab.
