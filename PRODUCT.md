@@ -19,7 +19,7 @@ sonotas turns a Guitar Pro or MusicXML tab into a scrolling play-along video wit
 
 ## Positioning
 
-- **Private, in the browser:** the file never leaves the user's machine. Nothing is uploaded and there is no server-side rendering.
+- **Private, in the browser:** the file never leaves the user's machine. Nothing is uploaded and there is no server-side rendering. Usage is counted anonymously (censitas): events and settings, never file names, contents or anything that identifies a person.
 - **Export-ready video:** a clean H.264 MP4 at the right shape for each platform (16:9, 9:16, 1:1), not a screen recording of a notation app.
 - **Free and open source:** MIT-licensed, no account, no watermark. The only line in the video is alphaTab's optional "rendered by alphaTab".
 

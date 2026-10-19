@@ -6,6 +6,7 @@
 import { computed, inject, onBeforeUnmount, onMounted, provide, reactive, watch } from 'vue'
 import type { InjectionKey } from 'vue'
 import { APP_DEFAULTS, THEMES, decodeSettings, encodeSettings, type Settings } from '~/utils/settings-code'
+import { fileFormat, lengthBucket, loadTracker, tookBucket, track } from '~/utils/track'
 
 export type SonotasStore = ReturnType<typeof createSonotas>
 
@@ -25,6 +26,8 @@ const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
+// Notation mode → the staves value censitas counts.
+const STAVES_FOR_COUNT: Record<string, string> = { tab: 'tab', both: 'standard-tab', notation: 'standard' }
 // Quiet time after the last settings change before the size probe runs.
 const ESTIMATE_DELAY_MS = 400
 
@@ -344,9 +347,11 @@ function createSonotas() {
       s.songPlays = []
       s.stripZoom = 1
       if (s.render.status === 'done') closeRender()
+      track('file-open', { format: fileFormat(file.name) })
       await rebuild()
     } catch (err) {
       s.loadError = (err as Error).message || 'Could not read that file.'
+      track('file-error', { format: fileFormat(file.name) })
     }
   }
 
@@ -476,6 +481,7 @@ function createSonotas() {
 
   function setTrack(e: Event) {
     s.trackIndex = Number((e.target as HTMLSelectElement).value)
+    track('track-switch')
   }
 
   function toggle(k: string) {
@@ -551,6 +557,19 @@ function createSonotas() {
       blobUrl = null
     }
     s.videoUrl = ''
+    const counted = { resolution: s.resolution, fast: s.fastExport ? 'on' : 'off' }
+    track('export-start', {
+      ...counted,
+      aspect: s.aspect,
+      fps: String(fpsNum()),
+      quality: s.quality.toLowerCase(),
+      layout: layoutMode(),
+      view: s.view,
+      staves: STAVES_FOR_COUNT[notationMode()] ?? 'tab',
+      theme: s.theme,
+      length: lengthBucket(effDur())
+    })
+    const started = performance.now()
     try {
       const out = await engine.encode({
         ...encodeOpts(),
@@ -568,8 +587,10 @@ function createSonotas() {
       s.outBytes = out.size
       makePoster()
       s.render = { ...s.render, status: 'done', pct: 100 }
+      track('export-done', { ...counted, took: tookBucket((performance.now() - started) / 1000) })
     } catch (err) {
       if (ctl.signal.aborted) return // cancelled: the AbortError is expected
+      track('export-fail', counted)
       rendering = null
       s.exportError = (err as Error).message || 'The encoder stopped.'
       s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
@@ -583,6 +604,7 @@ function createSonotas() {
   }
 
   function cancelRender() {
+    track('export-cancel')
     abortRender()
     s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
   }
@@ -615,6 +637,7 @@ function createSonotas() {
     a.click()
     a.remove()
     s.downloaded = true
+    track('video-download')
   }
 
   // ── settings link (?s=) ───────────────────────────────────────────────────
@@ -674,6 +697,7 @@ function createSonotas() {
       }
     }
     s.linkCopied = true
+    track('link-copy')
     if (copiedTimer) clearTimeout(copiedTimer)
     copiedTimer = setTimeout(() => (s.linkCopied = false), 2000)
   }
@@ -687,6 +711,7 @@ function createSonotas() {
   onMounted(() => {
     s.canExport = typeof VideoEncoder !== 'undefined'
     window.addEventListener('beforeunload', onBeforeUnload)
+    loadTracker()
     readLink()
     writeLink() // a link's code, cleaned up (or dropped when it was unreadable)
     rebuild()

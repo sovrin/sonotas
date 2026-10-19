@@ -16,8 +16,9 @@ const longDate = d => new Date(d).toLocaleDateString('en', { day: 'numeric', mon
 
 // Feedback goes to collatas, which serves the form as a web component. It is
 // loaded only once someone opens the dialog, so until then sonotas talks to no
-// other server. The form shows what it sends: the message, this page's address
-// (the settings are in it) and the context below, as far as collatas accepts it.
+// other server but censitas, which counts anonymous usage (utils/track). The
+// form shows what it sends: the message, this page's address (the settings are
+// in it) and the context below, as far as collatas accepts it.
 const FEEDBACK_FORM = 'https://collatas.sovrin.de/v1/form.js'
 // A server that takes the connection but never answers must not leave the dialog empty.
 const FORM_TIMEOUT = 10_000
