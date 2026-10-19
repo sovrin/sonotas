@@ -38,6 +38,10 @@ entirely on your machine, so nothing gets uploaded.
 - **Settings in the link:** the address bar always carries your settings as a
   short code (`?s=…`), so a reload keeps them and the link shares them. The
   song itself never leaves your machine.
+- **Anonymous usage counts:** sonotas counts what happens (page views, exports
+  and their settings, file formats) with [censitas](https://github.com/sovrin/censitas):
+  no cookies, no storage, no identifier, only daily totals. File names and
+  contents are never sent.
 
 ## Built on alphaTab
 
