@@ -209,22 +209,6 @@ main > .stage {
   }
 }
 
-/* ── frame glyphs ──────────────────────────────────────────────────────── */
-
-/* Glyph and ratio stay on one line, even in a narrow, filled segment. */
-.segmented span:has(> .ratio-glyph) {
-  white-space: nowrap;
-}
-
-/* Each frame option drawn at its own proportions, all at one height. */
-.ratio-glyph {
-  display: inline-block;
-  block-size: 0.875em;
-  margin-inline-end: var(--ae-space-1);
-  vertical-align: -0.1em;
-  border: var(--ae-stroke) solid currentColor;
-}
-
 /* ── timeline ──────────────────────────────────────────────────────────── */
 
 /* Play, readouts, strip and range sit in one box of their own under the stage:
@@ -441,6 +425,8 @@ main > .stage {
     font-variant-numeric: tabular-nums;
     line-height: 1;
     color: var(--ae-text-muted);
+    /* A number may run over its narrow cell into the next, unnumbered ones. */
+    white-space: nowrap;
   }
 
   /* The bar being played, lit as the video lights it. */

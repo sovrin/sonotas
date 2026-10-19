@@ -5,9 +5,9 @@
 const { s, v, setAspect, setLayout, toggle } = useSonotas()
 
 const ASPECTS = [
-  { v: '16:9', w: 16, h: 9, hint: 'Landscape, for YouTube.' },
-  { v: '9:16', w: 9, h: 16, hint: 'Portrait, for Shorts, Reels and TikTok.' },
-  { v: '1:1', w: 1, h: 1, hint: 'Square, for feeds.' }
+  { v: '16:9', hint: 'Landscape, for YouTube.' },
+  { v: '9:16', hint: 'Portrait, for Shorts, Reels and TikTok.' },
+  { v: '1:1', hint: 'Square, for feeds.' }
 ]
 const aspectHint = computed(() => ASPECTS.find(a => a.v === s.aspect)?.hint)
 
@@ -131,14 +131,7 @@ function pickLayout(l) {
               :checked="s.aspect === a.v"
               @change="setAspect(a.v)"
             >
-            <span>
-              <i
-                class="ratio-glyph"
-                :style="{ aspectRatio: `${a.w} / ${a.h}` }"
-                aria-hidden="true"
-              />
-              {{ a.v }}
-            </span>
+            <span>{{ a.v }}</span>
           </label>
         </div>
         <small>{{ aspectHint }}</small>
