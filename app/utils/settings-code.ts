@@ -55,6 +55,8 @@ export const APP_DEFAULTS = {
   showTempo: true,
   showTimeSig: true,
   showChords: false, // chord diagrams above chord-named beats
+  showLyrics: true,
+  showSections: true, // section names (Intro, Verse…) above their bars
   showAttribution: true, // alphaTab's "rendered by alphaTab" line
   playhead: 'jump', // 'jump' note to note | 'glide' through the bar
   view: 'bar', // 'bar' (page: per line) | 'screen' | 'track'
@@ -157,7 +159,9 @@ export const FIELDS: readonly Field[] = [
   { id: 44, key: 'soundMix', type: 'enum', values: ['All', 'Solo', 'Minus'], absent: 'All' },
   { id: 45, key: 'metronome', type: 'bool', absent: false },
   { id: 46, key: 'countIn', type: 'bool', absent: false },
-  { id: 47, key: 'tabRhythm', type: 'enum', values: ['Auto', 'Beams', 'Bars', 'None'], absent: 'Auto' }
+  { id: 47, key: 'tabRhythm', type: 'enum', values: ['Auto', 'Beams', 'Bars', 'None'], absent: 'Auto' },
+  { id: 48, key: 'showLyrics', type: 'bool', absent: true },
+  { id: 49, key: 'showSections', type: 'bool', absent: true }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

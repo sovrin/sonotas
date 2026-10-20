@@ -8,6 +8,8 @@ import {
   detachCropStart,
   untieCropStart,
   hasChords,
+  hasLyrics,
+  hasSections,
   hasTab,
   injectTempoAt,
   loadScore,
@@ -120,6 +122,8 @@ export async function createRenderer(
     showTempo,
     showTrackName: opts.showTrackName,
     showBarNumbers: opts.showBarNumbers,
+    showLyrics: opts.showLyrics,
+    showSections: opts.showSections,
     chordDiagrams,
     foreground: opts.foreground,
     barNumberColor: opts.barNumberColor
@@ -254,6 +258,8 @@ export async function createRenderer(
     title: score.title,
     artist: score.artist,
     hasChords: hasChords(score, track),
+    hasLyrics: hasLyrics(score, track),
+    hasSections: hasSections(score),
     bars,
     plays,
     frame(canvas, atMs, opts) {

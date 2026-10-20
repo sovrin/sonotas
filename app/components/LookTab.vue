@@ -26,6 +26,8 @@ const SHOW = [
   { key: 'showBarNumbers', label: 'Bar numbers' },
   { key: 'showTempo', label: 'Tempo marking' },
   { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords },
+  { key: 'showLyrics', label: 'Lyrics', missing: () => !s.hasLyrics },
+  { key: 'showSections', label: 'Section names', missing: () => !s.hasSections },
   // Only meaningful when the export starts mid-song.
   { key: 'showTimeSig', label: 'Time signature at the first bar', when: () => s.renderOnlyBars && s.fromBar > 1 },
   // Hidden unless the page is opened with ?attribution, so the line stays on by default.
@@ -150,7 +152,7 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
       <small
         v-if="missing.length"
         class="text-muted"
-      >{{ missing.join(' and ') }}: none in this file.</small>
+      >{{ new Intl.ListFormat('en').format(missing) }}: none in this file.</small>
     </InspectorGroup>
   </div>
 </template>

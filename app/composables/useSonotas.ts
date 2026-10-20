@@ -76,6 +76,8 @@ function createSonotas() {
     title: '', // song metadata the renderer read from the file ('' if none)
     artist: '',
     hasChords: false, // whether the rendered track defines any chords
+    hasLyrics: false,
+    hasSections: false,
     barStarts: [] as number[], // start-ms of each rendered bar (from the renderer)
     // The whole song's bars, kept from the last uncropped build so the timeline
     // can show every bar while only a range is rendered.
@@ -166,6 +168,8 @@ function createSonotas() {
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
       showBarNumbers: s.showBarNumbers,
+      showLyrics: s.showLyrics,
+      showSections: s.showSections,
       showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
@@ -302,6 +306,8 @@ function createSonotas() {
       s.title = inst.title
       s.artist = inst.artist
       s.hasChords = inst.hasChords
+      s.hasLyrics = inst.hasLyrics
+      s.hasSections = inst.hasSections
       s.barStarts = [...inst.bars]
       s.plays = [...inst.plays]
       if (!s.renderOnlyBars) {
@@ -778,7 +784,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.layout, s.showChords, s.showLyrics, s.showSections, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()

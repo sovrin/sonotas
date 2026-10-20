@@ -53,6 +53,8 @@ export interface SettingsOptions {
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
   showBarNumbers?: boolean // draw bar numbers, default true
+  showLyrics?: boolean // draw lyrics, default true
+  showSections?: boolean // draw section names, default true
   chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
@@ -119,6 +121,12 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   }
   if (opts.showBarNumbers === false) {
     settings.notation.elements.set(alphaTab.NotationElement.BarNumber, false)
+  }
+  if (opts.showLyrics === false) {
+    settings.notation.elements.set(alphaTab.NotationElement.EffectLyrics, false)
+  }
+  if (opts.showSections === false) {
+    settings.notation.elements.set(alphaTab.NotationElement.EffectMarker, false)
   }
   if (opts.chordDiagrams !== undefined) {
     settings.notation.elements.set(alphaTab.NotationElement.ChordDiagrams, opts.chordDiagrams)

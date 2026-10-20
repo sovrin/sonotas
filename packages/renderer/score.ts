@@ -155,6 +155,17 @@ export function hasChords(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
 }
 
+/** Whether any beat of the track carries a lyric syllable. */
+export function hasLyrics(score: alphaTab.model.Score, track: number): boolean {
+  return (score.tracks[track]?.staves ?? []).some(s =>
+    s.bars.some(b => b.voices.some(v => v.beats.some(beat => beat.lyrics?.some(l => l)))))
+}
+
+/** Whether the song names any sections (Intro, Verse…). */
+export function hasSections(score: alphaTab.model.Score): boolean {
+  return score.masterBars.some(m => m.section)
+}
+
 /** Master-bar boxes of the track laid out with `settings`, in render order, in
  * output px at its `display.scale`. Layout only — nothing is painted, so this
  * is cheap next to {@link renderSheet}. alphaTab lays out in unscaled units and

@@ -378,6 +378,18 @@
         "None"
       ],
       "absent": "Auto"
+    },
+    {
+      "id": 48,
+      "key": "showLyrics",
+      "type": "bool",
+      "absent": true
+    },
+    {
+      "id": 49,
+      "key": "showSections",
+      "type": "bool",
+      "absent": true
     }
   ],
   "retired": [],
@@ -684,6 +696,60 @@
         "metronome": true,
         "countIn": true,
         "tabRhythm": "None"
+      }
+    },
+    {
+      "code": "DhznyoSUIxIEIOaSrYCe6lbFnfzoxttXA9dQYOGL6FTAcvx5SfXB642353tIEq57vY8JIrf670aa19DocNoA2nEpEDumNh68xjtOSa4wtnt72pq0oivUZn9xoUeKnmhU4sTOe0CqdZeJZjkgrdwuNN4dgXj5X4",
+      "settings": {
+        "theme": "light",
+        "aspect": "1:1",
+        "layout": "Page",
+        "fitBars": "8 bars",
+        "currentBarOnly": true,
+        "notationSize": "150%",
+        "staves": "Standard only",
+        "playhead": "glide",
+        "view": "track",
+        "transition": 5000,
+        "followAt": 0,
+        "cursorColor": "#0a0b0c",
+        "cursorOpacity": 10,
+        "cursorWidth": 1,
+        "cursorHeight": 40,
+        "cursorOffset": -100,
+        "highlightBar": false,
+        "highlightColor": "#0a0b0c",
+        "highlightOpacity": 5,
+        "recolorNote": true,
+        "activeNoteColor": "#0a0b0c",
+        "activeNoteOpacity": 30,
+        "bg": "#0a0b0c",
+        "fg": "#0a0b0c",
+        "barNum": "#0a0b0c",
+        "showTitle": false,
+        "showTrackName": false,
+        "showBarNumbers": false,
+        "showTempo": false,
+        "showChords": true,
+        "fps": "60 fps",
+        "resolution": "480p",
+        "quality": "Max",
+        "speed": "2×",
+        "fastExport": true,
+        "steady": false,
+        "turnEarly": false,
+        "runPast": true,
+        "cursorMatchBar": true,
+        "highlightPadding": 0,
+        "showTimeSig": false,
+        "showAttribution": false,
+        "sound": true,
+        "soundMix": "Minus",
+        "metronome": true,
+        "countIn": true,
+        "tabRhythm": "None",
+        "showLyrics": false,
+        "showSections": false
       }
     }
   ]

@@ -48,6 +48,8 @@ export interface RendererOptions {
   showAttribution?: boolean // alphaTab's "rendered by alphaTab" line below the sheet
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
+  showLyrics?: boolean // lyrics under the beats, default true
+  showSections?: boolean // section names (Intro, Verse…) above their bars, default true
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
   // bare chord name; in page layout also lists them in the header. Default false.
   chordDiagrams?: boolean
@@ -155,6 +157,8 @@ export interface Renderer {
   artist: string
   /** Whether the rendered track defines any chords (so chord diagrams can exist). */
   hasChords: boolean
+  hasLyrics: boolean
+  hasSections: boolean
   /** Start-ms of each rendered bar's first play (rebased to 0); `bars.length`
    * is the rendered bar count. */
   bars: number[]
