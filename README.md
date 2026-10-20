@@ -19,10 +19,12 @@ entirely on your machine, so nothing gets uploaded.
   24, 30 or 60 fps, with an up-front file size estimate. The clip is split
   across several encoders at once; *Fast export* switches to software encoders
   on half your CPU cores for roughly 3× faster exports and larger files.
-- **Sound, if you want it:** turn it on and a built-in synth plays every track
-  of the song, in the preview and as an audio track in the MP4. It follows tempo
-  changes, ritardandos and the playback speed, and the last notes ring out at
-  the end. Off by default, so the video stays silent for your own recording.
+- **Sound, if you want it:** turn it on and a built-in synth plays the song, in
+  the preview and as an audio track in the MP4: every track, only the one shown,
+  or all but it for a backing track to play along with. Add a metronome, or a
+  count-in bar while the video holds its first frame. It follows tempo changes,
+  ritardandos and the playback speed, and the last notes ring out at the end.
+  Off by default, so the video stays silent for your own recording.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
 - **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
   that the view follows down.

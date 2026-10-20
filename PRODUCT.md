@@ -32,7 +32,7 @@ sonotas turns a Guitar Pro or MusicXML tab into a scrolling play-along video wit
 
 ## Capabilities and Constraints
 
-- **Sound is optional and off by default.** With it on, a built-in synth plays every track of the song, in the preview and as an audio track in the MP4, following tempo changes and the playback speed. Creators who add their own recording in an editor leave it off and get a silent video.
+- **Sound is optional and off by default.** With it on, a built-in synth plays the song in the preview and as an audio track in the MP4, following tempo changes and the playback speed: every track, only the one shown, or all but it as a backing track, with an optional metronome and a count-in bar. Creators who add their own recording in an editor leave it off and get a silent video.
 - **A single-page tool with no accounts:** no sign-in, no backend, no saved projects. Settings live in the link (`?s=…`, a short code), so sharing a look is sharing a URL; old links must keep working.
 - Output: 480p, 720p or 1080p at 24, 30 or 60 fps, silent or with sound. Three quality levels, a file size estimate before export, and an optional *Fast export* that trades file size for speed.
 - Layouts: a scrolling *line* or a *page* of wrapped systems. Zoom is set by notation size or by bars across the frame (1–8).
