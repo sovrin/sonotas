@@ -26,7 +26,10 @@ export interface TrackInfo {
 export interface RendererOptions {
   track?: number // default 0
   width?: number // output width, default 1280
-  aspect?: Aspect // frame the sheet to this ratio; omit for a bare horizontal strip
+  aspect?: Aspect | number // frame the sheet to this ratio (or width/height); omit for a bare horizontal strip
+  // Framed: size the notation and title as if the frame's short edge were this
+  // many px, so a free frame can change shape without zooming. Default: the short edge.
+  notationShort?: number
   scale?: number // notation scale, clamped 0.5–2.0, default 1.0
   notation?: Notation // stave selection, default "auto"
   tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'

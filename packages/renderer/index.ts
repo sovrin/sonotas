@@ -85,14 +85,14 @@ export async function createRenderer(
   const track = opts.track ?? 0
   const width = (opts.width ?? DEFAULT_WIDTH) & ~1
   const aspect = opts.aspect
-  const framed = !!aspect
+  const framed = aspect !== undefined
   const layout = opts.layout ?? 'line'
   const page = layout === 'page'
   const fitBars = page ? 0 : Math.max(0, Math.floor(opts.fitBars ?? 0))
   // Frame height follows the aspect; unframed line output takes the sheet's
   // height (below), unframed page output the whole page's.
-  const frameHeight = framed ? Math.round(width / ASPECT_RATIO[aspect]) & ~1 : 0
-  const shortEdge = framed ? Math.min(width, frameHeight) : width
+  const frameHeight = framed ? Math.round(width / (typeof aspect === 'number' ? aspect : ASPECT_RATIO[aspect])) & ~1 : 0
+  const shortEdge = framed ? opts.notationShort ?? Math.min(width, frameHeight) : width
   // Line + framed: fixed crisp raster, notation size → band fill. Line +
   // unframed: the scale knob drives the raster directly (clamp only when
   // provided). Page: engraved at output resolution, notation size → scale.
@@ -196,6 +196,7 @@ export async function createRenderer(
     height,
     sheetHeight,
     fill,
+    short: framed ? shortEdge : undefined,
     layout,
     fitBars,
     title: score.title,

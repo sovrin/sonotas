@@ -7,6 +7,7 @@ import { computed, inject, onBeforeUnmount, onMounted, provide, reactive, watch 
 import type { InjectionKey } from 'vue'
 import { APP_DEFAULTS, THEMES, decodeSettings, encodeSettings, type Settings } from '~/utils/settings-code'
 import { fileFormat, lengthBucket, loadTracker, tookBucket, track } from '~/utils/track'
+import { fitEdge, freeAt } from '~/utils/frame'
 
 export type SonotasStore = ReturnType<typeof createSonotas>
 
@@ -23,6 +24,7 @@ const SAMPLE_URL = '/tabs/Catastrophic.gp'
 // UI resolution → short edge (px). The renderer derives the other edge from the
 // aspect: 16:9 is wider than tall, 9:16 taller than wide, 1:1 square.
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
+const RATIO_BY_ASPECT: Record<string, number> = { '16:9': 16 / 9, '9:16': 9 / 16, '1:1': 1 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
 const SPACING_BY_UI: Record<string, number> = { Tight: 0.7, Normal: 1, Wide: 1.4 }
@@ -116,9 +118,22 @@ function createSonotas() {
   let blobUrl: string | null = null
 
   // ── option mapping (UI state → renderer options) ────────────────────────────
-  function outWidth() {
-    const short = SHORT_BY_RES[s.resolution] ?? 1080
-    return s.aspect === '16:9' ? Math.round(short * 16 / 9) : short
+  function shortRes() {
+    return SHORT_BY_RES[s.resolution] ?? 1080
+  }
+
+  // The output frame in px. A preset's short edge is the resolution's and its
+  // long edge follows the ratio; a free frame is its 1080p size, scaled.
+  function outDims(): [number, number] {
+    if (s.aspect === 'Custom') return freeAt(s.freeW, fitEdge(s.freeH, s.freeW), shortRes())
+    const ratio = RATIO_BY_ASPECT[s.aspect] ?? 16 / 9
+    const w = ratio > 1 ? Math.round(shortRes() * ratio) : shortRes()
+    return [w, Math.round(w / ratio) & ~1]
+  }
+
+  // "16:9", or "Free".
+  function aspectLabel() {
+    return s.aspect === 'Custom' ? 'Free' : s.aspect
   }
 
   function scaleNum() {
@@ -160,8 +175,10 @@ function createSonotas() {
   function buildOpts() {
     return {
       track: s.trackIndex,
-      width: outWidth(),
-      aspect: s.aspect,
+      width: outDims()[0],
+      aspect: s.aspect === 'Custom' ? outDims()[0] / outDims()[1] : s.aspect,
+      // A free frame changes shape without zooming: notation sized as at the resolution.
+      notationShort: s.aspect === 'Custom' ? shortRes() : undefined,
       scale: scaleNum(),
       notation: notationMode(),
       layout: layoutMode(),
@@ -551,7 +568,13 @@ function createSonotas() {
     s.uiTheme = s.uiTheme === 'dark' ? 'light' : 'dark'
   }
 
+  // Going free starts from the preset's own size, so nothing jumps.
   function setAspect(a: string) {
+    if (a === 'Custom' && s.aspect !== 'Custom') {
+      const ratio = RATIO_BY_ASPECT[s.aspect] ?? 16 / 9
+      s.freeW = ratio > 1 ? Math.round(1080 * ratio) : 1080
+      s.freeH = ratio < 1 ? Math.round(1080 / ratio) : 1080
+    }
     s.aspect = a
   }
 
@@ -668,10 +691,12 @@ function createSonotas() {
   }
 
   // e.g. "catastrophic-16x9-1080p.mp4": the loaded file's name (sans
-  // extension, demo tag and accents), the frame and the resolution.
+  // extension, demo tag and accents), the frame and the resolution; a free
+  // frame by its size, "catastrophic-1920x540.mp4".
   function outName() {
     const base = s.sourceName.replace(/\(demo\)/i, '').trim().replace(/\.\w+$/, '')
     const slug = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
+    if (s.aspect === 'Custom') return `${slug}-${outDims().join('x')}.mp4`
     return `${slug}-${s.aspect.replace(':', 'x')}-${s.resolution}.mp4`
   }
 
@@ -793,7 +818,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.staffLines, s.notationSize, s.staves, s.tabRhythm, s.songBook, s.barsPerLine, s.spacing, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
+    () => [s.trackIndex, s.aspect, s.freeW, s.freeH, s.fg, s.barNum, s.staffLines, s.notationSize, s.staves, s.tabRhythm, s.songBook, s.barsPerLine, s.spacing, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()
@@ -852,23 +877,20 @@ function createSonotas() {
 
   // ── derived values (styles + labels consumed by components) ─────────────────
   const v = computed(() => {
-    const ratio = s.aspect === '16:9' ? 16 / 9 : s.aspect === '9:16' ? 9 / 16 : 1
     const eff = effDur()
-    const resPxMap: Record<string, string> = {
-      '1080p': ratio > 1 ? '1920×1080' : ratio === 1 ? '1080×1080' : '1080×1920',
-      '720p': ratio > 1 ? '1280×720' : ratio === 1 ? '720×720' : '720×1280',
-      '480p': ratio > 1 ? '854×480' : ratio === 1 ? '480×480' : '480×854'
-    }
+    const [w, h] = outDims()
     const r = s.render
     const done = r.status === 'done'
     // Real output geometry once built; the probed estimate before a render
     // ('…' while it runs), the produced file's real size once done.
-    const resPx = s.sheetW ? `${s.sheetW}×${s.sheetH}` : resPxMap[s.resolution]
+    const resPx = s.sheetW ? `${s.sheetW}×${s.sheetH}` : `${w}×${h}`
     const estSize = s.estBytes ? fmtSize(s.estBytes) : '…'
     const sizeLabel = done && s.outBytes ? fmtSize(s.outBytes) : estSize
 
     return {
       isPage: s.layout === 'Page',
+      aspectLabel: aspectLabel(),
+      frameRatio: w / h,
       // Zoomed all the way in, about a dozen bars span the strip.
       stripMaxZoom: Math.max(1, (s.songPlays.length || s.plays.length) / 12),
       fitBars: fitBarsNum(),

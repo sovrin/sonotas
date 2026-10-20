@@ -651,3 +651,88 @@ collatas-form .btn[data-variant="primary"] {
   --ae-tone: var(--ae-text);
   --ae-tone-contrast: var(--ae-surface);
 }
+
+/* ── free frame resize ───────────────────────────────────────────────────── */
+
+/* Grips on the free frame's right edge, bottom edge and corner; while dragging,
+   a dashed outline and the shape it snaps to. Clicks elsewhere reach the
+   canvas below. */
+main > .stage {
+  position: relative;
+}
+
+.frame-resize {
+  position: absolute;
+  pointer-events: none;
+
+  &[data-dragging] {
+    outline: 1px dashed var(--ae-text-muted);
+  }
+
+  & > [data-edge] {
+    position: absolute;
+    pointer-events: auto;
+    touch-action: none;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      translate: -50% -50%;
+      border-radius: 1px;
+      background: var(--ae-text-muted);
+    }
+
+    &:hover::before {
+      background: var(--ae-text);
+    }
+  }
+
+  & > [data-edge="x"] {
+    inset-block: 0;
+    inset-inline-end: calc(-1 * var(--ae-space-3));
+    inline-size: var(--ae-space-3);
+    cursor: ew-resize;
+
+    &::before {
+      inline-size: 3px;
+      block-size: var(--ae-space-5);
+    }
+  }
+
+  & > [data-edge="y"] {
+    inset-inline: 0;
+    inset-block-end: calc(-1 * var(--ae-space-3));
+    block-size: var(--ae-space-3);
+    cursor: ns-resize;
+
+    &::before {
+      inline-size: var(--ae-space-5);
+      block-size: 3px;
+    }
+  }
+
+  & > [data-edge="xy"] {
+    inset-inline-end: calc(-1 * var(--ae-space-3));
+    inset-block-end: calc(-1 * var(--ae-space-3));
+    inline-size: var(--ae-space-3);
+    block-size: var(--ae-space-3);
+    cursor: nwse-resize;
+
+    &::before {
+      inline-size: 7px;
+      block-size: 7px;
+    }
+  }
+}
+
+.frame-resize-label {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  translate: -50% -50%;
+  padding: var(--ae-space-1) var(--ae-space-2);
+  background: var(--ae-bg);
+  color: var(--ae-text);
+  font-size: var(--ae-text-m);
+  box-shadow: var(--ae-shadow-l);
+}

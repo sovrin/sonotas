@@ -82,7 +82,7 @@ const scope = computed(() => {
         <div><strong>Couldn’t export the video.</strong> {{ s.exportError }} Try again, or turn off Fast export under Output.</div>
       </div>
       <div class="stack gap-1">
-        <span class="text-s">{{ scope }} · {{ s.aspect }}</span>
+        <span class="text-s">{{ scope }} · {{ v.aspectLabel }}</span>
         <span class="text-s font-mono tabular">{{ v.estLine }}</span>
       </div>
       <button

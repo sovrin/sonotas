@@ -25,7 +25,10 @@ entirely on your machine, so nothing gets uploaded.
   count-in bar while the video holds its first frame. It follows tempo changes,
   ritardandos and the playback speed, and the last notes ring out at the end.
   Off by default, so the video stays silent for your own recording.
-- **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
+- **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts,
+  or a free size, such as 1080×1350 or a thin strip to lay over footage: drag the frame's
+  edges in the preview, or type its width and height. The notation keeps its size, so a
+  free frame shows more or less of it.
 - **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
   that the view follows down, with a set number of bars per line if you like.
   Tight, normal or wide note spacing.
