@@ -319,6 +319,7 @@ function onHandleKey(e, edge) {
   const next = { ArrowRight: i + 1, ArrowUp: i + 1, ArrowLeft: i - 1, ArrowDown: i - 1, PageUp: i + 4, PageDown: i - 4, Home: 0, End: count.value - 1 }[e.key]
   if (next === undefined) return
   e.preventDefault()
+  e.stopPropagation() // not to the strip's own arrow keys; Space still reaches the page
   setDraft(edge, next)
   commit()
 }
@@ -407,7 +408,7 @@ const fmt = (ms) => {
             @pointermove="onHandleMove"
             @pointerup="onHandleUp"
             @pointercancel="onHandleUp"
-            @keydown.stop="onHandleKey($event, 'from')"
+            @keydown="onHandleKey($event, 'from')"
           />
           <span
             class="bar-strip-bracket"
@@ -424,7 +425,7 @@ const fmt = (ms) => {
             @pointermove="onHandleMove"
             @pointerup="onHandleUp"
             @pointercancel="onHandleUp"
-            @keydown.stop="onHandleKey($event, 'to')"
+            @keydown="onHandleKey($event, 'to')"
           />
         </template>
       </div>

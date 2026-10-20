@@ -51,10 +51,11 @@ function setEdge(edge) {
 }
 
 // Page-wide keys, left alone while typing or when a control has its own use
-// for the key (a focused button already plays on Space).
+// for the key (a focused button already plays on Space). Sliders have none for
+// Space, so it plays even after the scrubber took focus from a drag.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey || !s.ready || s.videoUrl || v.value.isRendering) return
-  if (e.target.closest?.('input, select, textarea, button, a, [role="slider"], [contenteditable]')) return
+  if (e.target.closest?.('input:not([type="range"]), select, textarea, button, a, [contenteditable]')) return
   const k = e.key.toLowerCase()
   if (k === ' ') togglePlay()
   else if (k === 'i') setEdge('from')
