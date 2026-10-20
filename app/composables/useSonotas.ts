@@ -712,6 +712,10 @@ function createSonotas() {
     s.canExport = typeof VideoEncoder !== 'undefined'
     window.addEventListener('beforeunload', onBeforeUnload)
     loadTracker()
+  })
+  // The prerendered page hydrates on its prerendered route (no query, even in
+  // the address bar); the link's ?s= is back only once Nuxt is ready.
+  onNuxtReady(() => {
     readLink()
     writeLink() // a link's code, cleaned up (or dropped when it was unreadable)
     rebuild()
