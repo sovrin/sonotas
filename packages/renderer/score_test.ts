@@ -110,3 +110,13 @@ test('untieCropStart unhooks ties from before the crop and restores them', async
   restore()
   assert(notes.every((n, i) => n.tieOrigin === origins[i] && n.isTieDestination))
 })
+
+test('tuningText names the preset, else lists the strings low to high, and skips drums', async () => {
+  const { tuningText } = await import('./score.ts')
+  assertEquals(tuningText(loadScore(await loadSample(), createSettings(), 0), 0), 'Standard tuning')
+  const demo = loadScore(await loadDemo(), createSettings(), 0)
+  assertEquals(tuningText(demo, 0), 'A E A D Gb B tuning')
+  assertEquals(tuningText(demo, 1), '')
+  demo.tracks[0]!.staves[0]!.capo = 2
+  assertEquals(tuningText(demo, 0), 'A E A D Gb B tuning · Capo 2')
+})

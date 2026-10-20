@@ -22,6 +22,7 @@ const RHYTHM = [
 ]
 const SHOW = [
   { key: 'showTitle', label: 'Song title', missing: () => !s.title },
+  { key: 'showTuning', label: 'Tuning and capo', missing: () => !s.tuning },
   { key: 'showTrackName', label: 'Track name' },
   { key: 'showBarNumbers', label: 'Bar numbers' },
   { key: 'showTempo', label: 'Tempo marking' },

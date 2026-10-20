@@ -1,4 +1,4 @@
-import type { Beat, Box, PaintOptions, Tile } from './types.ts'
+import type { Beat, Box, PaintOptions, Tile, TitleOptions } from './types.ts'
 import type { Layout } from './settings.ts'
 import { barAt, clampScroll, resolveFollow, scrollState, scrollStateY } from './scroll.ts'
 import { cursorRect } from './cursor.ts'
@@ -47,6 +47,7 @@ export interface SheetView {
   /** Song metadata for the title overlay ('' draws nothing). */
   title?: string
   artist?: string
+  tuning?: string // the tuning line ('' draws nothing)
   titleColor?: string // default for the overlay when the paint call gives none
 }
 
@@ -68,6 +69,7 @@ export function createPainter(view: SheetView): Painter {
   const sheetHeight = view.sheetHeight ?? height
   const title = view.title ?? ''
   const artist = view.artist ?? ''
+  const tuning = view.tuning ?? ''
   // Line layout: scale the sheet band to `fill` of the frame's SHORT edge,
   // centered. Using the short edge (not the height) keeps notation the same
   // size across aspects: a tall 9:16 frame then shows fewer bars with margins,
@@ -143,25 +145,39 @@ export function createPainter(view: SheetView): Painter {
     return (x0 + x1) / 2
   }
 
-  /** Height of the title block (title + artist lines with margins), 0 when
-   * nothing is drawn. Page layout starts the sheet below it. */
-  function titleBlockHeight(show: boolean): number {
-    if (!show || !title) return 0
-    return titleMargin + titleSize + (artist ? Math.round(artistSize * 1.3) : 0) + titleMargin
+  /** The title block's lines, each with its baseline: title and artist, then
+   * the tuning, as the options ask and the file has them. */
+  function titleLines(o?: TitleOptions) {
+    const lines: { text: string, size: number, weight: number, alpha: number }[] = []
+    if (o?.enabled && title) {
+      lines.push({ text: title, size: titleSize, weight: 600, alpha: 1 })
+      if (artist) lines.push({ text: artist, size: artistSize, weight: 400, alpha: 0.72 })
+    }
+    if (o?.tuning && tuning) lines.push({ text: tuning, size: artistSize, weight: 400, alpha: 0.72 })
+    let y = titleMargin
+    return lines.map((l, i) => {
+      y += i ? Math.round(l.size * 1.3) : l.size
+      return { ...l, y }
+    })
   }
 
-  function paintTitle(ctx: Ctx, color: string): void {
+  /** Height of the title block with margins, 0 when nothing is drawn. Page
+   * layout starts the sheet below it. */
+  function titleBlockHeight(o?: TitleOptions): number {
+    const lines = titleLines(o)
+    return lines.length ? lines.at(-1)!.y + titleMargin : 0
+  }
+
+  function paintTitle(ctx: Ctx, o: TitleOptions | undefined, color: string): void {
     ctx.fillStyle = color
     ctx.textBaseline = 'alphabetic'
     ctx.textAlign = 'left'
-    ctx.font = `600 ${titleSize}px ${TITLE_FONT}`
-    ctx.fillText(title, titleMargin, titleMargin + titleSize)
-    if (artist) {
-      ctx.font = `400 ${artistSize}px ${TITLE_FONT}`
-      ctx.globalAlpha = 0.72
-      ctx.fillText(artist, titleMargin, titleMargin + titleSize + Math.round(artistSize * 1.3))
-      ctx.globalAlpha = 1
+    for (const l of titleLines(o)) {
+      ctx.font = `${l.weight} ${l.size}px ${TITLE_FONT}`
+      ctx.globalAlpha = l.alpha
+      ctx.fillText(l.text, titleMargin, l.y)
     }
+    ctx.globalAlpha = 1
   }
 
   /** Where the view is at time `t` (clamped already): the played beat, the
@@ -185,7 +201,7 @@ export function createPainter(view: SheetView): Painter {
     const center = currentBarOnly || (!!fitBars && follow.view === 'bar')
     const focus = center ? focusMid : undefined
     const { noteX, scrollX: wantedX } = scrollState(follow, beats, i, t, viewportSheet, focus)
-    const top = page ? titleBlockHeight(opts?.title?.enabled ?? false) : bandTop
+    const top = page ? titleBlockHeight(opts?.title) : bandTop
     const viewportH = height - top
     const scrollX = center || (follow.view === 'track' && follow.overscroll && !page)
       ? wantedX
@@ -242,7 +258,6 @@ export function createPainter(view: SheetView): Painter {
     const activeNoteColor = opts?.activeNote?.color ?? DEFAULT_ACTIVE_NOTE_COLOR
     const activeNotePadding = opts?.activeNote?.padding ?? DEFAULT_ACTIVE_NOTE_PADDING
     const backgroundColor = opts?.background?.color ?? DEFAULT_BACKGROUND_COLOR
-    const titleEnabled = opts?.title?.enabled ?? false
     const titleColor = opts?.title?.color ?? view.titleColor ?? DEFAULT_TITLE_COLOR
     const currentBarOnly = opts?.currentBarOnly ?? false
 
@@ -331,7 +346,7 @@ export function createPainter(view: SheetView): Painter {
       ctx.fillRect(r.x, r.y, r.width, r.height)
     }
     // Title/artist overlay last, so it sits above anything scrolled under it.
-    if (titleEnabled && title) paintTitle(ctx, titleColor)
+    paintTitle(ctx, opts?.title, titleColor)
   }
 
   return { width, height, durationMs, paint, timeAt }

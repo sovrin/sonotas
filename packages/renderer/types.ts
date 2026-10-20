@@ -101,6 +101,7 @@ export interface ActiveNoteOptions {
  * starts below it. */
 export interface TitleOptions {
   enabled?: boolean // default false
+  tuning?: boolean // a tuning and capo line, under the title or on its own; default false
   color?: string // CSS color; defaults to the notation color
 }
 
@@ -156,6 +157,8 @@ export interface Renderer {
   height: number
   /** Song metadata from the file ('' when absent) — what the title overlay shows. */
   title: string
+  /** The track's tuning and capo line ('' for a track without strings). */
+  tuning: string
   artist: string
   /** Whether the rendered track defines any chords (so chord diagrams can exist). */
   hasChords: boolean

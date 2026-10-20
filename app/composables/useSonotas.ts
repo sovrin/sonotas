@@ -74,6 +74,7 @@ function createSonotas() {
     sheetW: 0,
     sheetH: 0,
     title: '', // song metadata the renderer read from the file ('' if none)
+    tuning: '', // the rendered track's tuning and capo line ('' without strings)
     artist: '',
     hasChords: false, // whether the rendered track defines any chords
     hasLyrics: false,
@@ -197,7 +198,7 @@ function createSonotas() {
       highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg },
-      title: { enabled: s.showTitle, color: s.fg }
+      title: { enabled: s.showTitle, tuning: s.showTuning, color: s.fg }
     }
   }
 
@@ -306,6 +307,7 @@ function createSonotas() {
       s.sheetW = inst.width
       s.sheetH = inst.height
       s.title = inst.title
+      s.tuning = inst.tuning
       s.artist = inst.artist
       s.hasChords = inst.hasChords
       s.hasLyrics = inst.hasLyrics
@@ -794,7 +796,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.showTuning, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => {
       invalidateResult()
       invalidateEstimate()

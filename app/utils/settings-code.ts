@@ -50,6 +50,7 @@ export const APP_DEFAULTS = {
   fg: '#e8e9eb', // notation
   barNum: '#e8e9eb',
   showTitle: true, // title/artist overlay (needs the file to carry one)
+  showTuning: false, // the track's tuning and capo, in the title overlay
   showTrackName: true,
   showBarNumbers: true,
   showTempo: true,
@@ -165,7 +166,8 @@ export const FIELDS: readonly Field[] = [
   { id: 48, key: 'showLyrics', type: 'bool', absent: true },
   { id: 49, key: 'showSections', type: 'bool', absent: true },
   { id: 50, key: 'showDynamics', type: 'bool', absent: true },
-  { id: 51, key: 'showFingering', type: 'bool', absent: true }
+  { id: 51, key: 'showFingering', type: 'bool', absent: true },
+  { id: 52, key: 'showTuning', type: 'bool', absent: false }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

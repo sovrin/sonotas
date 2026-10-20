@@ -155,6 +155,18 @@ export function hasChords(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
 }
 
+/** The track's tuning and capo as one line ("Dropped D tuning · Capo 2"),
+ * '' for a track without strings. */
+export function tuningText(score: alphaTab.model.Score, track: number): string {
+  const staff = score.tracks[track]?.staves.find(s => s.isStringed && !s.isPercussion)
+  if (!staff?.tuning.length) return ''
+  const preset = staff.stringTuning.name || alphaTab.model.Tuning.findTuning(staff.tuning)?.name || ''
+  // "Guitar Dropped D Tuning" → "Dropped D"; an unnamed tuning lists its strings, low to high.
+  const name = preset.replace(/^(Guitar|Bass)\s+/i, '').replace(/\s+Tuning$/i, '')
+    || [...staff.tuning].reverse().map(p => alphaTab.model.Tuning.getTextForTuning(p, false)).join(' ')
+  return staff.capo ? `${name} tuning · Capo ${staff.capo}` : `${name} tuning`
+}
+
 /** Whether any beat of the track carries a lyric syllable. */
 export function hasLyrics(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s =>

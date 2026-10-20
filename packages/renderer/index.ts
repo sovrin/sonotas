@@ -12,6 +12,7 @@ import {
   hasSections,
   hasTab,
   injectTempoAt,
+  tuningText,
   loadScore,
   measureBars,
   renderSheet
@@ -195,6 +196,7 @@ export async function createRenderer(
     fitBars,
     title: score.title,
     artist: score.artist,
+    tuning: tuningText(score, track),
     titleColor: opts.foreground,
     durationMs
   })
@@ -259,6 +261,7 @@ export async function createRenderer(
     height,
     title: score.title,
     artist: score.artist,
+    tuning: tuningText(score, track),
     hasChords: hasChords(score, track),
     hasLyrics: hasLyrics(score, track),
     hasSections: hasSections(score),
