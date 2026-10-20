@@ -27,17 +27,22 @@ entirely on your machine, so nothing gets uploaded.
   Off by default, so the video stays silent for your own recording.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
 - **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
-  that the view follows down.
+  that the view follows down, with a set number of bars per line if you like.
+  Tight, normal or wide note spacing.
 - **Follow, your way:** a playhead that jumps or glides, and a view that moves
   per bar, turns a screen at a time or tracks the playhead, with cut, quick or
   slow transitions and where in the frame *now* sits.
 - **Fit to width:** size the notation so 1–8 bars span the frame, optionally
   showing only the current bars.
-- **Styling:** tab only, standard notation or both. Dark or light canvas, custom
-  colours for background, notation and bar numbers. Playhead colour, width,
-  height and offset. Bar highlight and current-note recolouring.
+- **Styling:** tab only, standard notation or both, with rhythm under the tab as
+  beams, bars or none, and an optional song-book style for bends and let-ring.
+  Dark or light canvas, custom colours for background, notation and bar numbers,
+  and dimmer staff lines. Playhead colour, width, height and offset. Bar
+  highlight and current-note recolouring.
 - **Extras:** export a range of bars, change the playback speed from 0.25× to 2×, and
-  toggle the song title, track name, tempo marking, bar numbers and chord diagrams.
+  toggle the song title, the tuning and capo, track name, tempo marking, bar
+  numbers, chord diagrams, lyrics, section names, dynamics and text, and
+  fingering and pick strokes.
 - **Live preview:** scrub and play the exact frames that end up in the video. The
   timeline shows the song in play order, repeats included; Space plays and pauses,
   and I and O set the first and last exported bar at the playhead.

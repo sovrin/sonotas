@@ -35,9 +35,9 @@ sonotas turns a Guitar Pro or MusicXML tab into a scrolling play-along video wit
 - **Sound is optional and off by default.** With it on, a built-in synth plays the song in the preview and as an audio track in the MP4, following tempo changes and the playback speed: every track, only the one shown, or all but it as a backing track, with an optional metronome and a count-in bar. Creators who add their own recording in an editor leave it off and get a silent video.
 - **A single-page tool with no accounts:** no sign-in, no backend, no saved projects. Settings live in the link (`?s=…`, a short code), so sharing a look is sharing a URL; old links must keep working.
 - Output: 480p, 720p or 1080p at 24, 30 or 60 fps, silent or with sound. Three quality levels, a file size estimate before export, and an optional *Fast export* that trades file size for speed.
-- Layouts: a scrolling *line* or a *page* of wrapped systems. Zoom is set by notation size or by bars across the frame (1–8).
+- Layouts: a scrolling *line* or a *page* of wrapped systems, optionally with a fixed number of bars per line. Zoom is set by notation size or by bars across the frame (1–8), spacing by tight, normal or wide.
 - Follow: the playhead (jumps note to note or glides) and the view (moves per bar or line, turns a screen at a time, or tracks the playhead) are set apart, with the transition (cut, quick, slow), where *now* sits in the frame, an early screen turn, a steady tracking pace, and running past the song's ends.
-- Styling: staves (tab, standard or both), dark or light canvas, custom colours, playhead, bar highlight, current-note recolouring, and which elements are shown.
+- Styling: staves (tab, standard or both), rhythm under the tab, song-book style, dark or light canvas, custom colours and staff-line strength, playhead, bar highlight, current-note recolouring, and which elements are shown (title, tuning and capo, lyrics, section names, dynamics and text, fingering and more).
 - Extras: export a range of bars, playback speed from 0.25× to 2×, and a live preview that scrubs the exact frames that end up in the video.
 - Built on alphaTab (MPL-2.0) for parsing, engraving, timing and the synth; the Sonivox soundfont for its instruments; Bravura for the music font; mediabunny for muxing.
 
