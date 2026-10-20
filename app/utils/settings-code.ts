@@ -35,22 +35,35 @@ export const APP_DEFAULTS = {
   quality: 'High',
   fastExport: false, // parallel software encoders: much faster, larger files
   sound: false, // synthesized soundtrack in preview and export
+  soundMix: 'All', // which tracks sound: all, only the shown one, or all but it
+  metronome: false, // a click on every beat
+  countIn: false, // a bar of clicks before the first note
   speed: '1×',
   layout: 'Scrolling line', // one endless system, or page-style wrapped systems
   notationSize: '100%',
   fitBars: 'Off', // line layout: size the widest run of N bars to the frame width
+  barsPerLine: 'Auto', // page layout: bars on each line
+  spacing: 'Normal', // how far the notes spread out along the line
   currentBarOnly: false, // hide everything but the bar(s) being played
   staves: 'Tab only',
+  songBook: false, // bends, whammys and let-ring drawn and played song-book style
+  tabRhythm: 'Auto', // stems under the tab: auto (as the file sets it), beams, bars or none
   theme: 'dark', // canvas preset: sets the three colours below unless changed
   bg: '#121316',
   fg: '#e8e9eb', // notation
   barNum: '#e8e9eb',
+  staffLines: 100, // % of the notation colour's strength the staff lines get
   showTitle: true, // title/artist overlay (needs the file to carry one)
+  showTuning: false, // the track's tuning and capo, in the title overlay
   showTrackName: true,
   showBarNumbers: true,
   showTempo: true,
   showTimeSig: true,
   showChords: false, // chord diagrams above chord-named beats
+  showLyrics: true,
+  showSections: true, // section names (Intro, Verse…) above their bars
+  showDynamics: true, // dynamics, hairpins, text, directions and beat timers
+  showFingering: true, // fingering and pick strokes
   showAttribution: true, // alphaTab's "rendered by alphaTab" line
   playhead: 'jump', // 'jump' note to note | 'glide' through the bar
   view: 'bar', // 'bar' (page: per line) | 'screen' | 'track'
@@ -149,7 +162,20 @@ export const FIELDS: readonly Field[] = [
   { id: 40, key: 'highlightPadding', type: 'int', min: 0, max: 20, absent: 6 },
   { id: 41, key: 'showTimeSig', type: 'bool', absent: true },
   { id: 42, key: 'showAttribution', type: 'bool', absent: true },
-  { id: 43, key: 'sound', type: 'bool', absent: false }
+  { id: 43, key: 'sound', type: 'bool', absent: false },
+  { id: 44, key: 'soundMix', type: 'enum', values: ['All', 'Solo', 'Minus'], absent: 'All' },
+  { id: 45, key: 'metronome', type: 'bool', absent: false },
+  { id: 46, key: 'countIn', type: 'bool', absent: false },
+  { id: 47, key: 'tabRhythm', type: 'enum', values: ['Auto', 'Beams', 'Bars', 'None'], absent: 'Auto' },
+  { id: 48, key: 'showLyrics', type: 'bool', absent: true },
+  { id: 49, key: 'showSections', type: 'bool', absent: true },
+  { id: 50, key: 'showDynamics', type: 'bool', absent: true },
+  { id: 51, key: 'showFingering', type: 'bool', absent: true },
+  { id: 52, key: 'showTuning', type: 'bool', absent: false },
+  { id: 53, key: 'barsPerLine', type: 'enum', values: ['Auto', '2', '3', '4', '6'], absent: 'Auto' },
+  { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' },
+  { id: 55, key: 'songBook', type: 'bool', absent: false },
+  { id: 56, key: 'staffLines', type: 'int', min: 20, max: 100, absent: 100 }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

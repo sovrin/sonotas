@@ -14,12 +14,23 @@ const STAVES = [
   { v: 'Standard + Tab', label: 'Both' },
   { v: 'Standard only', label: 'Notes' }
 ]
+const RHYTHM = [
+  { v: 'Auto', label: 'Auto' },
+  { v: 'Beams', label: 'Beams' },
+  { v: 'Bars', label: 'Bars' },
+  { v: 'None', label: 'None' }
+]
 const SHOW = [
   { key: 'showTitle', label: 'Song title', missing: () => !s.title },
+  { key: 'showTuning', label: 'Tuning and capo', missing: () => !s.tuning },
   { key: 'showTrackName', label: 'Track name' },
   { key: 'showBarNumbers', label: 'Bar numbers' },
   { key: 'showTempo', label: 'Tempo marking' },
   { key: 'showChords', label: 'Chord diagrams', missing: () => !s.hasChords },
+  { key: 'showLyrics', label: 'Lyrics', missing: () => !s.hasLyrics },
+  { key: 'showSections', label: 'Section names', missing: () => !s.hasSections },
+  { key: 'showDynamics', label: 'Dynamics and text' },
+  { key: 'showFingering', label: 'Fingering and pick strokes' },
   // Only meaningful when the export starts mid-song.
   { key: 'showTimeSig', label: 'Time signature at the first bar', when: () => s.renderOnlyBars && s.fromBar > 1 },
   // Hidden unless the page is opened with ?attribution, so the line stays on by default.
@@ -93,7 +104,14 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
               >
             </span>
           </div>
-          <small class="text-muted">A colour picked here overrides the theme.</small>
+          <RangeField
+            name="staffLines"
+            label="Staff lines"
+            :min="20"
+            :max="100"
+            unit="%"
+          />
+          <small class="text-muted">A colour picked here overrides the theme. Staff lines take the notation colour at this strength.</small>
         </div>
       </details>
     </InspectorGroup>
@@ -104,6 +122,29 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
         label="Staves"
         :options="STAVES"
       />
+      <SegmentedField
+        v-if="s.staves !== 'Standard only'"
+        name="tabRhythm"
+        label="Rhythm under the tab"
+        :options="RHYTHM"
+      >
+        <small
+          v-if="s.tabRhythm === 'Auto'"
+          class="text-muted"
+        >As the file sets it: under the tab only when the file hides standard notation.</small>
+      </SegmentedField>
+      <div class="field">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.songBook"
+            @change="toggle('songBook')"
+          >
+          Song-book style
+        </label>
+        <small class="text-muted">Bends, whammy dips and let-ring drawn and played like a printed song book.</small>
+      </div>
     </InspectorGroup>
 
     <InspectorGroup title="Show elements">
@@ -133,7 +174,7 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
       <small
         v-if="missing.length"
         class="text-muted"
-      >{{ missing.join(' and ') }}: none in this file.</small>
+      >{{ new Intl.ListFormat('en').format(missing) }}: none in this file.</small>
     </InspectorGroup>
   </div>
 </template>

@@ -70,11 +70,12 @@ export function clipFrames(
   endMs: number,
   durationMs: number,
   fps: number,
-  speed = 1
+  speed = 1,
+  leadMs = 0 // held first frame before the clip (a count-in)
 ): number {
   const start = Math.max(0, startMs)
   const end = Math.min(endMs, durationMs)
-  return Math.max(1, Math.ceil(((end - start) / 1000 / speed) * fps))
+  return Math.max(1, Math.ceil(((end - start + leadMs) / 1000 / speed) * fps))
 }
 
 export interface EncodeParams {
@@ -89,6 +90,7 @@ export interface EncodeParams {
   signal?: AbortSignal // closes the encoders and abandons the output
   audio?: Float32Array // the clip's soundtrack: interleaved stereo at SAMPLE_RATE, already at `speed`
   tailMs?: number // how far `endMs` may run past the song's end, holding the last frame
+  leadMs?: number // source ms the first frame holds before the clip starts (a count-in)
 }
 
 /** A run of output frames `[first, first + count)` one encoder paints in order. */
@@ -193,7 +195,7 @@ interface Hooks {
  * frames, and the lanes stop painting. */
 async function encodeLanes(
   painter: Painter,
-  { fps, startMs, speed, paint }: Pick<EncodeParams, 'fps' | 'startMs' | 'speed' | 'paint'>,
+  { fps, startMs, speed, paint, leadMs = 0 }: Pick<EncodeParams, 'fps' | 'startMs' | 'speed' | 'paint' | 'leadMs'>,
   setup: Setup,
   lanes: Range[][],
   { keep, onPacket, signal }: Hooks
@@ -239,7 +241,7 @@ async function encodeLanes(
       for (const { first, count } of ranges) {
         for (let i = first; i < first + count; i++) {
           if (halted()) return out
-          painter.paint(ctx, startMs + (i / fps) * 1000 * speed, paint) // clip-relative source time
+          painter.paint(ctx, startMs + Math.max(0, (i / fps) * 1000 * speed - leadMs), paint) // clip-relative source time
           const frame = new VideoFrame(canvas, {
             timestamp: Math.round((i / fps) * 1e6), // output timestamps start at 0
             duration: Math.round(1e6 / fps)
@@ -350,7 +352,7 @@ export async function encodeVideo(
   { endMs, onProgress, signal, ...params }: EncodeParams
 ): Promise<Blob> {
   const { fps, startMs, speed, quality, fast } = params
-  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed)
+  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed, params.leadMs)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   signal?.throwIfAborted()
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
@@ -394,7 +396,7 @@ export async function estimateVideoBytes(
   samples: number
 ): Promise<number | null> {
   const { fps, startMs, speed, quality, fast } = params
-  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed)
+  const total = clipFrames(startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, speed, params.leadMs)
   const gopFrames = Math.round(KEYFRAME_SECONDS * fps)
   const setup = await resolveSetup(painter.width, painter.height, fps, quality, fast)
   if (signal?.aborted) return null

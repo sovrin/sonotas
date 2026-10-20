@@ -155,6 +155,29 @@ export function hasChords(score: alphaTab.model.Score, track: number): boolean {
   return (score.tracks[track]?.staves ?? []).some(s => (s.chords?.size ?? 0) > 0)
 }
 
+/** The track's tuning and capo as one line ("Dropped D tuning · Capo 2"),
+ * '' for a track without strings. */
+export function tuningText(score: alphaTab.model.Score, track: number): string {
+  const staff = score.tracks[track]?.staves.find(s => s.isStringed && !s.isPercussion)
+  if (!staff?.tuning.length) return ''
+  const preset = staff.stringTuning.name || alphaTab.model.Tuning.findTuning(staff.tuning)?.name || ''
+  // "Guitar Dropped D Tuning" → "Dropped D"; an unnamed tuning lists its strings, low to high.
+  const name = preset.replace(/^(Guitar|Bass)\s+/i, '').replace(/\s+Tuning$/i, '')
+    || [...staff.tuning].reverse().map(p => alphaTab.model.Tuning.getTextForTuning(p, false)).join(' ')
+  return staff.capo ? `${name} tuning · Capo ${staff.capo}` : `${name} tuning`
+}
+
+/** Whether any beat of the track carries a lyric syllable. */
+export function hasLyrics(score: alphaTab.model.Score, track: number): boolean {
+  return (score.tracks[track]?.staves ?? []).some(s =>
+    s.bars.some(b => b.voices.some(v => v.beats.some(beat => beat.lyrics?.some(l => l)))))
+}
+
+/** Whether the song names any sections (Intro, Verse…). */
+export function hasSections(score: alphaTab.model.Score): boolean {
+  return score.masterBars.some(m => m.section)
+}
+
 /** Master-bar boxes of the track laid out with `settings`, in render order, in
  * output px at its `display.scale`. Layout only — nothing is painted, so this
  * is cheap next to {@link renderSheet}. alphaTab lays out in unscaled units and

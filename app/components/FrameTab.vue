@@ -16,6 +16,13 @@ const LAYOUTS = [
   { v: 'Page', label: 'Page', hint: 'Lines stacked like printed sheet music; the view moves down.' }
 ]
 const layoutHint = computed(() => LAYOUTS.find(l => l.v === s.layout)?.hint)
+const BARS_PER_LINE = ['Auto', '2', '3', '4', '6'].map(n => ({ v: n, label: n }))
+const SPACINGS = [
+  { v: 'Tight', label: 'Tight', hint: 'Notes sit close together, so more bars fit.' },
+  { v: 'Normal', label: 'Normal', hint: 'The spacing alphaTab engraves by default.' },
+  { v: 'Wide', label: 'Wide', hint: 'Notes spread out, so each bar reads more easily.' }
+]
+const spacingHint = computed(() => SPACINGS.find(o => o.v === s.spacing)?.hint)
 
 // Zoom has two modes: a notation size, or a number of bars that span the width
 // (line layout only). The store keeps the latter as fitBars ('Off' | 'N bars').
@@ -161,6 +168,14 @@ function pickLayout(l) {
         </div>
         <small>{{ layoutHint }}</small>
       </div>
+      <SegmentedField
+        v-if="v.isPage"
+        name="barsPerLine"
+        label="Bars per line"
+        :options="BARS_PER_LINE"
+      >
+        <small>{{ s.barsPerLine === 'Auto' ? 'As many bars as fit the width.' : `${s.barsPerLine} bars on every line, squeezed or stretched to fit.` }}</small>
+      </SegmentedField>
     </InspectorGroup>
 
     <InspectorGroup title="Zoom">
@@ -234,6 +249,14 @@ function pickLayout(l) {
         :options="SIZES"
       >
         <small>{{ v.isPage ? 'Larger notation fits fewer bars on each line.' : 'Larger notation shows fewer bars at once.' }}</small>
+      </SegmentedField>
+
+      <SegmentedField
+        name="spacing"
+        label="Spacing"
+        :options="SPACINGS"
+      >
+        <small>{{ spacingHint }}</small>
       </SegmentedField>
     </InspectorGroup>
 

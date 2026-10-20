@@ -19,19 +19,30 @@ entirely on your machine, so nothing gets uploaded.
   24, 30 or 60 fps, with an up-front file size estimate. The clip is split
   across several encoders at once; *Fast export* switches to software encoders
   on half your CPU cores for roughly 3× faster exports and larger files.
+- **Sound, if you want it:** turn it on and a built-in synth plays the song, in
+  the preview and as an audio track in the MP4: every track, only the one shown,
+  or all but it for a backing track to play along with. Add a metronome, or a
+  count-in bar while the video holds its first frame. It follows tempo changes,
+  ritardandos and the playback speed, and the last notes ring out at the end.
+  Off by default, so the video stays silent for your own recording.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
 - **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
-  that the view follows down.
+  that the view follows down, with a set number of bars per line if you like.
+  Tight, normal or wide note spacing.
 - **Follow, your way:** a playhead that jumps or glides, and a view that moves
   per bar, turns a screen at a time or tracks the playhead, with cut, quick or
   slow transitions and where in the frame *now* sits.
 - **Fit to width:** size the notation so 1–8 bars span the frame, optionally
   showing only the current bars.
-- **Styling:** tab only, standard notation or both. Dark or light canvas, custom
-  colours for background, notation and bar numbers. Playhead colour, width,
-  height and offset. Bar highlight and current-note recolouring.
+- **Styling:** tab only, standard notation or both, with rhythm under the tab as
+  beams, bars or none, and an optional song-book style for bends and let-ring.
+  Dark or light canvas, custom colours for background, notation and bar numbers,
+  and dimmer staff lines. Playhead colour, width, height and offset. Bar
+  highlight and current-note recolouring.
 - **Extras:** export a range of bars, change the playback speed from 0.25× to 2×, and
-  toggle the song title, track name, tempo marking, bar numbers and chord diagrams.
+  toggle the song title, the tuning and capo, track name, tempo marking, bar
+  numbers, chord diagrams, lyrics, section names, dynamics and text, and
+  fingering and pick strokes.
 - **Live preview:** scrub and play the exact frames that end up in the video. The
   timeline shows the song in play order, repeats included; Space plays and pauses,
   and I and O set the first and last exported bar at the playhead.
@@ -49,9 +60,9 @@ Everything musical in sonotas is done by [alphaTab](https://www.alphatab.net),
 the open-source notation engine by [Daniel Kuschny and contributors](https://github.com/CoderLine/alphaTab).
 It reads every supported Guitar Pro format and MusicXML, engraves the tablature
 and standard notation you see in the video, and supplies the MIDI timing that
-moves the playhead. sonotas adds the camera, the styling and the encoder around
-it. alphaTab is licensed under the MPL-2.0; if it is useful to you, star the
-repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
+moves the playhead and the synth that plays the soundtrack. sonotas adds the
+camera, the styling and the encoder around it. alphaTab is licensed under the
+MPL-2.0; if it is useful to you, star the repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
 Exports carry alphaTab's own "rendered by alphaTab" line unless you turn it off
 in the *Look* tab.
 
@@ -68,6 +79,7 @@ packages/renderer/    Guitar Pro → video engine
   timeline.ts         map playback time to bars and beats (tempo changes, repeats)
   scroll.ts           camera movement for each scroll mode
   paint.ts            composite each frame: sheet, highlight, playhead, overlays
+  audio.ts            synthesize the soundtrack on the playhead's clock
   encode.ts           encode frames on parallel WebCodecs encoders, mux to MP4 with mediabunny
 public/tabs/          sample tabs (the demo loads Catastrophic.gp)
 ```

@@ -25,6 +25,8 @@ const SAMPLE_URL = '/tabs/Catastrophic.gp'
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
+const SPACING_BY_UI: Record<string, number> = { Tight: 0.7, Normal: 1, Wide: 1.4 }
+const RHYTHM_BY_UI: Record<string, string> = { Auto: 'auto', Beams: 'beams', Bars: 'bars', None: 'hidden' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
 // Notation mode → the staves value censitas counts.
 const STAVES_FOR_COUNT: Record<string, string> = { tab: 'tab', both: 'standard-tab', notation: 'standard' }
@@ -73,8 +75,11 @@ function createSonotas() {
     sheetW: 0,
     sheetH: 0,
     title: '', // song metadata the renderer read from the file ('' if none)
+    tuning: '', // the rendered track's tuning and capo line ('' without strings)
     artist: '',
     hasChords: false, // whether the rendered track defines any chords
+    hasLyrics: false,
+    hasSections: false,
     barStarts: [] as number[], // start-ms of each rendered bar (from the renderer)
     // The whole song's bars, kept from the last uncropped build so the timeline
     // can show every bar while only a range is rendered.
@@ -99,7 +104,7 @@ function createSonotas() {
   let lastTs = 0
   let playToken = 0 // bumped on every stop, so a play still awaiting its soundtrack gives up
   let audioCtx: AudioContext | null = null
-  let soundBuf: { engine: unknown, speed: number, buf: AudioBuffer } | null = null // engine: the sheet it was made for
+  let soundBuf: { engine: unknown, key: string, buf: AudioBuffer } | null = null // engine: the sheet it was made for
   // The soundtrack while it plays: the audio clock and song time (s) it started at.
   let voice: { node: AudioBufferSourceNode, at: number, from: number, speed: number } | null = null
   let ringing: AudioBufferSourceNode | null = null // a finished run's soundtrack, still ringing out
@@ -160,15 +165,24 @@ function createSonotas() {
       scale: scaleNum(),
       notation: notationMode(),
       layout: layoutMode(),
+      tabRhythm: RHYTHM_BY_UI[s.tabRhythm] ?? 'auto',
+      songBook: s.songBook,
+      barsPerRow: parseInt(s.barsPerLine, 10) || 0,
+      spacing: SPACING_BY_UI[s.spacing] ?? 1,
       fitBars: fitBarsNum(),
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
       showBarNumbers: s.showBarNumbers,
+      showLyrics: s.showLyrics,
+      showSections: s.showSections,
+      showDynamics: s.showDynamics,
+      showFingering: s.showFingering,
       showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
       foreground: s.fg,
       barNumberColor: s.barNum,
+      staffLineOpacity: s.staffLines / 100,
       crop: s.renderOnlyBars ? { fromBar: s.fromBar - 1, toBar: s.toBar - 1 } : undefined
     }
   }
@@ -189,7 +203,7 @@ function createSonotas() {
       highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
       background: { color: s.bg },
-      title: { enabled: s.showTitle, color: s.fg }
+      title: { enabled: s.showTitle, tuning: s.showTuning, color: s.fg }
     }
   }
 
@@ -226,6 +240,7 @@ function createSonotas() {
       quality: qualityMode(),
       fast: s.fastExport,
       audio: s.sound,
+      sound: soundOpts(),
       startMs: 0,
       endMs: s.duration * 1000,
       ...paintOpts()
@@ -297,8 +312,11 @@ function createSonotas() {
       s.sheetW = inst.width
       s.sheetH = inst.height
       s.title = inst.title
+      s.tuning = inst.tuning
       s.artist = inst.artist
       s.hasChords = inst.hasChords
+      s.hasLyrics = inst.hasLyrics
+      s.hasSections = inst.hasSections
       s.barStarts = [...inst.bars]
       s.plays = [...inst.plays]
       if (!s.renderOnlyBars) {
@@ -383,21 +401,31 @@ function createSonotas() {
     voice = null
   }
 
-  // The whole song as an AudioBuffer at the current speed, synthesized once per
-  // sheet and speed.
+  // What the soundtrack plays, from the Sound tab.
+  function soundOpts() {
+    return {
+      mix: s.soundMix.toLowerCase() as 'all' | 'solo' | 'minus',
+      metronome: s.metronome,
+      countIn: s.countIn
+    }
+  }
+
+  // The whole song as an AudioBuffer at the current speed and sound options,
+  // synthesized once per sheet and those.
   async function soundBuffer(ctx: AudioContext): Promise<AudioBuffer> {
     const owner = engine!
     const speed = speedNum()
-    if (soundBuf?.engine === owner && soundBuf.speed === speed) return soundBuf.buf
+    const key = JSON.stringify([speed, soundOpts()])
+    if (soundBuf?.engine === owner && soundBuf.key === key) return soundBuf.buf
     const { CHANNELS, SAMPLE_RATE } = await import('renderer')
-    const pcm = await owner.soundtrack({ speed })
+    const pcm = await owner.soundtrack({ speed, ...soundOpts() })
     const frames = pcm.length / CHANNELS
     const buf = ctx.createBuffer(CHANNELS, frames, SAMPLE_RATE)
     for (let c = 0; c < CHANNELS; c++) {
       const ch = buf.getChannelData(c)
       for (let i = 0; i < frames; i++) ch[i] = pcm[i * CHANNELS + c]!
     }
-    soundBuf = { engine: owner, speed, buf }
+    soundBuf = { engine: owner, key, buf }
     return buf
   }
 
@@ -416,7 +444,7 @@ function createSonotas() {
       paintFrame()
       return
     }
-    s.time = t
+    s.time = Math.max(0, t) // a count-in runs before 0: hold the first frame
     paintFrame()
     raf = requestAnimationFrame(tick)
   }
@@ -443,8 +471,12 @@ function createSonotas() {
         node.buffer = buf
         node.connect(audioCtx.destination)
         const speed = speedNum()
-        node.start(0, s.time / speed)
-        voice = { node, at: audioCtx.currentTime, from: s.time, speed }
+        // The buffer opens with the count-in bar; from the top it plays, from
+        // anywhere else it's skipped.
+        const lead = s.countIn ? engine.countInMs / 1000 : 0
+        const from = s.time === 0 ? -lead : s.time
+        node.start(0, (from + lead) / speed)
+        voice = { node, at: audioCtx.currentTime, from, speed }
       } catch (err) {
         if (token !== playToken) return
         s.soundLoading = false
@@ -579,6 +611,11 @@ function createSonotas() {
       theme: s.theme,
       length: lengthBucket(effDur())
     })
+    // Its own event: censitas takes at most 10 props, and export-start has them.
+    if (s.sound) {
+      const { mix, metronome, countIn } = soundOpts()
+      track('export-sound', { mix, metronome: metronome ? 'on' : 'off', countIn: countIn ? 'on' : 'off' })
+    }
     const started = performance.now()
     try {
       const out = await engine.encode({
@@ -756,7 +793,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.layout, s.showChords, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.staffLines, s.notationSize, s.staves, s.tabRhythm, s.songBook, s.barsPerLine, s.spacing, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()
@@ -764,7 +801,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.showTuning, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
     () => {
       invalidateResult()
       invalidateEstimate()
@@ -772,12 +809,12 @@ function createSonotas() {
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.fastExport, s.speed, s.sound].join('|'), () => {
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed, s.sound, s.soundMix, s.metronome, s.countIn].join('|'), () => {
     invalidateResult()
     invalidateEstimate()
   })
   // The playing soundtrack was made for the old speed / sound setting: pause.
-  watch(() => [s.speed, s.sound], () => {
+  watch(() => [s.speed, s.sound, s.soundMix, s.metronome, s.countIn], () => {
     if (s.playing) {
       stopLoop()
       s.playing = false

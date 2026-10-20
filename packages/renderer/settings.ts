@@ -7,6 +7,17 @@ export type Notation = 'auto' | 'both' | 'notation' | 'tab'
 /** Sheet layout: one endless horizontal system, or page-style wrapped systems. */
 export type Layout = 'line' | 'page'
 
+/** Rhythm stems under the tab: 'auto' only when the file hides standard notation,
+ * 'beams' per beat, 'bars' beamed like the score, or 'hidden'. */
+export type TabRhythm = 'auto' | 'beams' | 'bars' | 'hidden'
+
+const TAB_RHYTHM: Record<TabRhythm, alphaTab.TabRhythmMode> = {
+  auto: alphaTab.TabRhythmMode.Automatic,
+  beams: alphaTab.TabRhythmMode.ShowWithBeams,
+  bars: alphaTab.TabRhythmMode.ShowWithBars,
+  hidden: alphaTab.TabRhythmMode.Hidden
+}
+
 const DEFAULT_SCALE = 1.0
 const DEFAULT_NOTATION: Notation = 'auto'
 const DEFAULT_LAYOUT: Layout = 'line'
@@ -26,6 +37,19 @@ const HEADER_ELEMENTS = [
   alphaTab.NotationElement.GuitarTuning
 ]
 
+// Performance marks, toggled as two groups.
+const DYNAMICS_ELEMENTS = [
+  alphaTab.NotationElement.EffectDynamics,
+  alphaTab.NotationElement.EffectCrescendo,
+  alphaTab.NotationElement.EffectText,
+  alphaTab.NotationElement.EffectDirections,
+  alphaTab.NotationElement.EffectBeatTimer
+]
+const FINGERING_ELEMENTS = [
+  alphaTab.NotationElement.EffectFingering,
+  alphaTab.NotationElement.EffectPickStroke
+]
+
 /** Render only this 0-based inclusive master-bar range (maps to alphaTab's
  * `startBar`/`barCount`). Omit to render the whole sheet. */
 export interface CropRange {
@@ -37,13 +61,22 @@ export interface SettingsOptions {
   scale?: number // display scale, default 1.0
   notation?: Notation // stave selection, default "auto"
   layout?: Layout // 'line' (horizontal, default) or 'page' (wrapped systems)
+  tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
+  songBook?: boolean // alphaTab's song-book notation mode, default false
+  barsPerRow?: number // page layout: bars on each line, 0 (default) = fit
+  spacing?: number // note spacing (stretchForce), default 1
   crop?: CropRange // render only these bars, default whole sheet
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
   showBarNumbers?: boolean // draw bar numbers, default true
+  showLyrics?: boolean // draw lyrics, default true
+  showSections?: boolean // draw section names, default true
+  showDynamics?: boolean // draw dynamics, hairpins, text, directions, beat timers; default true
+  showFingering?: boolean // draw fingering and pick strokes, default true
   chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
+  staffLineOpacity?: number // staff lines' strength 0–1, default 1
 }
 
 /** Parse `#rrggbb` into an alphaTab Color. */
@@ -93,6 +126,11 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   settings.display.staveProfile = staveProfile(
     opts.notation ?? DEFAULT_NOTATION
   )
+  // Before the element toggles below, which the preset would otherwise override.
+  if (opts.songBook) settings.setSongBookModeSettings()
+  if (opts.barsPerRow) settings.display.barsPerRow = opts.barsPerRow
+  if (opts.spacing) settings.display.stretchForce = opts.spacing
+  if (opts.tabRhythm) settings.notation.rhythmMode = TAB_RHYTHM[opts.tabRhythm]
   if (opts.crop) {
     // alphaTab's startBar is 1-based; barCount counts from there (-1 = all).
     settings.display.startBar = opts.crop.fromBar + 1
@@ -106,6 +144,20 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   }
   if (opts.showBarNumbers === false) {
     settings.notation.elements.set(alphaTab.NotationElement.BarNumber, false)
+  }
+  if (opts.showLyrics === false) {
+    settings.notation.elements.set(alphaTab.NotationElement.EffectLyrics, false)
+  }
+  if (opts.showSections === false) {
+    settings.notation.elements.set(alphaTab.NotationElement.EffectMarker, false)
+  }
+  if (opts.showDynamics === false) {
+    for (const el of DYNAMICS_ELEMENTS) settings.notation.elements.set(el, false)
+  }
+  if (opts.showFingering === false) {
+    // Score fingering only draws in the score modes; move it to the effect band, then hide that.
+    settings.notation.fingeringMode = alphaTab.FingeringMode.SingleNoteEffectBand
+    for (const el of FINGERING_ELEMENTS) settings.notation.elements.set(el, false)
   }
   if (opts.chordDiagrams !== undefined) {
     settings.notation.elements.set(alphaTab.NotationElement.ChordDiagrams, opts.chordDiagrams)
@@ -125,6 +177,11 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   // Bar numbers are configurable independently of the notation color.
   if (opts.barNumberColor) {
     settings.display.resources.barNumberColor = colorFromHex(opts.barNumberColor)
+  }
+  // Dimmer staff lines let the notes stand out.
+  if (opts.staffLineOpacity !== undefined && opts.staffLineOpacity < 1) {
+    const l = settings.display.resources.staffLineColor
+    settings.display.resources.staffLineColor = new alphaTab.model.Color(l.r, l.g, l.b, Math.round(l.a * opts.staffLineOpacity))
   }
   return settings
 }

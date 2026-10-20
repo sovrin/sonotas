@@ -172,6 +172,7 @@ function lightDismiss(e) {
       <ol class="stack gap-2">
         <li><b>Open a tab.</b> Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML, picked or dropped anywhere on the page.</li>
         <li><b>Set the picture.</b> Frame, Look and Playhead decide where the score sits and how it is drawn.</li>
+        <li><b>Add sound.</b> Sound plays the song with a built-in synth: every track, one alone or all but one, with a metronome and a count-in if you like.</li>
         <li><b>Pick the bars.</b> Export the whole song, or only some bars: drag the brackets on the bar strip, or press I and O.</li>
         <li><b>Export.</b> The MP4 is rendered and muxed right here, and comes back to the stage to watch or save.</li>
       </ol>

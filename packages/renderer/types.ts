@@ -1,5 +1,5 @@
 import type { Follow, ScrollMode } from './scroll.ts'
-import type { Layout, Notation } from './settings.ts'
+import type { Layout, Notation, TabRhythm } from './settings.ts'
 
 /** Encoder quality preset. Mapped to mediabunny constants inside encode.ts. */
 export type Quality = 'low' | 'medium' | 'high' | 'max'
@@ -29,10 +29,14 @@ export interface RendererOptions {
   aspect?: Aspect // frame the sheet to this ratio; omit for a bare horizontal strip
   scale?: number // notation scale, clamped 0.5–2.0, default 1.0
   notation?: Notation // stave selection, default "auto"
+  tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
+  songBook?: boolean // bends, whammys and let-ring drawn and played song-book style, default false
   // 'line' (default): one endless system the view scrolls along. 'page': systems
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout
   crop?: Crop // render only these bars, default whole sheet
+  barsPerRow?: number // page layout: bars on each line; 0 (default) lets alphaTab fit them
+  spacing?: number // how far notes spread out (alphaTab's stretchForce), default 1
   // Line layout: engrave the notation so the widest run of this many
   // consecutive bars spans nearly the whole frame width (capped by the frame
   // height); the bar view then centers the current bar and the ones after it
@@ -47,11 +51,16 @@ export interface RendererOptions {
   showAttribution?: boolean // alphaTab's "rendered by alphaTab" line below the sheet
   showTimeSignature?: boolean
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
+  showLyrics?: boolean // lyrics under the beats, default true
+  showSections?: boolean // section names (Intro, Verse…) above their bars, default true
+  showDynamics?: boolean // dynamics, hairpins, text, directions and beat timers, default true
+  showFingering?: boolean // fingering and pick strokes, default true
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
   // bare chord name; in page layout also lists them in the header. Default false.
   chordDiagrams?: boolean
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
+  staffLineOpacity?: number // staff lines at this share (0–1) of their colour's strength, default 1
   fontUrl?: string // URL of the woff2 music font (a Bravura subset), default '/fonts/sonotas-music.woff2'
   soundFontUrl?: string // URL of the sf2/sf3 soundfont for audio, default '/soundfont/sonivox.sf3'; fetched on first use
 }
@@ -96,6 +105,7 @@ export interface ActiveNoteOptions {
  * starts below it. */
 export interface TitleOptions {
   enabled?: boolean // default false
+  tuning?: boolean // a tuning and capo line, under the title or on its own; default false
   color?: string // CSS color; defaults to the notation color
 }
 
@@ -113,6 +123,17 @@ export interface PaintOptions {
   title?: TitleOptions
 }
 
+/** What the soundtrack plays. All optional. */
+export interface SoundOptions {
+  // 'all' (default): every track. 'solo': only the rendered track. 'minus':
+  // every track but the rendered one, a backing track to play along with.
+  mix?: 'all' | 'solo' | 'minus'
+  metronome?: boolean // a click on every beat, default false
+  // One bar of clicks in the clip's opening meter and tempo before its first
+  // note; the video holds its first frame meanwhile. Default false.
+  countIn?: boolean
+}
+
 /** Options for {@link Renderer.encode} — the paint knobs plus the encode-loop
  * knobs. Encode-time only — never rebuilds the preview. */
 export interface EncodeOptions extends PaintOptions {
@@ -125,8 +146,9 @@ export interface EncodeOptions extends PaintOptions {
    * larger files with slightly softer motion. Falls back to the default
    * constant-quality encoder where software H.264 isn't available. */
   fast?: boolean
-  /** Add a synthesized soundtrack (every track of the song). Default false. */
+  /** Add a synthesized soundtrack. Default false. */
   audio?: boolean
+  sound?: SoundOptions // what the soundtrack plays, when `audio` is on
   onProgress?: (frame: number, total: number) => void
   /** Stops the encode: encoders are closed at once and `encode()` rejects with
    * the signal's reason (an AbortError by default). */
@@ -139,9 +161,13 @@ export interface Renderer {
   height: number
   /** Song metadata from the file ('' when absent) — what the title overlay shows. */
   title: string
+  /** The track's tuning and capo line ('' for a track without strings). */
+  tuning: string
   artist: string
   /** Whether the rendered track defines any chords (so chord diagrams can exist). */
   hasChords: boolean
+  hasLyrics: boolean
+  hasSections: boolean
   /** Start-ms of each rendered bar's first play (rebased to 0); `bars.length`
    * is the rendered bar count. */
   bars: number[]
@@ -160,11 +186,13 @@ export interface Renderer {
    * preview to seek. A bar played more than once resolves to the play nearest
    * `atMs`. */
   timeAt(atMs: number, x: number, y: number, opts?: PaintOptions): number | null
-  /** Synthesize a clip of the song (every track) as interleaved stereo at
-   * SAMPLE_RATE, played at `speed`. `endMs` defaults to the end plus the
-   * last notes' ring-out (when the clip ends the song). Fetches the soundfont
-   * on first use. */
-  soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'>): Promise<Float32Array>
+  /** Length (ms, source time) of the count-in bar a soundtrack can open with. */
+  countInMs: number
+  /** Synthesize a clip of the song as interleaved stereo at SAMPLE_RATE,
+   * played at `speed`, opening with the count-in bar when asked. `endMs`
+   * defaults to the end plus the last notes' ring-out (when the clip ends the
+   * song). Fetches the soundfont on first use. */
+  soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'> & SoundOptions): Promise<Float32Array>
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its
