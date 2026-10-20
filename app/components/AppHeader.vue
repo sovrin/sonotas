@@ -2,7 +2,7 @@
 // One toolbar: the app, then — past a hairline — the song being worked on,
 // its track, and the way to open another. Export is not up here; it waits
 // under the settings.
-const { s, v, loadFile, setTrack, toggleTheme, copyLink } = useSonotas()
+const { s, v, loadFile, setTrack, toggleTheme, copyLink, resetSettings } = useSonotas()
 
 const ACCEPT = '.gp,.gpx,.gp3,.gp4,.gp5,.xml,.musicxml,.mxl'
 const OPEN_TIP = 'Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML. Or drop a file anywhere. It stays in your browser.'
@@ -123,6 +123,26 @@ const facts = computed(() => [
           class="sr-only"
           role="status"
         >{{ s.linkCopied ? 'Link copied' : '' }}</span>
+      </button>
+      <button
+        class="btn"
+        data-icon
+        data-size="s"
+        data-variant="ghost"
+        :aria-label="s.undoReset ? 'Undo reset' : 'Reset settings'"
+        :data-tip="s.undoReset ? 'Undo reset' : 'Reset every setting to its default'"
+        data-tip-side="bottom"
+        :disabled="(v.atDefaults && !s.undoReset) || v.isRendering"
+        @click="resetSettings"
+      >
+        <i
+          class="icon"
+          :data-icon="s.undoReset ? 'undo' : 'rotate-ccw'"
+        />
+        <span
+          class="sr-only"
+          role="status"
+        >{{ s.undoReset ? 'Settings reset' : '' }}</span>
       </button>
       <AppHelp />
       <button

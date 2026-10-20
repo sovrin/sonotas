@@ -48,6 +48,7 @@ function createSonotas() {
     ...APP_DEFAULTS,
     settingsNotice: '', // why a link's settings didn't (all) apply ('' if they did)
     linkCopied: false, // the settings link was just copied
+    undoReset: null as Settings | null, // what a reset just replaced, offered back for a moment
     sourceName: 'Catastrophic (demo)',
     isDemo: true, // false once the user loads their own file
     loadError: '', // surfaced when a picked file can't be parsed
@@ -711,6 +712,23 @@ function createSonotas() {
     copiedTimer = setTimeout(() => (s.linkCopied = false), 2000)
   }
 
+  // Every video setting back to the app's defaults (the song, track and bar
+  // range stay). The URL follows, so the old ones can be put back for a moment.
+  let undoTimer: ReturnType<typeof setTimeout> | null = null
+  function resetSettings() {
+    if (undoTimer) clearTimeout(undoTimer)
+    if (s.undoReset) {
+      Object.assign(s, s.undoReset)
+      s.undoReset = null
+      return
+    }
+    const keys = Object.keys(APP_DEFAULTS) as (keyof Settings)[]
+    s.undoReset = Object.fromEntries(keys.map(k => [k, s[k]])) as Settings
+    Object.assign(s, APP_DEFAULTS)
+    s.settingsNotice = ''
+    undoTimer = setTimeout(() => (s.undoReset = null), 6000)
+  }
+
   // ── lifecycle ─────────────────────────────────────────────────────────────
   // Leaving mid-export, or before the finished video is saved, loses it.
   function onBeforeUnload(e: BeforeUnloadEvent) {
@@ -830,6 +848,7 @@ function createSonotas() {
       outName: outName(),
       isRendering: r.status === 'rendering',
       isDone: r.status === 'done',
+      atDefaults: !settingsCode.value,
       phase: r.phase,
       pct: Math.round(r.pct),
       frame: r.frame,
@@ -848,6 +867,7 @@ function createSonotas() {
     toggleTheme,
     zoomStrip,
     copyLink,
+    resetSettings,
     setAspect,
     setLayout,
     setCanvasTheme,
