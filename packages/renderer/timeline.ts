@@ -19,6 +19,8 @@ export interface Timeline {
   offsetMs: number
   /** Whether the clip plays to the end of the song (nothing follows it). */
   endsSong: boolean
+  /** Expanded MIDI tick of the clip start: whose meter and tempo a count-in takes. */
+  startTick: number
 }
 
 export interface Play {
@@ -130,7 +132,8 @@ export function buildTimeline(
     plays,
     midi,
     offsetMs: offset ?? 0,
-    endsSong: !spans.length || inRange(spans[spans.length - 1]!.bar)
+    endsSong: !spans.length || inRange(spans[spans.length - 1]!.bar),
+    startTick: spans.find(span => inRange(span.bar))?.s ?? 0
   }
 }
 

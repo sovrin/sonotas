@@ -15,6 +15,10 @@ test('clipFrames scales the frame count by playback speed', () => {
   assertEquals(clipFrames(0, 4000, 4000, 30, 0.5), 240)
 })
 
+test('clipFrames adds the held lead-in, scaled by speed', () => {
+  assertEquals(clipFrames(0, 4000, 4000, 30, 2, 2000), 90) // (4s + 2s) at 2× → 3s
+})
+
 test('clipFrames returns at least one frame', () => {
   assertEquals(clipFrames(1000, 1000, 5000, 30), 1)
 })
