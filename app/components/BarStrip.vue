@@ -9,7 +9,7 @@
 // view; the overview under it shows the whole song and the window in view.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-const { s, v, seekTo, zoomStrip } = useSonotas()
+const { s, v, seekTo, togglePlay, zoomStrip } = useSonotas()
 
 const strip = ref(null)
 const scroller = ref(null)
@@ -110,21 +110,29 @@ const progressWidth = computed(() => (rangeRight.value - rangeLeft.value) * (v.v
 
 // ── scrubbing ───────────────────────────────────────────────────────────────
 let scrubbing = false
+let resume = false // playing when the drag began: plays on from where it ends
+
+// Seeking pauses; `play` picks playback up again from the new spot.
+function playOn(play) {
+  if (play && !s.playing && s.time < s.duration) togglePlay()
+}
 
 function msAt(clientX) {
   const r = strip.value.getBoundingClientRect()
   return Math.min(Math.max((clientX - r.left) / r.width, 0), 1) * totalMs.value
 }
 
-function seekMs(ms) {
+function seekMs(ms, play = false) {
   const lo = barSpan(range.value.from)[0]
   const hi = barSpan(range.value.to)[1]
   seekTo((Math.min(Math.max(ms, lo), hi) - offsetMs.value) / 1000)
+  playOn(play)
 }
 
 function onDown(e) {
   if (e.button !== 0 || v.value.isRendering || !s.ready || s.videoUrl) return
   scrubbing = true
+  resume = s.playing
   strip.value.setPointerCapture(e.pointerId)
   seekMs(msAt(e.clientX))
 }
@@ -134,6 +142,7 @@ function onMove(e) {
 }
 
 function onUp() {
+  if (scrubbing) playOn(resume)
   scrubbing = false
 }
 
@@ -152,12 +161,12 @@ function onKeydown(e) {
   if (s.videoUrl) return
   if (e.key === 'Home' || e.key === 'End') {
     e.preventDefault()
-    seekMs(e.key === 'Home' ? 0 : totalMs.value)
+    seekMs(e.key === 'Home' ? 0 : totalMs.value, s.playing)
     return
   }
   if (target === undefined) return
   e.preventDefault()
-  seekMs(startOf(Math.min(Math.max(target, 0), plays.value.length - 1)))
+  seekMs(startOf(Math.min(Math.max(target, 0), plays.value.length - 1)), s.playing)
 }
 
 // ── zoom ────────────────────────────────────────────────────────────────────

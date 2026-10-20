@@ -470,7 +470,10 @@ function createSonotas() {
     const x = (clientX - r.left - (r.width - canvasEl.width * scale) / 2) / scale
     const y = (clientY - r.top - (r.height - canvasEl.height * scale) / 2) / scale
     const ms = engine.timeAt(s.time * 1000, x, y, paintOpts() as never)
-    if (ms !== null) seekTo(ms / 1000)
+    if (ms === null) return
+    const play = s.playing
+    seekTo(ms / 1000)
+    if (play && s.time < s.duration) void togglePlay() // plays on from the clicked beat
   }
 
   // ── form handlers ───────────────────────────────────────────────────────────
