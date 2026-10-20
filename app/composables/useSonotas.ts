@@ -97,7 +97,7 @@ function createSonotas() {
   let lastTs = 0
   let playToken = 0 // bumped on every stop, so a play still awaiting its soundtrack gives up
   let audioCtx: AudioContext | null = null
-  let soundBuf: { engine: unknown, speed: number, buf: AudioBuffer } | null = null // engine: the sheet it was made for
+  let soundBuf: { engine: unknown, key: string, buf: AudioBuffer } | null = null // engine: the sheet it was made for
   // The soundtrack while it plays: the audio clock and song time (s) it started at.
   let voice: { node: AudioBufferSourceNode, at: number, from: number, speed: number } | null = null
   let ringing: AudioBufferSourceNode | null = null // a finished run's soundtrack, still ringing out
@@ -224,6 +224,7 @@ function createSonotas() {
       quality: qualityMode(),
       fast: s.fastExport,
       audio: s.sound,
+      sound: soundOpts(),
       startMs: 0,
       endMs: s.duration * 1000,
       ...paintOpts()
@@ -380,21 +381,31 @@ function createSonotas() {
     voice = null
   }
 
-  // The whole song as an AudioBuffer at the current speed, synthesized once per
-  // sheet and speed.
+  // What the soundtrack plays, from the Sound tab.
+  function soundOpts() {
+    return {
+      mix: s.soundMix.toLowerCase() as 'all' | 'solo' | 'minus',
+      metronome: s.metronome,
+      countIn: s.countIn
+    }
+  }
+
+  // The whole song as an AudioBuffer at the current speed and sound options,
+  // synthesized once per sheet and those.
   async function soundBuffer(ctx: AudioContext): Promise<AudioBuffer> {
     const owner = engine!
     const speed = speedNum()
-    if (soundBuf?.engine === owner && soundBuf.speed === speed) return soundBuf.buf
+    const key = JSON.stringify([speed, soundOpts()])
+    if (soundBuf?.engine === owner && soundBuf.key === key) return soundBuf.buf
     const { CHANNELS, SAMPLE_RATE } = await import('renderer')
-    const pcm = await owner.soundtrack({ speed })
+    const pcm = await owner.soundtrack({ speed, ...soundOpts() })
     const frames = pcm.length / CHANNELS
     const buf = ctx.createBuffer(CHANNELS, frames, SAMPLE_RATE)
     for (let c = 0; c < CHANNELS; c++) {
       const ch = buf.getChannelData(c)
       for (let i = 0; i < frames; i++) ch[i] = pcm[i * CHANNELS + c]!
     }
-    soundBuf = { engine: owner, speed, buf }
+    soundBuf = { engine: owner, key, buf }
     return buf
   }
 
@@ -413,7 +424,7 @@ function createSonotas() {
       paintFrame()
       return
     }
-    s.time = t
+    s.time = Math.max(0, t) // a count-in runs before 0: hold the first frame
     paintFrame()
     raf = requestAnimationFrame(tick)
   }
@@ -438,8 +449,12 @@ function createSonotas() {
         node.buffer = buf
         node.connect(audioCtx.destination)
         const speed = speedNum()
-        node.start(0, s.time / speed)
-        voice = { node, at: audioCtx.currentTime, from: s.time, speed }
+        // The buffer opens with the count-in bar; from the top it plays, from
+        // anywhere else it's skipped.
+        const lead = s.countIn ? engine.countInMs / 1000 : 0
+        const from = s.time === 0 ? -lead : s.time
+        node.start(0, (from + lead) / speed)
+        voice = { node, at: audioCtx.currentTime, from, speed }
       } catch (err) {
         console.warn('sonotas: no sound', err) // play on silently
       }
@@ -569,6 +584,11 @@ function createSonotas() {
       theme: s.theme,
       length: lengthBucket(effDur())
     })
+    // Its own event: censitas takes at most 10 props, and export-start has them.
+    if (s.sound) {
+      const { mix, metronome, countIn } = soundOpts()
+      track('export-sound', { mix, metronome: metronome ? 'on' : 'off', countIn: countIn ? 'on' : 'off' })
+    }
     const started = performance.now()
     try {
       const out = await engine.encode({
@@ -741,12 +761,12 @@ function createSonotas() {
     }
   )
   // Encode-only options don't touch the preview but do change the file.
-  watch(() => [s.fps, s.quality, s.fastExport, s.speed, s.sound].join('|'), () => {
+  watch(() => [s.fps, s.quality, s.fastExport, s.speed, s.sound, s.soundMix, s.metronome, s.countIn].join('|'), () => {
     invalidateResult()
     invalidateEstimate()
   })
   // The playing soundtrack was made for the old speed / sound setting: pause.
-  watch(() => [s.speed, s.sound], () => {
+  watch(() => [s.speed, s.sound, s.soundMix, s.metronome, s.countIn], () => {
     if (s.playing) {
       stopLoop()
       s.playing = false

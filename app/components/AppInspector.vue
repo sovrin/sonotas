@@ -1,11 +1,12 @@
 <script setup>
 // Every setting, in tabs ordered the way a video is made: where the score sits
-// in the picture, how it looks, what marks the playing note, and the file that
-// comes out, right above the Export button pinned below.
+// in the picture, how it looks, what marks the playing note, what it sounds
+// like, and the file that comes out, right above the Export button pinned below.
 const TABS = [
   { id: 'frame', label: 'Frame' },
   { id: 'look', label: 'Look' },
   { id: 'playhead', label: 'Playhead' },
+  { id: 'sound', label: 'Sound' },
   { id: 'output', label: 'Output' }
 ]
 
@@ -80,6 +81,12 @@ function onKeydown(e, i) {
         role="tabpanel"
         aria-labelledby="tab-playhead"
         :hidden="current !== 'playhead'"
+      />
+      <SoundTab
+        id="panel-sound"
+        role="tabpanel"
+        aria-labelledby="tab-sound"
+        :hidden="current !== 'sound'"
       />
       <OutputTab
         id="panel-output"

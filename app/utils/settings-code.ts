@@ -35,6 +35,9 @@ export const APP_DEFAULTS = {
   quality: 'High',
   fastExport: false, // parallel software encoders: much faster, larger files
   sound: false, // synthesized soundtrack in preview and export
+  soundMix: 'All', // which tracks sound: all, only the shown one, or all but it
+  metronome: false, // a click on every beat
+  countIn: false, // a bar of clicks before the first note
   speed: '1×',
   layout: 'Scrolling line', // one endless system, or page-style wrapped systems
   notationSize: '100%',
@@ -149,7 +152,10 @@ export const FIELDS: readonly Field[] = [
   { id: 40, key: 'highlightPadding', type: 'int', min: 0, max: 20, absent: 6 },
   { id: 41, key: 'showTimeSig', type: 'bool', absent: true },
   { id: 42, key: 'showAttribution', type: 'bool', absent: true },
-  { id: 43, key: 'sound', type: 'bool', absent: false }
+  { id: 43, key: 'sound', type: 'bool', absent: false },
+  { id: 44, key: 'soundMix', type: 'enum', values: ['All', 'Solo', 'Minus'], absent: 'All' },
+  { id: 45, key: 'metronome', type: 'bool', absent: false },
+  { id: 46, key: 'countIn', type: 'bool', absent: false }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */
