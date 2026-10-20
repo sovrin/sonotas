@@ -113,6 +113,17 @@ export interface PaintOptions {
   title?: TitleOptions
 }
 
+/** What the soundtrack plays. All optional. */
+export interface SoundOptions {
+  // 'all' (default): every track. 'solo': only the rendered track. 'minus':
+  // every track but the rendered one, a backing track to play along with.
+  mix?: 'all' | 'solo' | 'minus'
+  metronome?: boolean // a click on every beat, default false
+  // One bar of clicks in the clip's opening meter and tempo before its first
+  // note; the video holds its first frame meanwhile. Default false.
+  countIn?: boolean
+}
+
 /** Options for {@link Renderer.encode} — the paint knobs plus the encode-loop
  * knobs. Encode-time only — never rebuilds the preview. */
 export interface EncodeOptions extends PaintOptions {
@@ -125,8 +136,9 @@ export interface EncodeOptions extends PaintOptions {
    * larger files with slightly softer motion. Falls back to the default
    * constant-quality encoder where software H.264 isn't available. */
   fast?: boolean
-  /** Add a synthesized soundtrack (every track of the song). Default false. */
+  /** Add a synthesized soundtrack. Default false. */
   audio?: boolean
+  sound?: SoundOptions // what the soundtrack plays, when `audio` is on
   onProgress?: (frame: number, total: number) => void
   /** Stops the encode: encoders are closed at once and `encode()` rejects with
    * the signal's reason (an AbortError by default). */
@@ -160,11 +172,13 @@ export interface Renderer {
    * preview to seek. A bar played more than once resolves to the play nearest
    * `atMs`. */
   timeAt(atMs: number, x: number, y: number, opts?: PaintOptions): number | null
-  /** Synthesize a clip of the song (every track) as interleaved stereo at
-   * SAMPLE_RATE, played at `speed`. `endMs` defaults to the end plus the
-   * last notes' ring-out (when the clip ends the song). Fetches the soundfont
-   * on first use. */
-  soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'>): Promise<Float32Array>
+  /** Length (ms, source time) of the count-in bar a soundtrack can open with. */
+  countInMs: number
+  /** Synthesize a clip of the song as interleaved stereo at SAMPLE_RATE,
+   * played at `speed`, opening with the count-in bar when asked. `endMs`
+   * defaults to the end plus the last notes' ring-out (when the clip ends the
+   * song). Fetches the soundfont on first use. */
+  soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'> & SoundOptions): Promise<Float32Array>
   /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its

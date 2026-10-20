@@ -18,9 +18,10 @@ import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
 import { widestRun } from './fit.ts'
 import { AUDIO_BITRATE, encodeVideo, estimateVideoBytes } from './encode.ts'
-import { RELEASE_MS, renderAudio } from './audio.ts'
+import { countInMs, RELEASE_MS, renderAudio } from './audio.ts'
 import type { EncodeParams } from './encode.ts'
-import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions } from './types.ts'
+import type * as alphaTab from '@coderline/alphatab'
+import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions, SoundOptions } from './types.ts'
 
 export { countBars, listTracks } from './score.ts'
 export { CHANNELS, SAMPLE_RATE } from './audio.ts'
@@ -39,6 +40,7 @@ export type {
   Quality,
   Renderer,
   RendererOptions,
+  SoundOptions,
   TitleOptions,
   TrackInfo
 } from './types.ts'
@@ -165,7 +167,7 @@ export async function createRenderer(
   )
   reattach?.()
   retie?.()
-  const { beats, durationMs, bars, plays, midi, offsetMs, endsSong } = buildTimeline(
+  const { beats, durationMs, bars, plays, midi, offsetMs, endsSong, startTick } = buildTimeline(
     score,
     settings,
     track,
@@ -190,6 +192,15 @@ export async function createRenderer(
     durationMs
   })
 
+  // The MIDI channels a mix leaves out: solo keeps only this track's, minus
+  // drops just this track's.
+  const channelsOf = (t: alphaTab.model.Track) => [t.playbackInfo.primaryChannel, t.playbackInfo.secondaryChannel]
+  const own = channelsOf(score.tracks[track]!)
+  const mutedFor = (mix: SoundOptions['mix']) => mix === 'solo'
+    ? score.tracks.flatMap(channelsOf).filter(c => !own.includes(c))
+    : mix === 'minus' ? own : []
+  const countIn = countInMs(midi, startTick)
+
   // Public encode options → encoder params, filling defaults. Shared by
   // encode() and estimateSize() so the probe measures exactly what exports.
   // A clip with sound that plays to the song's end runs on while the last notes
@@ -201,6 +212,7 @@ export async function createRenderer(
     startMs: opts.startMs ?? 0,
     endMs: (opts.endMs ?? durationMs) + tailFor(opts),
     tailMs: tailFor(opts),
+    leadMs: opts.audio && opts.sound?.countIn ? countIn : 0,
     speed: opts.speed ?? 1,
     quality: opts.quality ?? 'high',
     fast: opts.fast ?? false,
@@ -227,8 +239,12 @@ export async function createRenderer(
     throw e
   }))
   // shortcut: synthesizes on the main thread (~1s per 2 min of song); move to a worker if it janks.
-  const soundtrack: Renderer['soundtrack'] = async ({ startMs = 0, endMs = durationMs + releaseMs, speed = 1 } = {}) =>
-    renderAudio(midi, await loadSoundFont(), offsetMs + startMs, offsetMs + Math.min(endMs, durationMs + releaseMs), speed)
+  const soundtrack: Renderer['soundtrack'] = async ({ startMs = 0, endMs = durationMs + releaseMs, speed = 1, mix, metronome, countIn: withCountIn } = {}) =>
+    renderAudio(midi, await loadSoundFont(), offsetMs + startMs, offsetMs + Math.min(endMs, durationMs + releaseMs), speed, {
+      muted: mutedFor(mix),
+      metronome,
+      countIn: withCountIn ? startTick : undefined
+    })
 
   return {
     durationMs,
@@ -247,17 +263,18 @@ export async function createRenderer(
     timeAt(atMs, x, y, opts) {
       return painter.timeAt(atMs, x, y, opts)
     },
+    countInMs: countIn,
     soundtrack,
     async encode(opts: EncodeOptions = {}) {
       const params = encodeParams(opts)
-      if (opts.audio) params.audio = await soundtrack(params)
+      if (opts.audio) params.audio = await soundtrack({ ...params, ...opts.sound })
       return encodeVideo(painter, params)
     },
     async estimateSize({ samples = 8, ...opts }: EstimateOptions = {}) {
       const params = encodeParams(opts)
       const video = await estimateVideoBytes(painter, params, samples)
       if (video === null || !opts.audio) return video
-      const seconds = (Math.min(params.endMs, durationMs + releaseMs) - params.startMs) / 1000 / params.speed
+      const seconds = (Math.min(params.endMs, durationMs + releaseMs) - params.startMs + (params.leadMs ?? 0)) / 1000 / params.speed
       return video + Math.round((AUDIO_BITRATE / 8) * seconds)
     }
   }
