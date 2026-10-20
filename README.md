@@ -19,6 +19,10 @@ entirely on your machine, so nothing gets uploaded.
   24, 30 or 60 fps, with an up-front file size estimate. The clip is split
   across several encoders at once; *Fast export* switches to software encoders
   on half your CPU cores for roughly 3× faster exports and larger files.
+- **Sound, if you want it:** turn it on and a built-in synth plays every track
+  of the song, in the preview and as an audio track in the MP4. It follows tempo
+  changes, ritardandos and the playback speed, and the last notes ring out at
+  the end. Off by default, so the video stays silent for your own recording.
 - **Any aspect ratio:** 16:9 for YouTube, 9:16 for Shorts, Reels and TikTok, 1:1 for square posts.
 - **Two layouts:** a single *line* that scrolls, or a *page* of wrapped systems
   that the view follows down.
@@ -49,9 +53,9 @@ Everything musical in sonotas is done by [alphaTab](https://www.alphatab.net),
 the open-source notation engine by [Daniel Kuschny and contributors](https://github.com/CoderLine/alphaTab).
 It reads every supported Guitar Pro format and MusicXML, engraves the tablature
 and standard notation you see in the video, and supplies the MIDI timing that
-moves the playhead. sonotas adds the camera, the styling and the encoder around
-it. alphaTab is licensed under the MPL-2.0; if it is useful to you, star the
-repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
+moves the playhead and the synth that plays the soundtrack. sonotas adds the
+camera, the styling and the encoder around it. alphaTab is licensed under the
+MPL-2.0; if it is useful to you, star the repo or [contribute](https://github.com/CoderLine/alphaTab/blob/develop/CONTRIBUTING.md).
 Exports carry alphaTab's own "rendered by alphaTab" line unless you turn it off
 in the *Look* tab.
 
@@ -68,6 +72,7 @@ packages/renderer/    Guitar Pro → video engine
   timeline.ts         map playback time to bars and beats (tempo changes, repeats)
   scroll.ts           camera movement for each scroll mode
   paint.ts            composite each frame: sheet, highlight, playhead, overlays
+  audio.ts            synthesize the soundtrack on the playhead's clock
   encode.ts           encode frames on parallel WebCodecs encoders, mux to MP4 with mediabunny
 public/tabs/          sample tabs (the demo loads Catastrophic.gp)
 ```
