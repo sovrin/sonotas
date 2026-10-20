@@ -42,6 +42,8 @@ export const APP_DEFAULTS = {
   layout: 'Scrolling line', // one endless system, or page-style wrapped systems
   notationSize: '100%',
   fitBars: 'Off', // line layout: size the widest run of N bars to the frame width
+  barsPerLine: 'Auto', // page layout: bars on each line
+  spacing: 'Normal', // how far the notes spread out along the line
   currentBarOnly: false, // hide everything but the bar(s) being played
   staves: 'Tab only',
   tabRhythm: 'Auto', // stems under the tab: auto (as the file sets it), beams, bars or none
@@ -167,7 +169,9 @@ export const FIELDS: readonly Field[] = [
   { id: 49, key: 'showSections', type: 'bool', absent: true },
   { id: 50, key: 'showDynamics', type: 'bool', absent: true },
   { id: 51, key: 'showFingering', type: 'bool', absent: true },
-  { id: 52, key: 'showTuning', type: 'bool', absent: false }
+  { id: 52, key: 'showTuning', type: 'bool', absent: false },
+  { id: 53, key: 'barsPerLine', type: 'enum', values: ['Auto', '2', '3', '4', '6'], absent: 'Auto' },
+  { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

@@ -119,6 +119,8 @@ export async function createRenderer(
     notation: opts.notation,
     layout,
     tabRhythm: opts.tabRhythm,
+    barsPerRow: page ? opts.barsPerRow : undefined,
+    spacing: opts.spacing,
     crop,
     showTempo,
     showTrackName: opts.showTrackName,

@@ -62,6 +62,8 @@ export interface SettingsOptions {
   notation?: Notation // stave selection, default "auto"
   layout?: Layout // 'line' (horizontal, default) or 'page' (wrapped systems)
   tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
+  barsPerRow?: number // page layout: bars on each line, 0 (default) = fit
+  spacing?: number // note spacing (stretchForce), default 1
   crop?: CropRange // render only these bars, default whole sheet
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
@@ -122,6 +124,8 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   settings.display.staveProfile = staveProfile(
     opts.notation ?? DEFAULT_NOTATION
   )
+  if (opts.barsPerRow) settings.display.barsPerRow = opts.barsPerRow
+  if (opts.spacing) settings.display.stretchForce = opts.spacing
   if (opts.tabRhythm) settings.notation.rhythmMode = TAB_RHYTHM[opts.tabRhythm]
   if (opts.crop) {
     // alphaTab's startBar is 1-based; barCount counts from there (-1 = all).

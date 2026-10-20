@@ -408,6 +408,30 @@
       "key": "showTuning",
       "type": "bool",
       "absent": false
+    },
+    {
+      "id": 53,
+      "key": "barsPerLine",
+      "type": "enum",
+      "values": [
+        "Auto",
+        "2",
+        "3",
+        "4",
+        "6"
+      ],
+      "absent": "Auto"
+    },
+    {
+      "id": 54,
+      "key": "spacing",
+      "type": "enum",
+      "values": [
+        "Tight",
+        "Normal",
+        "Wide"
+      ],
+      "absent": "Normal"
     }
   ],
   "retired": [],
@@ -881,6 +905,65 @@
         "showDynamics": false,
         "showFingering": false,
         "showTuning": true
+      }
+    },
+    {
+      "code": "MmdLuQOU0BDSDsSOKwcOvMk0xipFiypRbUSY3bqTY4a8Qx9rUDaN4DMhzmHN4VyA94341qS9HQ3ssii5SQmIzmqIwhyBXrhmqmtfzri1qQCBtkjPjf1OibQ1VUkUTwncAR9cwPZZDuu1Ck1lSSHNTg1kUFdwsdD9J00ToqP9OjES60",
+      "settings": {
+        "theme": "light",
+        "aspect": "1:1",
+        "layout": "Page",
+        "fitBars": "8 bars",
+        "currentBarOnly": true,
+        "notationSize": "150%",
+        "staves": "Standard only",
+        "playhead": "glide",
+        "view": "track",
+        "transition": 5000,
+        "followAt": 0,
+        "cursorColor": "#0a0b0c",
+        "cursorOpacity": 10,
+        "cursorWidth": 1,
+        "cursorHeight": 40,
+        "cursorOffset": -100,
+        "highlightBar": false,
+        "highlightColor": "#0a0b0c",
+        "highlightOpacity": 5,
+        "recolorNote": true,
+        "activeNoteColor": "#0a0b0c",
+        "activeNoteOpacity": 30,
+        "bg": "#0a0b0c",
+        "fg": "#0a0b0c",
+        "barNum": "#0a0b0c",
+        "showTitle": false,
+        "showTrackName": false,
+        "showBarNumbers": false,
+        "showTempo": false,
+        "showChords": true,
+        "fps": "60 fps",
+        "resolution": "480p",
+        "quality": "Max",
+        "speed": "2×",
+        "fastExport": true,
+        "steady": false,
+        "turnEarly": false,
+        "runPast": true,
+        "cursorMatchBar": true,
+        "highlightPadding": 0,
+        "showTimeSig": false,
+        "showAttribution": false,
+        "sound": true,
+        "soundMix": "Minus",
+        "metronome": true,
+        "countIn": true,
+        "tabRhythm": "None",
+        "showLyrics": false,
+        "showSections": false,
+        "showDynamics": false,
+        "showFingering": false,
+        "showTuning": true,
+        "barsPerLine": "6",
+        "spacing": "Wide"
       }
     }
   ]

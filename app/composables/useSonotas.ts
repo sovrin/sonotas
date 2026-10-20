@@ -25,6 +25,7 @@ const SAMPLE_URL = '/tabs/Catastrophic.gp'
 const SHORT_BY_RES: Record<string, number> = { '1080p': 1080, '720p': 720, '480p': 480 }
 const NOTATION_BY_STAVES: Record<string, string> = { 'Tab only': 'tab', 'Standard + Tab': 'both', 'Standard only': 'notation' }
 const LAYOUT_BY_UI: Record<string, string> = { 'Scrolling line': 'line', 'Page': 'page' }
+const SPACING_BY_UI: Record<string, number> = { Tight: 0.7, Normal: 1, Wide: 1.4 }
 const RHYTHM_BY_UI: Record<string, string> = { Auto: 'auto', Beams: 'beams', Bars: 'bars', None: 'hidden' }
 const QUALITY_BY_UI: Record<string, string> = { Standard: 'medium', High: 'high', Max: 'max' }
 // Notation mode → the staves value censitas counts.
@@ -165,6 +166,8 @@ function createSonotas() {
       notation: notationMode(),
       layout: layoutMode(),
       tabRhythm: RHYTHM_BY_UI[s.tabRhythm] ?? 'auto',
+      barsPerRow: parseInt(s.barsPerLine, 10) || 0,
+      spacing: SPACING_BY_UI[s.spacing] ?? 1,
       fitBars: fitBarsNum(),
       chordDiagrams: s.showChords,
       showTrackName: s.showTrackName,
@@ -788,7 +791,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.barsPerLine, s.spacing, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()

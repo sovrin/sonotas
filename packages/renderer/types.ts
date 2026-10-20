@@ -34,6 +34,8 @@ export interface RendererOptions {
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout
   crop?: Crop // render only these bars, default whole sheet
+  barsPerRow?: number // page layout: bars on each line; 0 (default) lets alphaTab fit them
+  spacing?: number // how far notes spread out (alphaTab's stretchForce), default 1
   // Line layout: engrave the notation so the widest run of this many
   // consecutive bars spans nearly the whole frame width (capped by the frame
   // height); the bar view then centers the current bar and the ones after it
