@@ -104,7 +104,14 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
               >
             </span>
           </div>
-          <small class="text-muted">A colour picked here overrides the theme.</small>
+          <RangeField
+            name="staffLines"
+            label="Staff lines"
+            :min="20"
+            :max="100"
+            unit="%"
+          />
+          <small class="text-muted">A colour picked here overrides the theme. Staff lines take the notation colour at this strength.</small>
         </div>
       </details>
     </InspectorGroup>

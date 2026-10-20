@@ -52,6 +52,7 @@ export const APP_DEFAULTS = {
   bg: '#121316',
   fg: '#e8e9eb', // notation
   barNum: '#e8e9eb',
+  staffLines: 100, // % of the notation colour's strength the staff lines get
   showTitle: true, // title/artist overlay (needs the file to carry one)
   showTuning: false, // the track's tuning and capo, in the title overlay
   showTrackName: true,
@@ -173,7 +174,8 @@ export const FIELDS: readonly Field[] = [
   { id: 52, key: 'showTuning', type: 'bool', absent: false },
   { id: 53, key: 'barsPerLine', type: 'enum', values: ['Auto', '2', '3', '4', '6'], absent: 'Auto' },
   { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' },
-  { id: 55, key: 'songBook', type: 'bool', absent: false }
+  { id: 55, key: 'songBook', type: 'bool', absent: false },
+  { id: 56, key: 'staffLines', type: 'int', min: 20, max: 100, absent: 100 }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

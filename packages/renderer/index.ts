@@ -132,7 +132,8 @@ export async function createRenderer(
     showFingering: opts.showFingering,
     chordDiagrams,
     foreground: opts.foreground,
-    barNumberColor: opts.barNumberColor
+    barNumberColor: opts.barNumberColor,
+    staffLineOpacity: opts.staffLineOpacity
   })
   const score = loadScore(bytes, settings, track)
   // Tab only on a track without tablature (drums, keys) would render nothing;

@@ -60,6 +60,7 @@ export interface RendererOptions {
   chordDiagrams?: boolean
   foreground?: string // notation color (#rrggbb) — set light for a dark canvas
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
+  staffLineOpacity?: number // staff lines at this share (0–1) of their colour's strength, default 1
   fontUrl?: string // URL of the woff2 music font (a Bravura subset), default '/fonts/sonotas-music.woff2'
   soundFontUrl?: string // URL of the sf2/sf3 soundfont for audio, default '/soundfont/sonivox.sf3'; fetched on first use
 }

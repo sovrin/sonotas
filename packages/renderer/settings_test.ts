@@ -144,3 +144,9 @@ test('createSettings maps each notation to its StaveProfile', () => {
     alphaTab.StaveProfile.Tab
   )
 })
+
+test('createSettings dims only the staff lines by staffLineOpacity', () => {
+  const res = createSettings({ foreground: '#ffffff', staffLineOpacity: 0.5 }).display.resources
+  assertEquals([res.staffLineColor.r, res.staffLineColor.a], [255, 128])
+  assertEquals(res.mainGlyphColor.a, 255)
+})

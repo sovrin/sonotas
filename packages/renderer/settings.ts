@@ -76,6 +76,7 @@ export interface SettingsOptions {
   chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
+  staffLineOpacity?: number // staff lines' strength 0–1, default 1
 }
 
 /** Parse `#rrggbb` into an alphaTab Color. */
@@ -176,6 +177,11 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   // Bar numbers are configurable independently of the notation color.
   if (opts.barNumberColor) {
     settings.display.resources.barNumberColor = colorFromHex(opts.barNumberColor)
+  }
+  // Dimmer staff lines let the notes stand out.
+  if (opts.staffLineOpacity !== undefined && opts.staffLineOpacity < 1) {
+    const l = settings.display.resources.staffLineColor
+    settings.display.resources.staffLineColor = new alphaTab.model.Color(l.r, l.g, l.b, Math.round(l.a * opts.staffLineOpacity))
   }
   return settings
 }
