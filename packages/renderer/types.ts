@@ -30,6 +30,7 @@ export interface RendererOptions {
   scale?: number // notation scale, clamped 0.5–2.0, default 1.0
   notation?: Notation // stave selection, default "auto"
   tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
+  songBook?: boolean // bends, whammys and let-ring drawn and played song-book style, default false
   // 'line' (default): one endless system the view scrolls along. 'page': systems
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout

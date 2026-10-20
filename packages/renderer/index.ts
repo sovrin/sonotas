@@ -119,6 +119,7 @@ export async function createRenderer(
     notation: opts.notation,
     layout,
     tabRhythm: opts.tabRhythm,
+    songBook: opts.songBook,
     barsPerRow: page ? opts.barsPerRow : undefined,
     spacing: opts.spacing,
     crop,

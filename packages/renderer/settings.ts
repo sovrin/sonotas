@@ -62,6 +62,7 @@ export interface SettingsOptions {
   notation?: Notation // stave selection, default "auto"
   layout?: Layout // 'line' (horizontal, default) or 'page' (wrapped systems)
   tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
+  songBook?: boolean // alphaTab's song-book notation mode, default false
   barsPerRow?: number // page layout: bars on each line, 0 (default) = fit
   spacing?: number // note spacing (stretchForce), default 1
   crop?: CropRange // render only these bars, default whole sheet
@@ -124,6 +125,8 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   settings.display.staveProfile = staveProfile(
     opts.notation ?? DEFAULT_NOTATION
   )
+  // Before the element toggles below, which the preset would otherwise override.
+  if (opts.songBook) settings.setSongBookModeSettings()
   if (opts.barsPerRow) settings.display.barsPerRow = opts.barsPerRow
   if (opts.spacing) settings.display.stretchForce = opts.spacing
   if (opts.tabRhythm) settings.notation.rhythmMode = TAB_RHYTHM[opts.tabRhythm]

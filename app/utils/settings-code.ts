@@ -46,6 +46,7 @@ export const APP_DEFAULTS = {
   spacing: 'Normal', // how far the notes spread out along the line
   currentBarOnly: false, // hide everything but the bar(s) being played
   staves: 'Tab only',
+  songBook: false, // bends, whammys and let-ring drawn and played song-book style
   tabRhythm: 'Auto', // stems under the tab: auto (as the file sets it), beams, bars or none
   theme: 'dark', // canvas preset: sets the three colours below unless changed
   bg: '#121316',
@@ -171,7 +172,8 @@ export const FIELDS: readonly Field[] = [
   { id: 51, key: 'showFingering', type: 'bool', absent: true },
   { id: 52, key: 'showTuning', type: 'bool', absent: false },
   { id: 53, key: 'barsPerLine', type: 'enum', values: ['Auto', '2', '3', '4', '6'], absent: 'Auto' },
-  { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' }
+  { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' },
+  { id: 55, key: 'songBook', type: 'bool', absent: false }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

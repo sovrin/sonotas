@@ -126,6 +126,18 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
           class="text-muted"
         >As the file sets it: under the tab only when the file hides standard notation.</small>
       </SegmentedField>
+      <div class="field">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.songBook"
+            @change="toggle('songBook')"
+          >
+          Song-book style
+        </label>
+        <small class="text-muted">Bends, whammy dips and let-ring drawn and played like a printed song book.</small>
+      </div>
     </InspectorGroup>
 
     <InspectorGroup title="Show elements">
