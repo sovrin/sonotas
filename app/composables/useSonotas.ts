@@ -58,6 +58,7 @@ function createSonotas() {
     toBar: 4,
     renderOnlyBars: false,
     playing: false,
+    soundLoading: false, // a play is waiting for its soundtrack to render
     time: 0, // seconds
     duration: 8.4, // seconds; replaced by the real render once built
     ready: false,
@@ -369,6 +370,7 @@ function createSonotas() {
   // notes' release instead of cutting it.
   function stopLoop(ringOut = false) {
     playToken++
+    s.soundLoading = false
     if (raf !== null) {
       cancelAnimationFrame(raf)
       raf = null
@@ -431,9 +433,11 @@ function createSonotas() {
       const token = playToken
       audioCtx ??= new AudioContext() // made inside the click, so the browser lets it play
       void audioCtx.resume()
+      s.soundLoading = true
       try {
         const buf = await soundBuffer(audioCtx)
-        if (token !== playToken) return // paused or seeked while it rendered
+        if (token !== playToken) return // paused or seeked while it rendered (which cleared soundLoading)
+        s.soundLoading = false
         const node = audioCtx.createBufferSource()
         node.buffer = buf
         node.connect(audioCtx.destination)
@@ -441,6 +445,8 @@ function createSonotas() {
         node.start(0, s.time / speed)
         voice = { node, at: audioCtx.currentTime, from: s.time, speed }
       } catch (err) {
+        if (token !== playToken) return
+        s.soundLoading = false
         console.warn('sonotas: no sound', err) // play on silently
       }
     }

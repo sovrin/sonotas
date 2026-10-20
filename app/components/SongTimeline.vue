@@ -81,6 +81,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       :data-tip="s.playing ? 'Pause (Space)' : 'Play (Space)'"
       aria-keyshortcuts="Space"
       :aria-pressed="s.playing ? 'true' : 'false'"
+      :aria-busy="s.soundLoading ? 'true' : undefined"
       :disabled="!s.ready || !!s.videoUrl"
       @click="togglePlay"
     >
