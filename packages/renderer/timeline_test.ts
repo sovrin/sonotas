@@ -78,3 +78,26 @@ test('buildTimeline rebases play bar indices to a crop range', async () => {
   assertEquals(plays[0], { bar: 0, startMs: 0 })
   assert(plays.every(p => p.bar >= 0 && p.bar <= 1))
 })
+
+test('buildTimeline keeps beats on the synth\'s clock to the end (demo has no ramp)', async () => {
+  const alphaTab = await import('@coderline/alphatab')
+  const settings = createSettings()
+  const score = loadScore(await loadDemo(), settings, 0)
+  const { beats, durationMs, midi } = buildTimeline(score, settings, 0, noBounds)
+  // The synth's clock: the MIDI tempo map summed in float, as its sequencer does.
+  let ms = 0
+  let tick = 0
+  let bpm = 120
+  for (const e of midi.events) {
+    ms += ((e.tick - tick) * 60000) / (bpm * midi.division)
+    tick = e.tick
+    if (e instanceof alphaTab.midi.TempoChangeEvent) bpm = e.beatsPerMinute
+  }
+  const gen = new alphaTab.midi.MidiFileGenerator(score, settings, new alphaTab.midi.AlphaSynthMidiFileHandler(new alphaTab.midi.MidiFile()))
+  gen.generate()
+  let end = 0
+  for (let cur = gen.tickLookup.findBeat(new Set([0]), 0); cur && cur.end > end; cur = gen.tickLookup.findBeat(new Set([0]), cur.end)) end = cur.end
+  ms += ((end - tick) * 60000) / (bpm * midi.division)
+  assert(beats.length > 500, 'demo is long enough to drift')
+  assert(Math.abs(durationMs - ms) < 1, `cursor ends at ${durationMs}ms, sound at ${ms}ms`)
+})

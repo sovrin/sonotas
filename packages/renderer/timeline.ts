@@ -83,7 +83,7 @@ export function buildTimeline(
       heads,
       s: cur.start,
       e: cur.end,
-      ms: cur.duration > 0 ? cur.duration : 1,
+      ms: beatMs(cur, midi.division) || 1,
       bar: cur.beat.voice.bar.masterBar.index,
       first: cur.beat.index === 0 // opens a play of its bar (repeats included)
     })
@@ -132,6 +132,25 @@ export function buildTimeline(
     offsetMs: offset ?? 0,
     endsSong: !spans.length || inRange(spans[spans.length - 1]!.bar)
   }
+}
+
+/** A beat's exact length (ms). alphaTab's own `duration` truncates every beat
+ * to whole ms, which summed over a song runs the cursor ahead of the sound. */
+function beatMs(cur: alphaTab.midi.MidiTickLookupFindBeatResult, division: number): number {
+  const ms = (ticks: number, bpm: number) => (ticks * 60000) / (bpm * division)
+  const changes = cur.masterBar.tempoChanges
+  let tick = cur.start
+  let bpm = changes[0]!.tempo
+  let total = 0
+  for (const c of changes) {
+    if (c.tick > cur.end) break
+    if (c.tick > tick) {
+      total += ms(c.tick - tick, bpm)
+      tick = c.tick
+    }
+    bpm = c.tempo
+  }
+  return total + ms(cur.end - tick, bpm)
 }
 
 /** Backfill entries never played (e.g. untaken alternate endings) so the array
