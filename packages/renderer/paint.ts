@@ -251,8 +251,9 @@ export function createPainter(view: SheetView): Painter {
     // Map sheet pixels → output pixels: subtract scroll, scale by the band fit.
     const X = (x: number) => (x - scrollX) * k
     const Y = (y: number) => top + (y - scrollY) * k
-    // Cursor offset is screen-space (after scroll/scale), so scroll-independent.
-    const cursorX = X(noteX) + cursorOffsetX
+    // The playhead's centre, its right edge on the note's left. Cursor offset
+    // is screen-space (after scroll/scale), so scroll-independent.
+    const cursorX = X(noteX) - cursorWidth / 2 + cursorOffsetX
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, width, height)

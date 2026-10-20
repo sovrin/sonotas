@@ -62,6 +62,7 @@ export function buildTimeline(
   }[] = []
   let cur = lookup.findBeat(trackSet, 0)
   let last = -1
+  let lead = 0 // how far a beat's notes start left of its onNotesX; a rest keeps the last one's
   while (cur && cur.start !== last) {
     last = cur.start
     const bb = bounds.findBeat(cur.beat)
@@ -74,8 +75,9 @@ export function buildTimeline(
       w: n.noteHeadBounds.w,
       h: n.noteHeadBounds.h
     }))
+    if (bb && heads.length) lead = bb.onNotesX - Math.min(...heads.map(h => h.x))
     spans.push({
-      x: bb ? bb.onNotesX : 0,
+      x: bb ? bb.onNotesX - lead : 0, // the notes' left edge: the playhead ends there
       barX: box?.x ?? 0,
       barY: box?.y ?? 0,
       barW: box?.w ?? 0,

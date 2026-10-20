@@ -194,9 +194,10 @@ export interface Box {
   h: number
 }
 
-/** A played beat: onset time plus note-x, the current master-bar box, and the
- * head box of each note sounding on this beat (sheet coords). `barX` is the bar
- * box's left edge; `barY`/`barW`/`barH` its full extent. */
+/** A played beat: onset time plus note-x (its notes' left edge), the current
+ * master-bar box, and the head box of each note sounding on this beat (sheet
+ * coords). `barX` is the bar box's left edge; `barY`/`barW`/`barH` its full
+ * extent. */
 export interface Beat {
   startMs: number
   x: number
