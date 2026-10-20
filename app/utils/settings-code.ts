@@ -57,6 +57,8 @@ export const APP_DEFAULTS = {
   showChords: false, // chord diagrams above chord-named beats
   showLyrics: true,
   showSections: true, // section names (Intro, Verse…) above their bars
+  showDynamics: true, // dynamics, hairpins, text, directions and beat timers
+  showFingering: true, // fingering and pick strokes
   showAttribution: true, // alphaTab's "rendered by alphaTab" line
   playhead: 'jump', // 'jump' note to note | 'glide' through the bar
   view: 'bar', // 'bar' (page: per line) | 'screen' | 'track'
@@ -161,7 +163,9 @@ export const FIELDS: readonly Field[] = [
   { id: 46, key: 'countIn', type: 'bool', absent: false },
   { id: 47, key: 'tabRhythm', type: 'enum', values: ['Auto', 'Beams', 'Bars', 'None'], absent: 'Auto' },
   { id: 48, key: 'showLyrics', type: 'bool', absent: true },
-  { id: 49, key: 'showSections', type: 'bool', absent: true }
+  { id: 49, key: 'showSections', type: 'bool', absent: true },
+  { id: 50, key: 'showDynamics', type: 'bool', absent: true },
+  { id: 51, key: 'showFingering', type: 'bool', absent: true }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */

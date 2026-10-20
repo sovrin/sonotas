@@ -170,6 +170,8 @@ function createSonotas() {
       showBarNumbers: s.showBarNumbers,
       showLyrics: s.showLyrics,
       showSections: s.showSections,
+      showDynamics: s.showDynamics,
+      showFingering: s.showFingering,
       showAttribution: s.showAttribution,
       showTempo: s.showTempo,
       showTimeSignature: s.showTimeSig,
@@ -784,7 +786,7 @@ function createSonotas() {
 
   // Rebuild the sheet when a build-time option changes (debounced).
   watch(
-    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.layout, s.showChords, s.showLyrics, s.showSections, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
+    () => [s.trackIndex, s.aspect, s.fg, s.barNum, s.notationSize, s.staves, s.tabRhythm, s.layout, s.showChords, s.showLyrics, s.showSections, s.showDynamics, s.showFingering, s.showTrackName, s.showBarNumbers, s.showAttribution, s.showTempo, s.showTimeSig, s.fromBar, s.toBar, s.renderOnlyBars, s.resolution, fitBarsNum()].join('|'),
     () => {
       invalidateResult()
       scheduleRebuild()

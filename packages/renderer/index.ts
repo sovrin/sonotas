@@ -124,6 +124,8 @@ export async function createRenderer(
     showBarNumbers: opts.showBarNumbers,
     showLyrics: opts.showLyrics,
     showSections: opts.showSections,
+    showDynamics: opts.showDynamics,
+    showFingering: opts.showFingering,
     chordDiagrams,
     foreground: opts.foreground,
     barNumberColor: opts.barNumberColor

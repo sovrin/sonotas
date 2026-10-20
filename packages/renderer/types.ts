@@ -50,6 +50,8 @@ export interface RendererOptions {
   showTempo?: boolean // re-injects the tempo at a mid-piece crop start when on
   showLyrics?: boolean // lyrics under the beats, default true
   showSections?: boolean // section names (Intro, Verse…) above their bars, default true
+  showDynamics?: boolean // dynamics, hairpins, text, directions and beat timers, default true
+  showFingering?: boolean // fingering and pick strokes, default true
   // Draw chord diagrams (fretboard grids) for chord-named beats instead of the
   // bare chord name; in page layout also lists them in the header. Default false.
   chordDiagrams?: boolean

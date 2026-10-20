@@ -37,6 +37,19 @@ const HEADER_ELEMENTS = [
   alphaTab.NotationElement.GuitarTuning
 ]
 
+// Performance marks, toggled as two groups.
+const DYNAMICS_ELEMENTS = [
+  alphaTab.NotationElement.EffectDynamics,
+  alphaTab.NotationElement.EffectCrescendo,
+  alphaTab.NotationElement.EffectText,
+  alphaTab.NotationElement.EffectDirections,
+  alphaTab.NotationElement.EffectBeatTimer
+]
+const FINGERING_ELEMENTS = [
+  alphaTab.NotationElement.EffectFingering,
+  alphaTab.NotationElement.EffectPickStroke
+]
+
 /** Render only this 0-based inclusive master-bar range (maps to alphaTab's
  * `startBar`/`barCount`). Omit to render the whole sheet. */
 export interface CropRange {
@@ -55,6 +68,8 @@ export interface SettingsOptions {
   showBarNumbers?: boolean // draw bar numbers, default true
   showLyrics?: boolean // draw lyrics, default true
   showSections?: boolean // draw section names, default true
+  showDynamics?: boolean // draw dynamics, hairpins, text, directions, beat timers; default true
+  showFingering?: boolean // draw fingering and pick strokes, default true
   chordDiagrams?: boolean // page-layout chord diagram header; default alphaTab's (on)
   foreground?: string // notation color (#rrggbb); default is alphaTab's dark ink
   barNumberColor?: string // bar-number color (#rrggbb); defaults to `foreground`
@@ -127,6 +142,14 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   }
   if (opts.showSections === false) {
     settings.notation.elements.set(alphaTab.NotationElement.EffectMarker, false)
+  }
+  if (opts.showDynamics === false) {
+    for (const el of DYNAMICS_ELEMENTS) settings.notation.elements.set(el, false)
+  }
+  if (opts.showFingering === false) {
+    // Score fingering only draws in the score modes; move it to the effect band, then hide that.
+    settings.notation.fingeringMode = alphaTab.FingeringMode.SingleNoteEffectBand
+    for (const el of FINGERING_ELEMENTS) settings.notation.elements.set(el, false)
   }
   if (opts.chordDiagrams !== undefined) {
     settings.notation.elements.set(alphaTab.NotationElement.ChordDiagrams, opts.chordDiagrams)
