@@ -366,6 +366,18 @@
       "key": "countIn",
       "type": "bool",
       "absent": false
+    },
+    {
+      "id": 47,
+      "key": "tabRhythm",
+      "type": "enum",
+      "values": [
+        "Auto",
+        "Beams",
+        "Bars",
+        "None"
+      ],
+      "absent": "Auto"
     }
   ],
   "retired": [],
@@ -620,6 +632,58 @@
         "soundMix": "Minus",
         "metronome": true,
         "countIn": true
+      }
+    },
+    {
+      "code": "2vJ4GGjd3AE9Tc7YU44bCtZFdb7LtzWC85NPJl4hrAqfGy2kr5HELnUB7MIWo00k6L5WmbezR9v3zMewm9uQYXRH2UVd16aktGLXgC8w5agu0PwOdOMIklQ853FyHL1duCozDuXytdWrmjsWSDErcFfci",
+      "settings": {
+        "theme": "light",
+        "aspect": "1:1",
+        "layout": "Page",
+        "fitBars": "8 bars",
+        "currentBarOnly": true,
+        "notationSize": "150%",
+        "staves": "Standard only",
+        "playhead": "glide",
+        "view": "track",
+        "transition": 5000,
+        "followAt": 0,
+        "cursorColor": "#0a0b0c",
+        "cursorOpacity": 10,
+        "cursorWidth": 1,
+        "cursorHeight": 40,
+        "cursorOffset": -100,
+        "highlightBar": false,
+        "highlightColor": "#0a0b0c",
+        "highlightOpacity": 5,
+        "recolorNote": true,
+        "activeNoteColor": "#0a0b0c",
+        "activeNoteOpacity": 30,
+        "bg": "#0a0b0c",
+        "fg": "#0a0b0c",
+        "barNum": "#0a0b0c",
+        "showTitle": false,
+        "showTrackName": false,
+        "showBarNumbers": false,
+        "showTempo": false,
+        "showChords": true,
+        "fps": "60 fps",
+        "resolution": "480p",
+        "quality": "Max",
+        "speed": "2×",
+        "fastExport": true,
+        "steady": false,
+        "turnEarly": false,
+        "runPast": true,
+        "cursorMatchBar": true,
+        "highlightPadding": 0,
+        "showTimeSig": false,
+        "showAttribution": false,
+        "sound": true,
+        "soundMix": "Minus",
+        "metronome": true,
+        "countIn": true,
+        "tabRhythm": "None"
       }
     }
   ]

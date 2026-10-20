@@ -1,5 +1,5 @@
 import type { Follow, ScrollMode } from './scroll.ts'
-import type { Layout, Notation } from './settings.ts'
+import type { Layout, Notation, TabRhythm } from './settings.ts'
 
 /** Encoder quality preset. Mapped to mediabunny constants inside encode.ts. */
 export type Quality = 'low' | 'medium' | 'high' | 'max'
@@ -29,6 +29,7 @@ export interface RendererOptions {
   aspect?: Aspect // frame the sheet to this ratio; omit for a bare horizontal strip
   scale?: number // notation scale, clamped 0.5–2.0, default 1.0
   notation?: Notation // stave selection, default "auto"
+  tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
   // 'line' (default): one endless system the view scrolls along. 'page': systems
   // wrap at the frame width and stack; the view follows the current system down.
   layout?: Layout

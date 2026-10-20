@@ -7,6 +7,17 @@ export type Notation = 'auto' | 'both' | 'notation' | 'tab'
 /** Sheet layout: one endless horizontal system, or page-style wrapped systems. */
 export type Layout = 'line' | 'page'
 
+/** Rhythm stems under the tab: 'auto' only when the file hides standard notation,
+ * 'beams' per beat, 'bars' beamed like the score, or 'hidden'. */
+export type TabRhythm = 'auto' | 'beams' | 'bars' | 'hidden'
+
+const TAB_RHYTHM: Record<TabRhythm, alphaTab.TabRhythmMode> = {
+  auto: alphaTab.TabRhythmMode.Automatic,
+  beams: alphaTab.TabRhythmMode.ShowWithBeams,
+  bars: alphaTab.TabRhythmMode.ShowWithBars,
+  hidden: alphaTab.TabRhythmMode.Hidden
+}
+
 const DEFAULT_SCALE = 1.0
 const DEFAULT_NOTATION: Notation = 'auto'
 const DEFAULT_LAYOUT: Layout = 'line'
@@ -37,6 +48,7 @@ export interface SettingsOptions {
   scale?: number // display scale, default 1.0
   notation?: Notation // stave selection, default "auto"
   layout?: Layout // 'line' (horizontal, default) or 'page' (wrapped systems)
+  tabRhythm?: TabRhythm // rhythm stems under the tab, default 'auto'
   crop?: CropRange // render only these bars, default whole sheet
   showTempo?: boolean // draw the tempo marker, default true
   showTrackName?: boolean // draw the track name in the accolade, default true
@@ -93,6 +105,7 @@ export function createSettings(opts: SettingsOptions = {}): alphaTab.Settings {
   settings.display.staveProfile = staveProfile(
     opts.notation ?? DEFAULT_NOTATION
   )
+  if (opts.tabRhythm) settings.notation.rhythmMode = TAB_RHYTHM[opts.tabRhythm]
   if (opts.crop) {
     // alphaTab's startBar is 1-based; barCount counts from there (-1 = all).
     settings.display.startBar = opts.crop.fromBar + 1

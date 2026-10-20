@@ -14,6 +14,12 @@ const STAVES = [
   { v: 'Standard + Tab', label: 'Both' },
   { v: 'Standard only', label: 'Notes' }
 ]
+const RHYTHM = [
+  { v: 'Auto', label: 'Auto' },
+  { v: 'Beams', label: 'Beams' },
+  { v: 'Bars', label: 'Bars' },
+  { v: 'None', label: 'None' }
+]
 const SHOW = [
   { key: 'showTitle', label: 'Song title', missing: () => !s.title },
   { key: 'showTrackName', label: 'Track name' },
@@ -104,6 +110,17 @@ const colorRows = computed(() => COLOR_ROWS.filter(r => r.name !== 'barNum' || s
         label="Staves"
         :options="STAVES"
       />
+      <SegmentedField
+        v-if="s.staves !== 'Standard only'"
+        name="tabRhythm"
+        label="Rhythm under the tab"
+        :options="RHYTHM"
+      >
+        <small
+          v-if="s.tabRhythm === 'Auto'"
+          class="text-muted"
+        >As the file sets it: under the tab only when the file hides standard notation.</small>
+      </SegmentedField>
     </InspectorGroup>
 
     <InspectorGroup title="Show elements">

@@ -26,7 +26,7 @@ import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions,
 export { countBars, listTracks } from './score.ts'
 export { CHANNELS, SAMPLE_RATE } from './audio.ts'
 export type { Follow, PlayheadMotion, ScrollMode, ViewMode } from './scroll.ts'
-export type { Layout, Notation } from './settings.ts'
+export type { Layout, Notation, TabRhythm } from './settings.ts'
 export type {
   ActiveNoteOptions,
   Aspect,
@@ -115,6 +115,7 @@ export async function createRenderer(
     scale,
     notation: opts.notation,
     layout,
+    tabRhythm: opts.tabRhythm,
     crop,
     showTempo,
     showTrackName: opts.showTrackName,
