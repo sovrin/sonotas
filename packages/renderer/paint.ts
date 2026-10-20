@@ -35,6 +35,8 @@ export interface SheetView {
   /** Vertical fraction of the frame the sheet band fills when framed (centered).
    * Undefined/1 keeps the sheet at native size (unframed). Line layout only. */
   fill?: number
+  /** The short edge the band fill and title are sized from; default the frame's. */
+  short?: number
   /** 'line' (default): one horizontal system, scrolled along x and centered
    * vertically. 'page': wrapped systems already laid out at the output width,
    * top-aligned and scrolled along y. */
@@ -76,7 +78,7 @@ export function createPainter(view: SheetView): Painter {
   // instead of zooming one bar to fill the height. Unframed (fill undefined) →
   // 1, sheet fills canvas. Page layout: the sheet is already laid out in output
   // pixels, so it's drawn 1:1 from the top.
-  const k = !page && view.fill ? (Math.min(width, height) * view.fill) / sheetHeight : 1
+  const k = !page && view.fill ? ((view.short ?? Math.min(width, height)) * view.fill) / sheetHeight : 1
   const fitBars = page ? 0 : view.fitBars ?? 0
   // Tallest bar box — what fit-to-bars centers vertically (a line layout's bars
   // share one system, so they all sit at the same y).
@@ -102,7 +104,7 @@ export function createPainter(view: SheetView): Painter {
       bars.push({ x: b.barX, y: b.barY, w: b.barW, h: b.barH })
     }
   }
-  const short = Math.min(width, height)
+  const short = view.short ?? Math.min(width, height)
   const titleMargin = Math.round(short * TITLE_MARGIN)
   const titleSize = Math.round(short * TITLE_SIZE)
   const artistSize = Math.round(titleSize * ARTIST_SIZE)

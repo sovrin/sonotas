@@ -2,14 +2,24 @@
 // Where the score sits in the picture, decided in order: the picture's shape,
 // how the score is laid out in it, how big it is, and how the view follows the
 // music. Each control says what its current value does.
+import { FREE_MAX, FREE_MIN, fitEdge } from '~/utils/frame'
+
 const { s, v, setAspect, setLayout, toggle } = useSonotas()
 
 const ASPECTS = [
   { v: '16:9', hint: 'Landscape, for YouTube.' },
   { v: '9:16', hint: 'Portrait, for Shorts, Reels and TikTok.' },
-  { v: '1:1', hint: 'Square, for feeds.' }
+  { v: '1:1', hint: 'Square, for feeds.' },
+  { v: 'Custom', label: 'Free', hint: 'Any size, in px at 1080p. The notation keeps its size; the frame shows more or less of it.' }
 ]
 const aspectHint = computed(() => ASPECTS.find(a => a.v === s.aspect)?.hint)
+// Held even, 240–3840 px and within a 4K frame's area; the field shows what was kept.
+function setFree(e) {
+  const n = Number(e.target.value)
+  const name = e.target.name
+  if (n > 0) s[name] = fitEdge(n, name === 'freeW' ? s.freeH : s.freeW)
+  e.target.value = s[name]
+}
 
 const LAYOUTS = [
   { v: 'Scrolling line', label: 'Line', hint: 'One long line of notation running through the frame.' },
@@ -138,10 +148,41 @@ function pickLayout(l) {
               :checked="s.aspect === a.v"
               @change="setAspect(a.v)"
             >
-            <span>{{ a.v }}</span>
+            <span>{{ a.label ?? a.v }}</span>
           </label>
         </div>
         <small>{{ aspectHint }}</small>
+      </div>
+      <div
+        v-if="s.aspect === 'Custom'"
+        class="field"
+      >
+        <div class="flex items-center gap-2">
+          <input
+            type="number"
+            class="input"
+            name="freeW"
+            aria-label="Width in px"
+            :min="FREE_MIN"
+            :max="FREE_MAX"
+            step="8"
+            :value="s.freeW"
+            @change="setFree"
+          >
+          <span aria-hidden="true">×</span>
+          <input
+            type="number"
+            class="input"
+            name="freeH"
+            aria-label="Height in px"
+            :min="FREE_MIN"
+            :max="FREE_MAX"
+            step="8"
+            :value="s.freeH"
+            @change="setFree"
+          >
+        </div>
+        <small>Drag the frame's edges in the preview, or type a size. 720p and 480p scale it down.</small>
       </div>
     </InspectorGroup>
 

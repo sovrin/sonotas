@@ -30,6 +30,8 @@
  * these. Free to change; every key needs a field below. */
 export const APP_DEFAULTS = {
   aspect: '16:9', // framed output ratio
+  freeW: 1920, // the Custom (free) frame's size in px at 1080p
+  freeH: 1080,
   resolution: '1080p',
   fps: '30 fps',
   quality: 'High',
@@ -121,7 +123,7 @@ const fitBarsValues = ['Off', '1 bar', ...[2, 3, 4, 5, 6, 7, 8].map(n => `${n} b
 // `absent` set to how videos looked before it existed.
 export const FIELDS: readonly Field[] = [
   { id: 1, key: 'theme', type: 'enum', values: ['dark', 'light'], absent: 'dark' },
-  { id: 2, key: 'aspect', type: 'enum', values: ['16:9', '9:16', '1:1'], absent: '16:9' },
+  { id: 2, key: 'aspect', type: 'enum', values: ['16:9', '9:16', '1:1', 'Custom'], absent: '16:9' },
   { id: 3, key: 'layout', type: 'enum', values: ['Scrolling line', 'Page'], absent: 'Scrolling line' },
   { id: 4, key: 'fitBars', type: 'enum', values: fitBarsValues, absent: 'Off' },
   { id: 5, key: 'currentBarOnly', type: 'bool', absent: false },
@@ -175,7 +177,9 @@ export const FIELDS: readonly Field[] = [
   { id: 53, key: 'barsPerLine', type: 'enum', values: ['Auto', '2', '3', '4', '6'], absent: 'Auto' },
   { id: 54, key: 'spacing', type: 'enum', values: ['Tight', 'Normal', 'Wide'], absent: 'Normal' },
   { id: 55, key: 'songBook', type: 'bool', absent: false },
-  { id: 56, key: 'staffLines', type: 'int', min: 20, max: 100, absent: 100 }
+  { id: 56, key: 'staffLines', type: 'int', min: 20, max: 100, absent: 100 },
+  { id: 57, key: 'freeW', type: 'int', min: 240, max: 3840, absent: 1920 },
+  { id: 58, key: 'freeH', type: 'int', min: 240, max: 3840, absent: 1080 }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */
