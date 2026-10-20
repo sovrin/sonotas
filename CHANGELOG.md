@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3](https://github.com/sovrin/sonotas/compare/v0.2.2...v0.2.3) (2026-10-19)
+
+
+### Features
+
+* **app:** add a Sound switch for preview and export ([6f8673e](https://github.com/sovrin/sonotas/commit/6f8673e7aa45c778b8c2743d3ae07237bd0964e0))
+* **app:** use aequitas' compact density ([d1e0378](https://github.com/sovrin/sonotas/commit/d1e03782bd27c67502c60cea9530059cf17d648b))
+* **renderer:** synthesize a soundtrack into the mp4 ([95566eb](https://github.com/sovrin/sonotas/commit/95566eb42c04f521a68d645d7f666cd809c84068))
+
+
+### Bug Fixes
+
+* **app:** plain shape buttons and bar numbers on one line ([5b213e6](https://github.com/sovrin/sonotas/commit/5b213e67b0e2b6c69ca1dbfba09a2657be014a7d))
+
 ## [0.2.2](https://github.com/sovrin/sonotas/compare/v0.2.1...v0.2.2) (2026-10-17)
 
 
