@@ -3,7 +3,7 @@
 // tracker loads in the background; until it has, or if it never does, track()
 // does nothing. Events and their prop values must be listed for sonotas in
 // censitas, or they are refused.
-const TRACKER = 'https://censitas.sovrin.de/v1/track.js?site=sonotas'
+const TRACKER = 'https://nexitas.sovrin.de/v1/track.js?site=sonotas'
 
 let send: (event: string, props?: Record<string, string>) => void = () => {}
 
