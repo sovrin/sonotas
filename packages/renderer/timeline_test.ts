@@ -101,3 +101,29 @@ test('buildTimeline keeps beats on the synth\'s clock to the end (demo has no ra
   assert(beats.length > 500, 'demo is long enough to drift')
   assert(Math.abs(durationMs - ms) < 1, `cursor ends at ${durationMs}ms, sound at ${ms}ms`)
 })
+
+test('buildTimeline sketches the whole song\'s notes, crop or not', async () => {
+  const settings = createSettings()
+  const score = loadScore(await loadSample(), settings, 0)
+
+  const full = buildTimeline(score, settings, 0, noBounds)
+  const crop = buildTimeline(score, settings, 0, noBounds, { fromBar: 1, toBar: 2 })
+
+  assert(full.notes.length > 0, 'no notes sketched')
+  assertEquals(crop.notes, full.notes) // the strip shows the whole song either way
+  for (const n of full.notes) {
+    assert(n.y >= 0 && n.y <= 1, `lane ${n.y} off the staff`)
+    assert(n.startMs >= 0 && n.endMs > n.startMs && n.endMs <= full.durationMs + 1, `note ${n.startMs}–${n.endMs} out of the song`)
+  }
+})
+
+test('buildTimeline spreads a drum kit over its own pitch range', async () => {
+  const settings = createSettings()
+  const score = loadScore(await loadDemo(), settings, 1) // Drums
+
+  const { notes } = buildTimeline(score, settings, 1, noBounds)
+  const ys = notes.map(n => n.y)
+
+  assertEquals(Math.min(...ys), 0) // highest drum on the top line
+  assertEquals(Math.max(...ys), 1) // lowest on the bottom
+})

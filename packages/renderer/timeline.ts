@@ -13,6 +13,9 @@ export interface Timeline {
   /** Every bar in the order it is played, repeats included: its rendered bar
    * index and onset (ms, rebased). Unlike `bars`, this lines up with time. */
   plays: Play[]
+  /** The track's notes over the whole song, crop or not, in song time (ms):
+   * a sketch of the tab for a scrubber. */
+  notes: SketchNote[]
   /** The played MIDI, tempo-matched to the beats, for audio. */
   midi: alphaTab.midi.MidiFile
   /** Unrebased time (ms) of the clip start: where the audio for 0 lies. */
@@ -26,6 +29,21 @@ export interface Timeline {
 export interface Play {
   bar: number
   startMs: number
+}
+
+/** One note as a scrubber sketches it: when it sounds and its lane, 0 the
+ * top line of the tab (the highest string) to 1 the bottom. */
+export interface SketchNote {
+  startMs: number
+  endMs: number
+  y: number
+}
+
+// A note's lane on a tab: its string. A track without strings (piano, drums)
+// gives its pitch instead, spread over the track's own range once all are known.
+function laneOf(note: alphaTab.model.Note, stringed: boolean): number {
+  const strings = note.beat.voice.bar.staff.tuning.length
+  return stringed ? (strings - note.string) / (strings - 1) : note.realValue
 }
 
 /** Walk the played beats and place each on the tempo curve. When `range` is set
@@ -47,6 +65,7 @@ export function buildTimeline(
   gen.generate()
   const lookup = gen.tickLookup
   const trackSet = new Set([track])
+  const stringed = (score.tracks[track]!.staves[0]?.tuning.length ?? 0) > 1
 
   // 1st pass: walk in playback order (expanded ticks unfold repeats), collect tick spans
   const spans: {
@@ -56,6 +75,7 @@ export function buildTimeline(
     barW: number
     barH: number
     heads: Box[]
+    lanes: number[]
     s: number
     e: number
     ms: number
@@ -85,6 +105,8 @@ export function buildTimeline(
       barW: box?.w ?? 0,
       barH: box?.h ?? 0,
       heads,
+      // A tied note goes on sounding; it is drawn once, where it starts.
+      lanes: cur.beat.isRest ? [] : cur.beat.notes.filter(n => !n.isTieDestination).map(n => laneOf(n, stringed)),
       s: cur.start,
       e: cur.end,
       ms: beatMs(cur, midi.division) || 1,
@@ -106,6 +128,7 @@ export function buildTimeline(
   const beats: Beat[] = []
   const barOnset = new Array<number>(score.masterBars.length) // rebased onset per bar
   const plays: Play[] = []
+  const notes: SketchNote[] = []
   const firstBar = range?.fromBar ?? 0
   let prevBar = -1
   let flatMs = 0
@@ -114,6 +137,7 @@ export function buildTimeline(
   for (const span of spans) {
     const startMs = tempo.hasRamp ? tempo.timeAtTick(span.s) : flatMs
     const endMs = tempo.hasRamp ? tempo.timeAtTick(span.e) : flatMs + span.ms
+    for (const y of span.lanes) notes.push({ startMs, endMs, y })
     if (inRange(span.bar)) {
       offset ??= startMs
       beats.push({ startMs: startMs - offset, x: span.x, barX: span.barX, barY: span.barY, barW: span.barW, barH: span.barH, heads: span.heads })
@@ -126,12 +150,21 @@ export function buildTimeline(
     }
     if (!tempo.hasRamp) flatMs += span.ms
   }
+  if (!stringed) {
+    // Highest pitch on the top line, lowest on the bottom.
+    let lo = Infinity
+    let hi = -Infinity
+    for (const n of notes) [lo, hi] = [Math.min(lo, n.y), Math.max(hi, n.y)]
+    const span = hi - lo || 1
+    for (const n of notes) n.y = 1 - (n.y - lo) / span
+  }
   const bars = fillDense(barOnset, durationMs)
   return {
     beats,
     durationMs,
     bars: range ? bars.slice(range.fromBar, range.toBar + 1) : bars,
     plays,
+    notes,
     midi,
     offsetMs: offset ?? 0,
     endsSong: !spans.length || inRange(spans[spans.length - 1]!.bar),

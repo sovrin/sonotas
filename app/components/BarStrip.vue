@@ -21,11 +21,15 @@ let observer = null
 
 onMounted(() => {
   observer = new ResizeObserver((entries) => {
-    for (const e of entries) if (e.target === strip.value) width.value = e.contentRect.width
+    for (const e of entries) {
+      if (e.target === strip.value) width.value = e.contentRect.width
+      if (e.target === sketchEl.value) sketchH.value = e.contentRect.height
+    }
     syncView()
   })
   observer.observe(strip.value)
   observer.observe(scroller.value)
+  observer.observe(sketchEl.value)
 })
 onBeforeUnmount(() => observer?.disconnect())
 
@@ -101,6 +105,32 @@ const cells = computed(() => plays.value.map((p, i) => {
     out: p.bar < range.value.from || p.bar > range.value.to
   }
 }))
+
+// The tab in brief: every note a flat bar on its string line, as long as it
+// sounds less a hair's gap, drawn in pixels so it stays crisp at any zoom.
+// The bar being played lights its notes, as the video lights the bar.
+const sketchEl = ref(null)
+const sketchH = ref(0)
+const NOTE_H = 3
+const NOTE_GAP = 1.5
+
+function sketchPath(notes) {
+  const k = width.value / totalMs.value
+  const h = sketchH.value - 1 // the bottom line's centre
+  const f = x => x.toFixed(1)
+  return notes.map((n) => {
+    const w = Math.max(NOTE_H - 1, (n.endMs - n.startMs) * k - NOTE_GAP)
+    return `M${f(n.startMs * k)} ${f(n.y * h + 0.5 - NOTE_H / 2)}h${f(w)}v${NOTE_H}h-${f(w)}z`
+  }).join('')
+}
+
+const sketch = computed(() => (width.value && sketchH.value ? sketchPath(s.songNotes) : ''))
+const sketchNow = computed(() => {
+  if (!sketch.value || v.value.isRendering) return ''
+  const from = startOf(current.value)
+  const to = endOf(current.value)
+  return sketchPath(s.songNotes.filter(n => n.startMs >= from && n.startMs < to))
+})
 
 const rangeLeft = computed(() => pct(barSpan(range.value.from)[0]))
 const rangeRight = computed(() => pct(barSpan(range.value.to)[1]))
@@ -388,6 +418,18 @@ const fmt = (ms) => {
               aria-hidden="true"
             >{{ b.n }}</span>
           </div>
+
+          <svg
+            ref="sketchEl"
+            class="bar-strip-sketch"
+            aria-hidden="true"
+          >
+            <path :d="sketch" />
+            <path
+              :d="sketchNow"
+              data-now
+            />
+          </svg>
 
           <div
             v-if="v.isRendering"

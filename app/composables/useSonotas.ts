@@ -93,6 +93,8 @@ function createSonotas() {
     // and the whole song's from the last uncropped build. The strip draws these.
     plays: [] as { bar: number, startMs: number }[],
     songPlays: [] as { bar: number, startMs: number }[],
+    // The track's notes over the whole song (every build has them), sketched on the strip.
+    songNotes: [] as { startMs: number, endMs: number, y: number }[],
     stripZoom: 1, // timeline strip zoom: 1 fits the whole song
     outBytes: 0,
     estBytes: 0, // probed size of the export for the current settings (0 = not yet known)
@@ -340,6 +342,7 @@ function createSonotas() {
       s.hasSections = inst.hasSections
       s.barStarts = [...inst.bars]
       s.plays = [...inst.plays]
+      s.songNotes = inst.notes
       if (!s.renderOnlyBars) {
         s.songBars = [...inst.bars]
         s.songPlays = [...inst.plays]
@@ -410,6 +413,7 @@ function createSonotas() {
       s.renderOnlyBars = false
       s.songBars = []
       s.songPlays = []
+      s.songNotes = []
       s.stripZoom = 1
       if (s.render.status === 'done') closeRender()
       track('file-open', { format: fileFormat(file.name) })

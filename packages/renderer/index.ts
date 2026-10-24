@@ -179,7 +179,7 @@ export async function createRenderer(
   )
   reattach?.()
   retie?.()
-  const { beats, durationMs, bars, plays, midi, offsetMs, endsSong, startTick } = buildTimeline(
+  const { beats, durationMs, bars, plays, notes, midi, offsetMs, endsSong, startTick } = buildTimeline(
     score,
     settings,
     track,
@@ -272,6 +272,7 @@ export async function createRenderer(
     hasSections: hasSections(score),
     bars,
     plays,
+    notes,
     frame(canvas, atMs, opts) {
       if (canvas.width !== width) canvas.width = width // resize also clears; skip if unchanged
       if (canvas.height !== height) canvas.height = height

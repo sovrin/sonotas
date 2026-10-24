@@ -452,6 +452,27 @@ main > .stage {
   }
 }
 
+/* The notes, on the same lines as the staff behind them: quiet, so barlines
+   and numbers read over them, and lit in the bar being played. */
+.bar-strip-sketch {
+  /* An svg doesn't stretch between insets, so it is sized to the staff instead. */
+  position: absolute;
+  inset-block-start: var(--ae-space-5);
+  inset-inline-start: 0;
+  inline-size: 100%;
+  block-size: calc(100% - var(--ae-space-5) - var(--ae-space-2));
+  overflow: visible;
+  pointer-events: none;
+
+  & > path {
+    fill: color-mix(in oklch, var(--ae-text-muted) 70%, transparent);
+
+    &[data-now] {
+      fill: var(--strip-now);
+    }
+  }
+}
+
 .bar-strip-bar {
   position: absolute;
   inset-block: 0;

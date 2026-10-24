@@ -177,6 +177,9 @@ export interface Renderer {
   /** Every bar as played, repeats included (rendered bar index, onset ms) —
    * the song's real timeline, for a scrubber. */
   plays: { bar: number, startMs: number }[]
+  /** The track's notes over the whole song (song ms, even when cropped), each
+   * with its lane on the tab, 0 the top line to 1 the bottom: for a scrubber. */
+  notes: { startMs: number, endMs: number, y: number }[]
   /** Paint one frame (at time `atMs`) onto a visible canvas — for previews.
    * Pass `opts` to tune crop, scroll, cursor, and background. */
   frame(
