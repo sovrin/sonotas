@@ -150,6 +150,8 @@ function lightDismiss(e) {
         <dd>On a bracket: move it four bars</dd>
         <dt><kbd>+</kbd> <kbd>−</kbd></dt>
         <dd>On the bar strip or its overview: zoom in or out. Pinch or Ctrl-scroll over the strip, or drag an end of the overview window</dd>
+        <dt><kbd>Ctrl</kbd> + scroll</dt>
+        <dd>On the preview: zoom in to look closer (the export stays as it is). Drag to pan, double-click to fit again</dd>
       </dl>
       <button class="btn self-end">
         Close

@@ -108,6 +108,72 @@ function end() {
   measure()
 }
 
+// View zoom: Ctrl/⌘-scroll or pinch over the preview magnifies it, a drag pans
+// it and a double-click fits it again. Only the view moves, never the export.
+const view = ref({ z: 1, x: 0, y: 0 })
+let pan = null // { x, y, moved } while dragging the zoomed view
+const panning = ref(false) // the view follows the pointer without easing
+
+// Pan no further than the magnified canvas still covers its fitted box.
+function setView(z, x, y) {
+  const c = canvasRef.value
+  const lim = (n, size) => Math.min(Math.max(n, -size * (z - 1) / 2), size * (z - 1) / 2)
+  view.value = { z, x: lim(x, c.offsetWidth), y: lim(y, c.offsetHeight) }
+}
+
+// Zoom to nz, keeping the point at (px, py) where it is (offsets from the
+// fitted centre; the buttons use the centre itself).
+function zoomTo(nz, px = 0, py = 0) {
+  const { z, x, y } = view.value
+  // shortcut: magnifies the painted bitmap, so it softens past ~4×; repaint at zoom if sharper is wanted.
+  nz = Math.min(Math.max(nz, 1), 4)
+  setView(nz, px - (px - x) * nz / z, py - (py - y) * nz / z)
+}
+
+// The buttons step to the next 25% mark, wherever scrolling left the zoom.
+const stepIn = () => zoomTo(Math.floor(view.value.z * 4 + 1e-6) / 4 + 0.25)
+const stepOut = () => zoomTo(Math.ceil(view.value.z * 4 - 1e-6) / 4 - 0.25)
+
+function wheel(e) {
+  if (!(e.ctrlKey || e.metaKey) || !s.ready || s.videoUrl) return
+  e.preventDefault() // not the browser's page zoom
+  const c = canvasRef.value
+  const r = stageRef.value.getBoundingClientRect()
+  zoomTo(
+    view.value.z * Math.exp(-e.deltaY / 200),
+    e.clientX - r.left - (c.offsetLeft + c.offsetWidth / 2),
+    e.clientY - r.top - (c.offsetTop + c.offsetHeight / 2)
+  )
+}
+
+function panStart(e) {
+  if (view.value.z === 1) return
+  e.currentTarget.setPointerCapture(e.pointerId)
+  pan = { x: e.clientX, y: e.clientY, moved: false }
+}
+
+function panMove(e) {
+  if (!pan) return
+  const dx = e.clientX - pan.x
+  const dy = e.clientY - pan.y
+  if (!pan.moved && Math.hypot(dx, dy) < 4) return
+  pan = { x: e.clientX, y: e.clientY, moved: true }
+  panning.value = true
+  setView(view.value.z, view.value.x + dx, view.value.y + dy)
+}
+
+function panEnd() {
+  panning.value = false
+  // The click that ends a pan doesn't seek; clear it after that click has run.
+  setTimeout(() => {
+    pan = null
+  })
+}
+
+function click(e) {
+  if (!pan?.moved) seekAtCanvas(e.clientX, e.clientY)
+}
+
 // A canvas with a set CSS size keeps it when rebuilt, so the observer stays
 // quiet: look again once the new sheet is painted.
 watch(() => [s.sheetW, s.sheetH], () => requestAnimationFrame(measure))
@@ -132,19 +198,31 @@ onBeforeUnmount(() => observer?.disconnect())
     ref="stageRef"
     class="stage"
     data-grow
-    :style="{ '--frame': v.frameRatio }"
+    :style="{ '--frame': v.frameRatio, '--view-z': view.z, '--view-x': `${view.x}px`, '--view-y': `${view.y}px` }"
+    :data-panning="panning ? '' : undefined"
     aria-label="Preview"
+    @wheel="wheel"
   >
     <canvas
       v-show="s.ready && !s.videoUrl"
       ref="canvasRef"
-      :style="pinned ? { width: `${pinned.w}px`, height: `${pinned.h}px` } : undefined"
-      @click="seekAtCanvas($event.clientX, $event.clientY)"
+      :data-zoomed="view.z > 1 ? '' : undefined"
+      :style="{
+        ...(pinned && { width: `${pinned.w}px`, height: `${pinned.h}px` }),
+        ...(view.z > 1 && { transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` })
+      }"
+      @click="click"
+      @dblclick="view = { z: 1, x: 0, y: 0 }"
+      @pointerdown="panStart"
+      @pointermove="panMove"
+      @pointerup="panEnd"
+      @pointercancel="panEnd"
     />
 
-    <!-- Mouse and touch only: the Frame tab's width and height fields set the same. -->
+    <!-- Mouse and touch only: the Frame tab's width and height fields set the same.
+         Hidden while zoomed in, as its handles follow the fitted frame. -->
     <div
-      v-if="resizable && box"
+      v-if="resizable && box && view.z === 1"
       class="frame-resize"
       :data-dragging="drag ? '' : undefined"
       :style="{ left: `${box.x}px`, top: `${box.y}px`, width: `${box.w}px`, height: `${box.h}px` }"
@@ -163,6 +241,53 @@ onBeforeUnmount(() => observer?.disconnect())
         @pointerup="end"
         @pointercancel="end"
       />
+    </div>
+
+    <div
+      v-if="s.ready && !s.videoUrl"
+      class="btn-group view-zoom"
+    >
+      <button
+        class="btn"
+        data-icon
+        data-size="s"
+        data-variant="ghost"
+        aria-label="Zoom out"
+        data-tip="Zoom out"
+        :disabled="view.z === 1"
+        @click="stepOut"
+      >
+        <i
+          class="icon"
+          data-icon="zoom-out"
+        />
+      </button>
+      <button
+        class="btn font-mono tabular"
+        data-size="s"
+        data-variant="ghost"
+        :aria-label="`Zoom ${Math.round(view.z * 100)}%, fit the preview`"
+        data-tip="Fit"
+        :disabled="view.z === 1"
+        @click="view = { z: 1, x: 0, y: 0 }"
+      >
+        {{ Math.round(view.z * 100) }}%
+      </button>
+      <button
+        class="btn"
+        data-icon
+        data-size="s"
+        data-variant="ghost"
+        aria-label="Zoom in"
+        data-tip="Zoom in"
+        :disabled="view.z === 4"
+        @click="stepIn"
+      >
+        <i
+          class="icon"
+          data-icon="zoom-in"
+        />
+      </button>
     </div>
 
     <video
