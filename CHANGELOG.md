@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.6](https://github.com/sovrin/sonotas/compare/v0.2.5...v0.2.6) (2026-10-24)
+
+
+### Features
+
+* **intro:** say what sonotas is while the sample is up ([e9e20fd](https://github.com/sovrin/sonotas/commit/e9e20fde58a41e994acf03118db47f199cc0a02b))
+* **preview:** zoom and pan the preview without touching the export ([62ef02a](https://github.com/sovrin/sonotas/commit/62ef02ab2a482cf191c1bb83eb73643c5f1eb9ab))
+* **sound:** play with your own sf2/sf3 soundfont ([b689e20](https://github.com/sovrin/sonotas/commit/b689e204a2e1d5ffd8c0edb7b13696ff9c283cf8))
+* **timeline:** float the transport over the stage on desktop ([a29f0df](https://github.com/sovrin/sonotas/commit/a29f0df9bb77654c8030bbc30c0e311b391f4261))
+* **timeline:** sketch the track's notes on the bar strip ([2a24c58](https://github.com/sovrin/sonotas/commit/2a24c58a36d1c66866618c22a69a5398fdb39dc3))
+
+
+### Bug Fixes
+
+* **header:** bigger header icons, easier to tell apart ([f902fb9](https://github.com/sovrin/sonotas/commit/f902fb95bc554655d2672a9cec8b4e90967e08c2))
+
 ## [0.2.5](https://github.com/sovrin/sonotas/compare/v0.2.4...v0.2.5) (2026-10-24)
 
 
