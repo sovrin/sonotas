@@ -19,7 +19,7 @@ const longDate = d => new Date(d).toLocaleDateString('en', { day: 'numeric', mon
 // other server but censitas, which counts anonymous usage (utils/track). The
 // form shows what it sends: the message, this page's address (the settings are
 // in it) and the context below, as far as collatas accepts it.
-const FEEDBACK_FORM = 'https://collatas.sovrin.de/v1/form.js'
+const FEEDBACK_FORM = 'https://nexitas.sovrin.de/v1/form.js'
 // A server that takes the connection but never answers must not leave the dialog empty.
 const FORM_TIMEOUT = 10_000
 const feedbackDlg = ref(null)
