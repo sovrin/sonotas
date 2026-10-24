@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5](https://github.com/sovrin/sonotas/compare/v0.2.4...v0.2.5) (2026-10-24)
+
+
+### Bug Fixes
+
+* **help:** collapse older releases in what's new, keep the newest open ([0e9ec0a](https://github.com/sovrin/sonotas/commit/0e9ec0ab50b6f05d1e4ff8142ae0ade07561c2ea))
+* load the tracker and the feedback form from nexitas.sovrin.de ([6d28fb4](https://github.com/sovrin/sonotas/commit/6d28fb47f2af040bb15fb5846eef598ee7762825))
+
 ## [0.2.4](https://github.com/sovrin/sonotas/compare/v0.2.3...v0.2.4) (2026-10-20)
 
 
