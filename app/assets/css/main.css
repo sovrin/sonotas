@@ -293,7 +293,7 @@ main > .stage {
     /* Up over main's gap (space-4) and its own height, inset space-4 from the stage's edges. */
     margin: calc(-1 * var(--transport-h, 0px) - var(--ae-space-4) * 2) var(--ae-space-4) var(--ae-space-4);
     /* Frosted with aequitas' own glass (solid where transparency is reduced). */
-    background: var(--ae-frost-bg);
+    background: var(--ae-frost-bg-sheer);
     backdrop-filter: var(--ae-frost-filter-l);
     box-shadow: inset 0 0 0 1px var(--ae-border), var(--ae-shadow-l);
   }
@@ -730,7 +730,7 @@ main > .stage {
   inset-inline-end: var(--ae-space-2);
   z-index: 1;
   /* Frosted like the transport; its ghost buttons let the frost show. */
-  background: var(--ae-frost-bg);
+  background: var(--ae-frost-bg-sheer);
   backdrop-filter: var(--ae-frost-filter-l);
   box-shadow: inset 0 0 0 1px var(--ae-border), var(--ae-shadow-l);
 }
