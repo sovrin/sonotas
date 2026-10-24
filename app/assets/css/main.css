@@ -654,8 +654,18 @@ main > .stage {
   background: var(--ae-fill);
 }
 
+/* The sample's intro is a plain word, not an alert: neutral, its Play the one amber. */
+.alert.intro {
+  background: var(--ae-fill);
+
+  & strong {
+    color: var(--ae-text);
+  }
+}
+
 .navbar .btn[data-variant="ghost"],
-.view-zoom .btn[data-variant="ghost"] {
+.view-zoom .btn[data-variant="ghost"],
+.intro .btn[data-variant="ghost"] {
   color: var(--ae-text-muted);
 
   &:hover {

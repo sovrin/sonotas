@@ -2,9 +2,10 @@
 // One toolbar: the app, then — past a hairline — the song being worked on,
 // its track, and the way to open another. Export is not up here; it waits
 // under the settings.
+import { ACCEPT } from '~/utils/formats'
+
 const { s, v, loadFile, setTrack, toggleTheme, copyLink, resetSettings } = useSonotas()
 
-const ACCEPT = '.gp,.gpx,.gp3,.gp4,.gp5,.xml,.musicxml,.mxl'
 const OPEN_TIP = 'Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML. Or drop a file anywhere. It stays in your browser.'
 const fileInput = ref(null)
 
