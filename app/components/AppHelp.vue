@@ -198,39 +198,41 @@ function lightDismiss(e) {
       <h3 id="news-title">
         What's new
       </h3>
-      <!-- Newest first, a hairline between releases; inside one, the
+      <!-- Newest first and only the newest open; inside one, the
            inspector's eyebrow labels name what kind of change it is. -->
-      <div
-        class="stack"
-        data-divided
-      >
-        <section
-          v-for="r in releases"
+      <div>
+        <details
+          v-for="(r, i) in releases"
           :key="r.version"
-          class="stack gap-3"
+          class="accordion"
+          :open="i === 0"
         >
-          <h4 class="flex items-baseline justify-between gap-3 text-m">
-            {{ longDate(r.date) }}
-            <span class="text-s text-muted font-mono">v{{ r.version }}</span>
-          </h4>
-          <div
-            v-for="s in r.sections"
-            :key="s.title"
-            class="stack gap-2"
-          >
-            <h5 class="eyebrow">
-              {{ s.title }}
-            </h5>
-            <ul class="stack gap-1">
-              <li
-                v-for="item in s.items"
-                :key="item"
-              >
-                {{ item }}
-              </li>
-            </ul>
+          <summary>
+            <h4 class="flex flex-1 items-baseline justify-between gap-3 text-m">
+              {{ longDate(r.date) }}
+              <span class="text-s text-muted font-mono">v{{ r.version }}</span>
+            </h4>
+          </summary>
+          <div class="stack gap-3">
+            <div
+              v-for="s in r.sections"
+              :key="s.title"
+              class="stack gap-2"
+            >
+              <h5 class="eyebrow">
+                {{ s.title }}
+              </h5>
+              <ul class="stack gap-1">
+                <li
+                  v-for="item in s.items"
+                  :key="item"
+                >
+                  {{ item }}
+                </li>
+              </ul>
+            </div>
           </div>
-        </section>
+        </details>
       </div>
       <div class="flex items-center justify-between gap-3">
         <a
