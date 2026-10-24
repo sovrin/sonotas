@@ -1,7 +1,14 @@
 <script setup>
 // What the video sounds like: a built-in synth plays the song in the preview
 // and the exported file, with a metronome and a count-in to play along to.
-const { s, toggle } = useSonotas()
+const { s, v, toggle, loadSoundFont } = useSonotas()
+const fontInput = ref()
+
+function onPickFont(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // so picking the same file again still fires
+  if (file) loadSoundFont(file)
+}
 
 const MIX = ['All', 'Solo', 'Minus'].map(v => ({ v, label: v }))
 const trackName = computed(() => s.tracks[s.trackIndex]?.name || 'this track')
@@ -41,6 +48,41 @@ const mixHint = computed(() => ({
       >
         <small>{{ mixHint }}</small>
       </SegmentedField>
+      <div
+        v-if="s.sound"
+        class="field"
+      >
+        <span>Soundfont</span>
+        <input
+          ref="fontInput"
+          type="file"
+          accept=".sf2,.sf3"
+          hidden
+          @change="onPickFont"
+        >
+        <div class="cluster">
+          <button
+            class="btn"
+            data-size="s"
+            :inert="v.isRendering"
+            @click="fontInput?.click()"
+          >
+            {{ s.soundFontName ? 'Change…' : 'Use your own…' }}
+          </button>
+          <button
+            v-if="s.soundFontName"
+            class="btn"
+            data-size="s"
+            data-variant="ghost"
+            :inert="v.isRendering"
+            @click="loadSoundFont(null)"
+          >
+            Use built-in
+          </button>
+        </div>
+        <small v-if="s.soundFontError">{{ s.soundFontError }}</small>
+        <small v-else>{{ s.soundFontName ? `Playing with ${s.soundFontName}.` : 'The built-in General MIDI set. Pick an .sf2 or .sf3 file to use your own instruments.' }}</small>
+      </div>
     </InspectorGroup>
 
     <InspectorGroup

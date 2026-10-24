@@ -56,6 +56,8 @@ function createSonotas() {
     sourceName: 'Catastrophic (demo)',
     isDemo: true, // false once the user loads their own file
     loadError: '', // surfaced when a picked file can't be parsed
+    soundFontName: '', // the user's own soundfont ('' plays the built-in one)
+    soundFontError: '', // why a picked soundfont was refused
     tracks: [] as { index: number, name: string }[],
     trackIndex: 0,
     uiTheme: 'dark', // page theme
@@ -101,6 +103,7 @@ function createSonotas() {
   // ── renderer instance + loop handles (non-reactive) ─────────────────────────
   let engine: Awaited<ReturnType<typeof import('renderer')['createRenderer']>> | null = null
   let bytes: Uint8Array | null = null
+  let soundFontUrl: string | undefined // object URL of the user's soundfont
   let canvasEl: HTMLCanvasElement | null = null
   let raf: number | null = null
   let lastTs = 0
@@ -200,6 +203,7 @@ function createSonotas() {
       foreground: s.fg,
       barNumberColor: s.barNum,
       staffLineOpacity: s.staffLines / 100,
+      soundFontUrl,
       crop: s.renderOnlyBars ? { fromBar: s.fromBar - 1, toBar: s.toBar - 1 } : undefined
     }
   }
@@ -359,6 +363,30 @@ function createSonotas() {
     if (!import.meta.client) return
     if (rebuildTimer) clearTimeout(rebuildTimer)
     rebuildTimer = setTimeout(rebuild, 150)
+  }
+
+  // Swap the synth's soundfont for a user-picked .sf2/.sf3 (null: back to the
+  // built-in one). The renderer reads it on the next soundtrack, so rebuild.
+  async function loadSoundFont(file: File | null) {
+    if (!import.meta.client || s.render.status === 'rendering') return
+    s.soundFontError = ''
+    if (file) {
+      // Both formats are a RIFF file of type 'sfbk'.
+      const head = new TextDecoder().decode(await file.slice(0, 12).arrayBuffer())
+      if (!head.startsWith('RIFF') || head.slice(8) !== 'sfbk') {
+        s.soundFontError = `${file.name} isn’t a soundfont. Pick an .sf2 or .sf3 file.`
+        return
+      }
+    }
+    if (soundFontUrl) URL.revokeObjectURL(soundFontUrl)
+    soundFontUrl = file ? URL.createObjectURL(file) : undefined
+    s.soundFontName = file?.name ?? ''
+    if (s.playing) {
+      stopLoop()
+      s.playing = false
+    }
+    invalidateResult()
+    scheduleRebuild()
   }
 
   // Load a user-picked Guitar Pro / MusicXML file, replacing the demo. Parses
@@ -856,6 +884,7 @@ function createSonotas() {
     if (rebuildTimer) clearTimeout(rebuildTimer)
     abortEstimate()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
+    if (soundFontUrl) URL.revokeObjectURL(soundFontUrl)
     abortRender()
     buildToken++
   })
@@ -940,7 +969,8 @@ function createSonotas() {
     cancelRender,
     closeRender,
     download,
-    loadFile
+    loadFile,
+    loadSoundFont
   }
 }
 
