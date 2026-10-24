@@ -675,6 +675,11 @@ main > .stage {
   background: var(--ae-fill);
 }
 
+/* aequitas sizes icons to the small text (~12px), a hairline in a 26px button. */
+.navbar .btn .icon {
+  font-size: 1.375em;
+}
+
 /* The sample's intro is a plain word, not an alert: neutral, its Play the one amber. */
 .alert.intro {
   background: var(--ae-fill);
