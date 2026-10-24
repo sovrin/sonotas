@@ -63,12 +63,24 @@ function onKey(e) {
   else return
   e.preventDefault()
 }
-onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+// On a desktop the transport floats over the stage's foot; its height, shared
+// with the stage, keeps the fitted preview and its zoom control clear of it.
+const el = ref(null)
+let observer
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  observer = new ResizeObserver(([e]) => el.value.parentElement.style.setProperty('--transport-h', `${e.borderBoxSize[0].blockSize}px`))
+  observer.observe(el.value)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  observer?.disconnect()
+})
 </script>
 
 <template>
   <section
+    ref="el"
     class="transport"
     aria-label="Timeline"
     :inert="v.isRendering"
