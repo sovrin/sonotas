@@ -55,12 +55,19 @@ const facts = computed(() => [
           class="badge s:hidden"
         >Sample</span>
       </div>
-      <span class="text-s text-muted truncate tabular">{{ facts }}</span>
+      <span class="text-s text-muted truncate tabular">
+        <span
+          v-if="!s.ready"
+          class="skeleton song-facts-skeleton"
+          aria-hidden="true"
+        >&nbsp;</span>
+        <template v-else>{{ facts }}</template>
+      </span>
     </div>
 
     <div class="end cluster gap-3">
+      <!-- Always there, so it doesn't pop in once the song is read; a one-track song can't switch. -->
       <label
-        v-if="s.tracks.length > 1"
         class="cluster gap-2 text-s text-muted"
         :inert="v.isRendering"
       >
@@ -71,6 +78,7 @@ const facts = computed(() => [
             class="input"
             data-size="s"
             :value="s.trackIndex"
+            :disabled="s.tracks.length < 2"
             @change="setTrack"
           >
             <option

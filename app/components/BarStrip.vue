@@ -482,10 +482,11 @@ const fmt = (ms) => {
       </div>
     </div>
 
+    <!-- Hidden, not removed, for a short song: its room stays, so the strip doesn't jump once the song is read. -->
     <div
-      v-if="v.stripMaxZoom > 1"
       ref="overview"
       class="bar-strip-overview"
+      :style="v.stripMaxZoom > 1 ? undefined : { visibility: 'hidden' }"
       @pointerdown="onOverviewDown"
       @pointermove="onOverviewMove"
       @pointerup="onOverviewUp"

@@ -105,7 +105,7 @@ onBeforeUnmount(() => {
 
     <div class="transport-readout">
       <b>{{ tc(s.time) }}</b>
-      <span>of {{ tc(s.duration) }}</span>
+      <span>of {{ s.ready ? tc(s.duration) : '—' }}</span>
     </div>
 
     <BarStrip class="transport-strip" />

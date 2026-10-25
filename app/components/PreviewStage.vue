@@ -244,7 +244,7 @@ onBeforeUnmount(() => observer?.disconnect())
     </div>
 
     <div
-      v-if="s.ready && !s.videoUrl"
+      v-if="!s.videoUrl"
       class="btn-group view-zoom"
     >
       <button
@@ -280,7 +280,7 @@ onBeforeUnmount(() => observer?.disconnect())
         data-variant="ghost"
         aria-label="Zoom in"
         data-tip="Zoom in"
-        :disabled="view.z === 4"
+        :disabled="!s.ready || view.z === 4"
         @click="stepIn"
       >
         <i

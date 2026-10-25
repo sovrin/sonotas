@@ -934,7 +934,7 @@ function createSonotas() {
       // "1920×1080 · 30 fps · 0:08 · ~1.2 MB"
       // The size is probed only while the preview is still ("~…" read as truncated text).
       // A no-break space keeps each dot on its fact's line when the line wraps.
-      estLine: resPx + '\u00a0· ' + fpsNum() + '\u00a0fps\u00a0· ' + fmt(eff) + '\u00a0· ' + (s.estBytes ? '~' + estSize : s.playing ? 'size once paused' : 'estimating size…'),
+      estLine: resPx + '\u00a0· ' + fpsNum() + '\u00a0fps\u00a0· ' + (s.ready ? fmt(eff) : '—') + '\u00a0· ' + (s.estBytes ? '~' + estSize : s.playing ? 'size once paused' : 'estimating size…'),
       resPx,
       sizeLabel,
       outName: outName(),
