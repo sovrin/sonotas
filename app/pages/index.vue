@@ -37,6 +37,14 @@ function onDrop(e) {
     @dragleave.prevent="onDragLeave"
     @drop.prevent="onDrop"
   >
+    <!-- Reading or re-engraving the score: the preview catches up after. -->
+    <div
+      class="loading-bar"
+      :data-active="s.building || undefined"
+      :data-done="!s.building || undefined"
+      aria-hidden="true"
+    />
+
     <AppHeader />
 
     <main>
