@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.7](https://github.com/sovrin/sonotas/compare/v0.2.6...v0.2.7) (2026-11-03)
+
+
+### Features
+
+* **app:** hold the layout while the score is read ([9ccd43b](https://github.com/sovrin/sonotas/commit/9ccd43b9d851f710f1f8c4d9b484292c2032eb0e))
+* **app:** show a loading bar while the score is engraved ([6e72ed1](https://github.com/sovrin/sonotas/commit/6e72ed149de04542b21f2e905e0e244e805f5178))
+* **i18n:** sonotas speaks English and German ([a7a1814](https://github.com/sovrin/sonotas/commit/a7a18143bbbaca4725c2164781040d4014c0c5df))
+
 ## [0.2.6](https://github.com/sovrin/sonotas/compare/v0.2.5...v0.2.6) (2026-10-24)
 
 
