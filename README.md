@@ -143,12 +143,11 @@ out; `pnpm test` fails on a key with no text, a text no code uses, and a key put
 To change texts, edit and publish them there, then fetch them:
 
 ```bash
-pnpm texts                                          # the published texts
-TEXTS_TOKEN=<build token> pnpm texts --draft        # the texts as they are now, for development
+TEXTS_URL=<server> pnpm texts                                      # the published texts
+TEXTS_URL=<server> TEXTS_TOKEN=<build token> pnpm texts --draft    # the texts as they are now
 ```
 
-`TEXTS_URL` points it at another server (`http://localhost:3000`). The page fetches nothing
-while it runs: new texts ship with the next build.
+The page fetches nothing while it runs: new texts ship with the next build.
 
 ## Self-hosting with Docker
 

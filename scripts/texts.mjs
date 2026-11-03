@@ -1,12 +1,12 @@
 // Fetches sonotas' texts and their client into app/i18n, to commit: the build uses
 // them as they are and needs nothing else. Each language is its own file (texts/<lang>.json), so
 // a page loads only its language and the source, and a diff shows which language changed.
-//   pnpm texts                                     the published texts
-//   TEXTS_TOKEN=<build token> pnpm texts --draft   the texts as they are now, for development
-// TEXTS_URL picks another server (http://localhost:3000).
+//   TEXTS_URL=<server> pnpm texts                                          the published texts
+//   TEXTS_URL=<server> TEXTS_TOKEN=<build token> pnpm texts --draft        the texts as they are now
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 
-const served = `${process.env.TEXTS_URL ?? 'https://nexitas.sovrin.de'}/v1/translations`
+if (!process.env.TEXTS_URL) throw new Error('TEXTS_URL is not set: the server the texts come from')
+const served = `${process.env.TEXTS_URL}/v1/translations`
 const draft = process.argv.includes('--draft')
 const token = process.env.TEXTS_TOKEN
 
