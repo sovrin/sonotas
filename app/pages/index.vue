@@ -1,70 +1,32 @@
 <script setup>
-const { s, loadFile } = provideSonotas()
+import { languages, sourceLanguage } from '~/utils/i18n'
 
-// aequitas reads the theme and density from <html data-theme data-density>.
-useHead({
-  htmlAttrs: { 'data-theme': () => s.uiTheme, 'data-density': 'compact' }
-})
+// The bare address sends the browser to its language's page, keeping a shared link's settings
+// (?s=) and hash. It runs in <head>, before anything is drawn or Nuxt touches the address. Plain
+// text, not a function's source: the server build rewrites browser globals such as navigator.
+// Without script, the links below.
+const redirect = `(function (langs, source) {
+  var asked = navigator.languages || [navigator.language], pick = source
+  for (var i = 0; i < asked.length && pick === source; i++) {
+    var tag = String(asked[i]), base = tag.split('-')[0]
+    if (langs.indexOf(tag) >= 0) pick = tag
+    else if (langs.indexOf(base) >= 0) pick = base
+  }
+  location.replace('/' + pick + '/' + location.search + location.hash)
+})(${JSON.stringify(languages)}, ${JSON.stringify(sourceLanguage)})`
 
-// Page-wide drag & drop: any file dropped anywhere replaces the loaded tab.
-const dragDepth = ref(0)
-const dragging = computed(() => dragDepth.value > 0)
-
-function onDragEnter(e) {
-  if (!e.dataTransfer?.types?.includes('Files')) return
-  dragDepth.value++
-}
-
-function onDragLeave() {
-  dragDepth.value = Math.max(0, dragDepth.value - 1)
-}
-
-function onDrop(e) {
-  dragDepth.value = 0
-  const file = e.dataTransfer?.files?.[0]
-  if (file) loadFile(file)
-}
+useHead({ title: 'sonotas', script: [{ innerHTML: redirect }] })
 </script>
 
 <template>
-  <div
-    class="shell"
-    data-header
-    data-inspector
-    data-fill
-    @dragenter.prevent="onDragEnter"
-    @dragover.prevent
-    @dragleave.prevent="onDragLeave"
-    @drop.prevent="onDrop"
-  >
-    <!-- Reading or re-engraving the score: the preview catches up after. -->
-    <div
-      class="loading-bar"
-      :data-active="s.building || undefined"
-      :data-done="!s.building || undefined"
-      aria-hidden="true"
-    />
-
-    <AppHeader />
-
-    <main>
-      <FileHeader />
-      <PreviewStage />
-      <SongTimeline />
-      <AppFooter />
-    </main>
-
-    <AppInspector />
-
-    <!-- On a phone the credits close the page, after the settings. -->
-    <AppFooter class="shell-credits" />
-
-    <div
-      class="dropzone"
-      data-page
-      :data-active="dragging || undefined"
+  <noscript>
+    <ul>
+    <li
+    v-for="lang in languages"
+    :key="lang"
     >
-      <strong>Drop to load the file</strong>
-    </div>
-  </div>
+    <a :href="`/${lang}/`">{{ lang }}</a>
+    </li>
+    </ul>
+  </noscript>
 </template>

@@ -1,25 +1,27 @@
 <script setup>
 // The goal of the page, pinned under the settings: what the export will make,
 // the button that makes it, its progress, and the file once it exists.
+import { t } from '~/utils/i18n'
+
 const { s, v, startRender, cancelRender, closeRender, download } = useSonotas()
 
 const scope = computed(() => {
-  if (!s.renderOnlyBars) return 'Whole song'
-  return s.fromBar === s.toBar ? `Bar ${s.fromBar}` : `Bars ${s.fromBar}–${s.toBar}`
+  if (!s.renderOnlyBars) return t('export.scope.song')
+  return s.fromBar === s.toBar ? t('export.scope.bar', { bar: s.fromBar }) : t('export.scope.bars', { from: s.fromBar, to: s.toBar })
 })
 </script>
 
 <template>
   <footer
     class="export-panel stack gap-3"
-    aria-label="Export"
+    :aria-label="t('export.label')"
   >
     <template v-if="v.isDone">
       <div
         class="stack gap-1"
         role="status"
       >
-        <strong class="text-s">Your video is ready</strong>
+        <strong class="text-s">{{ t('export.done.title') }}</strong>
         <span class="text-s text-muted font-mono tabular">{{ v.outName }} · {{ v.sizeLabel }}</span>
       </div>
       <button
@@ -31,7 +33,7 @@ const scope = computed(() => {
           class="icon"
           data-icon="download"
         />
-        Download MP4
+        {{ t('export.download') }}
       </button>
       <button
         class="btn w-full"
@@ -39,7 +41,7 @@ const scope = computed(() => {
         data-variant="ghost"
         @click="closeRender"
       >
-        {{ s.downloaded ? 'Back to preview' : 'Discard video' }}
+        {{ s.downloaded ? t('export.back') : t('export.discard') }}
       </button>
     </template>
 
@@ -52,7 +54,7 @@ const scope = computed(() => {
         <progress
           :value="v.pct"
           max="100"
-          aria-label="Export progress"
+          :aria-label="t('export.progress')"
         />
       </div>
       <button
@@ -60,7 +62,7 @@ const scope = computed(() => {
         data-size="s"
         @click="cancelRender"
       >
-        Cancel export
+        {{ t('export.cancel') }}
       </button>
     </template>
 
@@ -71,7 +73,7 @@ const scope = computed(() => {
         data-tone="warning"
         role="alert"
       >
-        <div><strong>This browser can’t export video.</strong> Export needs the WebCodecs video encoder. Open sonotas in a recent Chrome or Edge.</div>
+        <div><strong>{{ t('export.unsupported.title') }}</strong> {{ t('export.unsupported.body') }}</div>
       </div>
       <div
         v-else-if="s.exportError"
@@ -79,7 +81,7 @@ const scope = computed(() => {
         data-tone="danger"
         role="alert"
       >
-        <div><strong>Couldn’t export the video.</strong> {{ s.exportError }} Try again, or turn off Fast export under Output.</div>
+        <div><strong>{{ t('export.failed.title') }}</strong> {{ s.exportError }} {{ t('export.failed.retry') }}</div>
       </div>
       <div class="stack gap-1">
         <span class="text-s">{{ scope }} · {{ v.aspectLabel }}</span>
@@ -91,7 +93,7 @@ const scope = computed(() => {
         :disabled="!s.ready || s.building || !s.canExport"
         @click="startRender"
       >
-        Export MP4
+        {{ t('export.start') }}
       </button>
     </template>
   </footer>

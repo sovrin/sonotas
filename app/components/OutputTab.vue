@@ -1,10 +1,16 @@
 <script setup>
 // The file that comes out: its size, smoothness, quality and pace.
+import { t } from '~/utils/i18n'
+
 const { s, setField, toggle } = useSonotas()
 
 const RESOLUTIONS = ['1080p', '720p', '480p'].map(v => ({ v, label: v }))
 const FPS = ['24 fps', '30 fps', '60 fps'].map(v => ({ v, label: v.replace(' fps', '') }))
-const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
+const QUALITY = computed(() => [
+  { v: 'Standard', label: t('output.quality.standard') },
+  { v: 'High', label: t('output.quality.high') },
+  { v: 'Max', label: t('output.quality.max') }
+])
 </script>
 
 <template>
@@ -12,23 +18,23 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
     class="stack"
     data-divided
   >
-    <InspectorGroup title="Format">
+    <InspectorGroup :title="t('output.format.title')">
       <SegmentedField
         name="resolution"
-        label="Resolution"
+        :label="t('output.resolution.label')"
         :options="RESOLUTIONS"
       />
       <SegmentedField
         name="fps"
-        label="Frames per second"
+        :label="t('output.fps.label')"
         :options="FPS"
       />
       <SegmentedField
         name="quality"
-        label="Quality"
+        :label="t('output.quality.label')"
         :options="QUALITY"
       >
-        <small>Higher quality looks sharper and makes a larger file.</small>
+        <small>{{ t('output.quality.hint') }}</small>
       </SegmentedField>
       <div class="field">
         <label>
@@ -38,15 +44,15 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
             :checked="s.fastExport"
             @change="toggle('fastExport')"
           >
-          Fast export
+          {{ t('output.fast.label') }}
         </label>
-        <small>Several encoders at once: about 3× faster on multi-core machines, with 2–3× larger files and slightly softer motion.</small>
+        <small>{{ t('output.fast.hint') }}</small>
       </div>
     </InspectorGroup>
 
-    <InspectorGroup title="Timing">
+    <InspectorGroup :title="t('output.timing.title')">
       <div class="field">
-        <label for="speed">Speed</label>
+        <label for="speed">{{ t('output.speed.label') }}</label>
         <div class="select">
           <select
             id="speed"
@@ -65,7 +71,7 @@ const QUALITY = ['Standard', 'High', 'Max'].map(v => ({ v, label: v }))
             <option>2×</option>
           </select>
         </div>
-        <small>Also scales the length of the video.</small>
+        <small>{{ t('output.speed.hint') }}</small>
       </div>
     </InspectorGroup>
   </div>

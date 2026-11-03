@@ -8,6 +8,7 @@
 // renders. Zoomed in, the strip scrolls sideways and keeps the playhead in
 // view; the overview under it shows the whole song and the window in view.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { t } from '~/utils/i18n'
 
 const { s, v, seekTo, togglePlay, zoomStrip } = useSonotas()
 
@@ -364,8 +365,8 @@ function onHandleKey(e, edge) {
 }
 
 const fmt = (ms) => {
-  const t = ms / 1000
-  return Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0')
+  const sec = ms / 1000
+  return Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0')
 }
 </script>
 
@@ -391,11 +392,11 @@ const fmt = (ms) => {
           class="bar-strip-track"
           role="slider"
           tabindex="0"
-          aria-label="Song position"
+          :aria-label="t('strip.position')"
           :aria-valuemin="1"
           :aria-valuemax="Math.max(count, 1)"
           :aria-valuenow="currentBar + 1"
-          :aria-valuetext="`Bar ${currentBar + 1} of ${count}, ${fmt(headMs)}`"
+          :aria-valuetext="t('strip.position.value', { bar: currentBar + 1, count, time: fmt(headMs) })"
           :aria-busy="!s.ready ? 'true' : undefined"
           @pointerdown="onDown"
           @pointermove="onMove"
@@ -450,11 +451,11 @@ const fmt = (ms) => {
             :style="{ left: rangeLeft + '%' }"
             role="slider"
             tabindex="0"
-            aria-label="First bar to export"
+            :aria-label="t('strip.from')"
             :aria-valuemin="1"
             :aria-valuemax="range.to + 1"
             :aria-valuenow="range.from + 1"
-            :aria-valuetext="`Bar ${range.from + 1}, ${fmt(barSpan(range.from)[0])}`"
+            :aria-valuetext="t('strip.from.value', { bar: range.from + 1, time: fmt(barSpan(range.from)[0]) })"
             @pointerdown="onHandleDown($event, 'from')"
             @pointermove="onHandleMove"
             @pointerup="onHandleUp"
@@ -467,11 +468,11 @@ const fmt = (ms) => {
             :style="{ left: rangeRight + '%' }"
             role="slider"
             tabindex="0"
-            aria-label="Last bar to export"
+            :aria-label="t('strip.to')"
             :aria-valuemin="range.from + 1"
             :aria-valuemax="count"
             :aria-valuenow="range.to + 1"
-            :aria-valuetext="`Bar ${range.to + 1}, ends ${fmt(barSpan(range.to)[1])}`"
+            :aria-valuetext="t('strip.to.value', { bar: range.to + 1, time: fmt(barSpan(range.to)[1]) })"
             @pointerdown="onHandleDown($event, 'to')"
             @pointermove="onHandleMove"
             @pointerup="onHandleUp"
@@ -507,12 +508,12 @@ const fmt = (ms) => {
         role="scrollbar"
         tabindex="0"
         :aria-controls="scrollerId"
-        aria-label="Part of the song in view"
+        :aria-label="t('strip.overview')"
         aria-orientation="horizontal"
         :aria-valuenow="Math.round(view.from * 100)"
         aria-valuemin="0"
         aria-valuemax="100"
-        data-tip="Drag to move, drag an end to zoom"
+        :data-tip="t('strip.overview.tip')"
         :style="{ left: view.from * 100 + '%', width: (view.to - view.from) * 100 + '%' }"
         @keydown="onOverviewKey"
         @dblclick="zoomStrip(1)"

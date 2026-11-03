@@ -2,13 +2,16 @@
 // Every setting, in tabs ordered the way a video is made: where the score sits
 // in the picture, how it looks, what marks the playing note, what it sounds
 // like, and the file that comes out, right above the Export button pinned below.
-const TABS = [
-  { id: 'frame', label: 'Frame' },
-  { id: 'look', label: 'Look' },
-  { id: 'playhead', label: 'Playhead' },
-  { id: 'sound', label: 'Sound' },
-  { id: 'output', label: 'Output' }
-]
+import { t } from '~/utils/i18n'
+
+// Computed, so the labels follow the language.
+const tabs = computed(() => [
+  { id: 'frame', label: t('settings.tab.frame') },
+  { id: 'look', label: t('settings.tab.look') },
+  { id: 'playhead', label: t('settings.tab.playhead') },
+  { id: 'sound', label: t('settings.tab.sound') },
+  { id: 'output', label: t('settings.tab.output') }
+])
 
 // Settings hold still while an export reads them.
 const { v } = useSonotas()
@@ -24,11 +27,11 @@ watch(current, () => {
 
 // Arrow keys move along the tabs (wrapping), Home/End jump to the ends.
 function onKeydown(e, i) {
-  const n = TABS.length
+  const n = tabs.value.length
   const next = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key]
   if (next === undefined) return
   e.preventDefault()
-  current.value = TABS[next].id
+  current.value = tabs.value[next].id
   tabEls.value[next]?.focus()
 }
 </script>
@@ -36,27 +39,27 @@ function onKeydown(e, i) {
 <template>
   <aside
     class="inspector"
-    aria-label="Settings"
+    :aria-label="t('settings.label')"
   >
     <div
       class="tabs"
       role="tablist"
-      aria-label="Settings"
+      :aria-label="t('settings.label')"
       :inert="v.isRendering"
     >
       <button
-        v-for="(t, i) in TABS"
-        :id="`tab-${t.id}`"
-        :key="t.id"
+        v-for="(tab, i) in tabs"
+        :id="`tab-${tab.id}`"
+        :key="tab.id"
         ref="tabEls"
         role="tab"
-        :aria-selected="current === t.id ? 'true' : 'false'"
-        :aria-controls="`panel-${t.id}`"
-        :tabindex="current === t.id ? 0 : -1"
-        @click="current = t.id"
+        :aria-selected="current === tab.id ? 'true' : 'false'"
+        :aria-controls="`panel-${tab.id}`"
+        :tabindex="current === tab.id ? 0 : -1"
+        @click="current = tab.id"
         @keydown="onKeydown($event, i)"
       >
-        {{ t.label }}
+        {{ tab.label }}
       </button>
     </div>
 

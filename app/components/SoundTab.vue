@@ -1,6 +1,8 @@
 <script setup>
 // What the video sounds like: a built-in synth plays the song in the preview
 // and the exported file, with a metronome and a count-in to play along to.
+import { t } from '~/utils/i18n'
+
 const { s, v, toggle, loadSoundFont } = useSonotas()
 const fontInput = ref()
 
@@ -10,13 +12,17 @@ function onPickFont(e) {
   if (file) loadSoundFont(file)
 }
 
-const MIX = ['All', 'Solo', 'Minus'].map(v => ({ v, label: v }))
-const trackName = computed(() => s.tracks[s.trackIndex]?.name || 'this track')
+const MIX = computed(() => [
+  { v: 'All', label: t('sound.mix.all') },
+  { v: 'Solo', label: t('sound.mix.solo') },
+  { v: 'Minus', label: t('sound.mix.minus') }
+])
+const trackName = computed(() => s.tracks[s.trackIndex]?.name || t('sound.mix.this_track'))
 const mixHint = computed(() => ({
-  All: 'Every track plays.',
-  Solo: `Only ${trackName.value} plays.`,
-  Minus: `Every track but ${trackName.value} plays: a backing track to play along with.`
-})[s.soundMix])
+  All: () => t('sound.mix.all.hint'),
+  Solo: () => t('sound.mix.solo.hint', { track: trackName.value }),
+  Minus: () => t('sound.mix.minus.hint', { track: trackName.value })
+})[s.soundMix]?.())
 </script>
 
 <template>
@@ -24,7 +30,7 @@ const mixHint = computed(() => ({
     class="stack"
     data-divided
   >
-    <InspectorGroup title="Sound">
+    <InspectorGroup :title="t('sound.title')">
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -38,12 +44,12 @@ const mixHint = computed(() => ({
         v-if="!s.sound"
         class="caption"
       >
-        The video is silent. With sound on, a built-in synth plays the song in the preview and the exported video.
+        {{ t('sound.off.hint') }}
       </p>
       <SegmentedField
         v-else-if="s.tracks.length > 1"
         name="soundMix"
-        label="Tracks"
+        :label="t('sound.mix.label')"
         :options="MIX"
       >
         <small>{{ mixHint }}</small>
@@ -52,7 +58,7 @@ const mixHint = computed(() => ({
         v-if="s.sound"
         class="field"
       >
-        <span>Soundfont</span>
+        <span>{{ t('sound.font.label') }}</span>
         <input
           ref="fontInput"
           type="file"
@@ -67,7 +73,7 @@ const mixHint = computed(() => ({
             :inert="v.isRendering"
             @click="fontInput?.click()"
           >
-            {{ s.soundFontName ? 'Change…' : 'Use your own…' }}
+            {{ s.soundFontName ? t('sound.font.change') : t('sound.font.own') }}
           </button>
           <button
             v-if="s.soundFontName"
@@ -77,17 +83,17 @@ const mixHint = computed(() => ({
             :inert="v.isRendering"
             @click="loadSoundFont(null)"
           >
-            Use built-in
+            {{ t('sound.font.builtin') }}
           </button>
         </div>
         <small v-if="s.soundFontError">{{ s.soundFontError }}</small>
-        <small v-else>{{ s.soundFontName ? `Playing with ${s.soundFontName}.` : 'The built-in General MIDI set. Pick an .sf2 or .sf3 file to use your own instruments.' }}</small>
+        <small v-else>{{ s.soundFontName ? t('sound.font.playing', { name: s.soundFontName }) : t('sound.font.builtin.hint') }}</small>
       </div>
     </InspectorGroup>
 
     <InspectorGroup
       v-if="s.sound"
-      title="Timing aids"
+      :title="t('sound.aids.title')"
     >
       <div class="field">
         <label>
@@ -97,9 +103,9 @@ const mixHint = computed(() => ({
             :checked="s.metronome"
             @change="toggle('metronome')"
           >
-          Metronome
+          {{ t('sound.metronome.label') }}
         </label>
-        <small>A click on every beat, following the tempo.</small>
+        <small>{{ t('sound.metronome.hint') }}</small>
       </div>
       <div class="field">
         <label>
@@ -109,9 +115,9 @@ const mixHint = computed(() => ({
             :checked="s.countIn"
             @change="toggle('countIn')"
           >
-          Count-in
+          {{ t('sound.countin.label') }}
         </label>
-        <small>A bar of clicks before the first note. The video holds its first frame meanwhile.</small>
+        <small>{{ t('sound.countin.hint') }}</small>
       </div>
     </InspectorGroup>
   </div>

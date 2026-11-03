@@ -1,5 +1,6 @@
 <script setup>
 import { version } from '~~/package.json'
+import { t } from '~/utils/i18n'
 
 // What is not a setting, the keys and how the app works, each behind a quiet
 // icon in the toolbar and shown in a dialog.
@@ -11,7 +12,7 @@ const newsDlg = ref(null)
 // first release there is no CHANGELOG.md and no button.
 const changelog = Object.values(import.meta.glob('../../CHANGELOG.md', { query: '?raw', import: 'default', eager: true }))[0] ?? ''
 const releases = parseChangelog(changelog)
-// A fixed locale and zone, so the prerendered page and the browser agree.
+// A fixed locale and zone, so the prerendered page and the browser agree; English like the notes.
 const longDate = d => new Date(d).toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
 // Feedback goes to collatas, which serves the form as a web component. It is
@@ -65,8 +66,8 @@ function lightDismiss(e) {
     data-icon
     data-size="s"
     data-variant="ghost"
-    aria-label="Keyboard shortcuts"
-    data-tip="Keyboard shortcuts"
+    :aria-label="t('help.keys.title')"
+    :data-tip="t('help.keys.title')"
     data-tip-side="bottom"
     @click="keysDlg?.showModal()"
   >
@@ -80,8 +81,8 @@ function lightDismiss(e) {
     data-icon
     data-size="s"
     data-variant="ghost"
-    aria-label="How it works"
-    data-tip="How it works"
+    :aria-label="t('help.how.title')"
+    :data-tip="t('help.how.title')"
     data-tip-side="bottom"
     @click="helpDlg?.showModal()"
   >
@@ -96,8 +97,8 @@ function lightDismiss(e) {
     data-icon
     data-size="s"
     data-variant="ghost"
-    aria-label="What's new"
-    data-tip="What's new"
+    :aria-label="t('help.news.title')"
+    :data-tip="t('help.news.title')"
     data-tip-side="bottom"
     @click="newsDlg?.showModal()"
   >
@@ -112,8 +113,8 @@ function lightDismiss(e) {
     data-icon
     data-size="s"
     data-variant="ghost"
-    aria-label="Send feedback"
-    data-tip="Send feedback"
+    :aria-label="t('help.feedback.title')"
+    :data-tip="t('help.feedback.title')"
     data-tip-side="bottom"
     @click="openFeedback"
   >
@@ -133,28 +134,28 @@ function lightDismiss(e) {
       class="stack gap-4"
     >
       <h3 id="keys-title">
-        Keyboard shortcuts
+        {{ t('help.keys.title') }}
       </h3>
       <dl class="properties">
         <dt><kbd>Space</kbd></dt>
-        <dd>Play or pause the preview</dd>
+        <dd>{{ t('help.keys.space') }}</dd>
         <dt><kbd>I</kbd></dt>
-        <dd>Start the export at the bar under the playhead</dd>
+        <dd>{{ t('help.keys.in') }}</dd>
         <dt><kbd>O</kbd></dt>
-        <dd>End the export at the bar under the playhead</dd>
+        <dd>{{ t('help.keys.out') }}</dd>
         <dt><kbd>←</kbd> <kbd>→</kbd></dt>
-        <dd>On the bar strip: step a bar back or on. On a bracket: move it a bar</dd>
+        <dd>{{ t('help.keys.arrows') }}</dd>
         <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
-        <dd>On the bar strip: jump to the start or end</dd>
+        <dd>{{ t('help.keys.home-end') }}</dd>
         <dt><kbd>PgUp</kbd> <kbd>PgDn</kbd></dt>
-        <dd>On a bracket: move it four bars</dd>
+        <dd>{{ t('help.keys.page') }}</dd>
         <dt><kbd>+</kbd> <kbd>−</kbd></dt>
-        <dd>On the bar strip or its overview: zoom in or out. Pinch or Ctrl-scroll over the strip, or drag an end of the overview window</dd>
-        <dt><kbd>Ctrl</kbd> + scroll</dt>
-        <dd>On the preview: zoom in to look closer (the export stays as it is). Drag to pan, double-click to fit again</dd>
+        <dd>{{ t('help.keys.zoom') }}</dd>
+        <dt><kbd>Ctrl</kbd> + {{ t('help.keys.scroll') }}</dt>
+        <dd>{{ t('help.keys.ctrl-scroll') }}</dd>
       </dl>
       <button class="btn self-end">
-        Close
+        {{ t('help.close') }}
       </button>
     </form>
   </dialog>
@@ -169,20 +170,20 @@ function lightDismiss(e) {
       class="stack gap-4"
     >
       <h3 id="help-title">
-        How it works
+        {{ t('help.how.title') }}
       </h3>
       <ol class="stack gap-2">
-        <li><b>Open a tab.</b> Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML, picked or dropped anywhere on the page.</li>
-        <li><b>Set the picture.</b> Frame, Look and Playhead decide where the score sits and how it is drawn.</li>
-        <li><b>Add sound.</b> Sound plays the song with a built-in synth: every track, one alone or all but one, with a metronome and a count-in if you like.</li>
-        <li><b>Pick the bars.</b> Export the whole song, or only some bars: drag the brackets on the bar strip, or press I and O.</li>
-        <li><b>Export.</b> The MP4 is rendered and muxed right here, and comes back to the stage to watch or save.</li>
+        <li><b>{{ t('help.how.open.title') }}</b> {{ t('help.how.open.text') }}</li>
+        <li><b>{{ t('help.how.picture.title') }}</b> {{ t('help.how.picture.text') }}</li>
+        <li><b>{{ t('help.how.sound.title') }}</b> {{ t('help.how.sound.text') }}</li>
+        <li><b>{{ t('help.how.bars.title') }}</b> {{ t('help.how.bars.text') }}</li>
+        <li><b>{{ t('help.how.export.title') }}</b> {{ t('help.how.export.text') }}</li>
       </ol>
       <p class="text-muted text-s">
-        Everything runs in your browser. The file you open is never uploaded.
+        {{ t('help.how.privacy') }}
       </p>
       <button class="btn self-end">
-        Close
+        {{ t('help.close') }}
       </button>
     </form>
   </dialog>
@@ -198,7 +199,7 @@ function lightDismiss(e) {
       class="stack gap-4"
     >
       <h3 id="news-title">
-        What's new
+        {{ t('help.news.title') }}
       </h3>
       <!-- Newest first and only the newest open; inside one, the
            inspector's eyebrow labels name what kind of change it is. -->
@@ -242,7 +243,7 @@ function lightDismiss(e) {
           href="https://github.com/sovrin/sonotas/blob/master/CHANGELOG.md"
           target="_blank"
           rel="noopener"
-        >Every release<i
+        >{{ t('help.news.all') }}<i
           class="icon"
           data-icon="external"
           data-size="s"
@@ -252,7 +253,7 @@ function lightDismiss(e) {
           class="btn"
           autofocus
         >
-          Close
+          {{ t('help.close') }}
         </button>
       </div>
     </form>
@@ -267,20 +268,20 @@ function lightDismiss(e) {
     <!-- The form is its own <form>, so the dialog's close button sits apart. -->
     <div class="stack gap-4">
       <h3 id="feedback-title">
-        Send feedback
+        {{ t('help.feedback.title') }}
       </h3>
       <p
         v-if="formState === 'failed'"
         class="text-muted"
       >
-        The feedback form could not be loaded. Try again later.
+        {{ t('help.feedback.failed') }}
       </p>
       <p
         v-else-if="formState === 'loading'"
         class="text-muted"
         role="status"
       >
-        Loading the form…
+        {{ t('help.feedback.loading') }}
       </p>
       <collatas-form
         v-else-if="feedbackOpen"
@@ -288,14 +289,14 @@ function lightDismiss(e) {
         :context.prop="feedbackContext"
       />
       <p class="text-muted text-s">
-        Your tab file is not sent.
+        {{ t('help.feedback.privacy') }}
       </p>
       <form
         method="dialog"
         class="self-end"
       >
         <button class="btn">
-          Close
+          {{ t('help.close') }}
         </button>
       </form>
     </div>

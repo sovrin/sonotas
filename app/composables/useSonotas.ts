@@ -8,6 +8,7 @@ import type { InjectionKey } from 'vue'
 import { APP_DEFAULTS, THEMES, decodeSettings, encodeSettings, type Settings } from '~/utils/settings-code'
 import { fileFormat, lengthBucket, loadTracker, tookBucket, track } from '~/utils/track'
 import { fitEdge, freeAt } from '~/utils/frame'
+import { t } from '~/utils/i18n'
 
 export type SonotasStore = ReturnType<typeof createSonotas>
 
@@ -138,7 +139,7 @@ function createSonotas() {
 
   // "16:9", or "Free".
   function aspectLabel() {
-    return s.aspect === 'Custom' ? 'Free' : s.aspect
+    return s.aspect === 'Custom' ? t('export.aspect.free') : s.aspect
   }
 
   function scaleNum() {
@@ -308,11 +309,11 @@ function createSonotas() {
   // Current bar / total, from the renderer's real per-bar onsets (ms, rebased).
   function barLabel() {
     const total = s.barStarts.length
-    if (!total) return 'Bar 1 / 1'
+    if (!total) return t('timeline.bar', { bar: 1, total: 1 })
     const ms = s.time * 1000
     let i = 0
     while (i + 1 < total && s.barStarts[i + 1]! <= ms) i++
-    return `Bar ${i + 1} / ${total}`
+    return t('timeline.bar', { bar: i + 1, total })
   }
 
   async function rebuild() {
@@ -377,7 +378,7 @@ function createSonotas() {
       // Both formats are a RIFF file of type 'sfbk'.
       const head = new TextDecoder().decode(await file.slice(0, 12).arrayBuffer())
       if (!head.startsWith('RIFF') || head.slice(8) !== 'sfbk') {
-        s.soundFontError = `${file.name} isn’t a soundfont. Pick an .sf2 or .sf3 file.`
+        s.soundFontError = t('soundfont.error.invalid', { name: file.name })
         return
       }
     }
@@ -419,7 +420,7 @@ function createSonotas() {
       track('file-open', { format: fileFormat(file.name) })
       await rebuild()
     } catch (err) {
-      s.loadError = (err as Error).message || 'Could not read that file.'
+      s.loadError = (err as Error).message || t('file.error.unreadable')
       track('file-error', { format: fileFormat(file.name) })
     }
   }
@@ -483,17 +484,17 @@ function createSonotas() {
     lastTs = ts
     // With sound on, the audio clock leads (less what's still in the output
     // buffer), so the cursor can't drift from what's heard.
-    const t = voice
+    const now = voice
       ? voice.from + Math.max(0, audioCtx!.currentTime - (audioCtx!.outputLatency || 0) - voice.at) * voice.speed
       : s.time + dt * speedNum()
-    if (t >= s.duration) {
+    if (now >= s.duration) {
       s.time = s.duration
       s.playing = false
       stopLoop(true)
       paintFrame()
       return
     }
-    s.time = Math.max(0, t) // a count-in runs before 0: hold the first frame
+    s.time = Math.max(0, now) // a count-in runs before 0: hold the first frame
     paintFrame()
     raf = requestAnimationFrame(tick)
   }
@@ -615,12 +616,12 @@ function createSonotas() {
     normalise()
   }
 
-  function setCanvasTheme(t: string) {
+  function setCanvasTheme(theme: string) {
     // A playhead in the old theme's ink would vanish on the new paper.
-    if (s.cursorColor === INK[s.theme as 'dark' | 'light'] && t !== s.theme) s.cursorColor = INK[t as 'dark' | 'light']
-    s.theme = t
+    if (s.cursorColor === INK[s.theme as 'dark' | 'light'] && theme !== s.theme) s.cursorColor = INK[theme as 'dark' | 'light']
+    s.theme = theme
     // Presets set all three colors; the Advanced pickers can override afterward.
-    Object.assign(s, THEMES[t])
+    Object.assign(s, THEMES[theme])
   }
 
   function setCursorColor(c: string) {
@@ -637,7 +638,7 @@ function createSonotas() {
 
   // ── encode (real MP4) ───────────────────────────────────────────────────────
   function phaseFor(pct: number) {
-    return pct < 8 ? 'Preparing score…' : pct < 82 ? 'Rendering frames…' : pct < 97 ? 'Encoding MP4…' : 'Finalizing…'
+    return pct < 8 ? t('export.phase.preparing') : pct < 82 ? t('export.phase.frames') : pct < 97 ? t('export.phase.encoding') : t('export.phase.finalizing')
   }
 
   async function startRender() {
@@ -646,7 +647,7 @@ function createSonotas() {
     s.playing = false
     rendering?.abort()
     const ctl = (rendering = new AbortController())
-    s.render = { status: 'rendering', pct: 0, phase: 'Preparing score…', frame: 0, total: 0 }
+    s.render = { status: 'rendering', pct: 0, phase: t('export.phase.preparing'), frame: 0, total: 0 }
     s.exportError = ''
     s.downloaded = false
     if (blobUrl) {
@@ -694,7 +695,7 @@ function createSonotas() {
       if (ctl.signal.aborted) return // cancelled: the AbortError is expected
       track('export-fail', counted)
       rendering = null
-      s.exportError = (err as Error).message || 'The encoder stopped.'
+      s.exportError = (err as Error).message || t('export.error.encoder_stopped')
       s.render = { status: 'idle', pct: 0, phase: '', frame: 0, total: 0 }
     }
   }
@@ -764,12 +765,12 @@ function createSonotas() {
     if (typeof code !== 'string' || !code) return
     const d = decodeSettings(code)
     if (!d) {
-      s.settingsNotice = 'The settings in this link couldn’t be read, so the defaults are used.'
+      s.settingsNotice = t('link.notice.unreadable')
       return
     }
     Object.assign(s, d.settings)
     normalise()
-    if (d.skipped) s.settingsNotice = `${d.skipped === 1 ? 'One setting' : `${d.skipped} settings`} in this link couldn’t be used here, perhaps from a newer sonotas. The rest applied.`
+    if (d.skipped) s.settingsNotice = t('link.notice.skipped', { count: d.skipped })
   }
 
   function writeLink() {
@@ -796,7 +797,7 @@ function createSonotas() {
       const ok = document.execCommand('copy')
       field.remove()
       if (!ok) {
-        s.settingsNotice = `Couldn’t copy the link. It’s in the address bar: ${url}`
+        s.settingsNotice = t('link.error.copy', { url })
         return
       }
     }
@@ -902,9 +903,9 @@ function createSonotas() {
     return s.duration / speedNum()
   }
 
-  function fmt(t: number) {
-    const m = Math.floor(t / 60)
-    const sec = Math.floor(t % 60)
+  function fmt(secs: number) {
+    const m = Math.floor(secs / 60)
+    const sec = Math.floor(secs % 60)
     return m + ':' + String(sec).padStart(2, '0')
   }
 
@@ -934,7 +935,7 @@ function createSonotas() {
       // "1920×1080 · 30 fps · 0:08 · ~1.2 MB"
       // The size is probed only while the preview is still ("~…" read as truncated text).
       // A no-break space keeps each dot on its fact's line when the line wraps.
-      estLine: resPx + '\u00a0· ' + fpsNum() + '\u00a0fps\u00a0· ' + (s.ready ? fmt(eff) : '—') + '\u00a0· ' + (s.estBytes ? '~' + estSize : s.playing ? 'size once paused' : 'estimating size…'),
+      estLine: resPx + '\u00a0· ' + fpsNum() + '\u00a0fps\u00a0· ' + (s.ready ? fmt(eff) : '—') + '\u00a0· ' + (s.estBytes ? '~' + estSize : s.playing ? t('export.estimate.paused') : t('export.estimate.pending')),
       resPx,
       sizeLabel,
       outName: outName(),

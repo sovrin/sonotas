@@ -92,13 +92,29 @@
   letter-spacing: -0.01em;
 }
 
-/* The actions stay one row; on a phone the song title gives way instead. */
+/* The actions stay one row. On a phone they take a row of their own under the
+   song, spread across it, so neither crowds the other. */
 .navbar > .end {
   flex: none;
   flex-wrap: nowrap;
 
   & > * {
     flex: none;
+  }
+}
+
+@media (width < 48rem) {
+  .navbar {
+    flex-wrap: wrap;
+    row-gap: var(--ae-space-3);
+    padding-block: var(--ae-space-3);
+  }
+
+  .navbar > .end {
+    flex-basis: 100%;
+    justify-content: space-between;
+    gap: 0;
+    margin-inline-start: 0;
   }
 }
 

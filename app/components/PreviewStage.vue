@@ -4,6 +4,7 @@
 // store paints straight into it. Clicking the notation seeks to that beat.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { FREE_MIN, fitEdge } from '~/utils/frame'
+import { t } from '~/utils/i18n'
 
 const { s, v, registerCanvas, seekAtCanvas } = useSonotas()
 const stageRef = ref(null)
@@ -200,7 +201,7 @@ onBeforeUnmount(() => observer?.disconnect())
     data-grow
     :style="{ '--frame': v.frameRatio, '--view-z': view.z, '--view-x': `${view.x}px`, '--view-y': `${view.y}px` }"
     :data-panning="panning ? '' : undefined"
-    aria-label="Preview"
+    :aria-label="t('preview.label')"
     @wheel="wheel"
   >
     <canvas
@@ -252,8 +253,8 @@ onBeforeUnmount(() => observer?.disconnect())
         data-icon
         data-size="s"
         data-variant="ghost"
-        aria-label="Zoom out"
-        data-tip="Zoom out"
+        :aria-label="t('preview.zoom.out')"
+        :data-tip="t('preview.zoom.out')"
         :disabled="view.z === 1"
         @click="stepOut"
       >
@@ -266,8 +267,8 @@ onBeforeUnmount(() => observer?.disconnect())
         class="btn font-mono tabular"
         data-size="s"
         data-variant="ghost"
-        :aria-label="`Zoom ${Math.round(view.z * 100)}%, fit the preview`"
-        data-tip="Fit"
+        :aria-label="t('preview.zoom.fit.label', { zoom: Math.round(view.z * 100) })"
+        :data-tip="t('preview.zoom.fit')"
         :disabled="view.z === 1"
         @click="view = { z: 1, x: 0, y: 0 }"
       >
@@ -278,8 +279,8 @@ onBeforeUnmount(() => observer?.disconnect())
         data-icon
         data-size="s"
         data-variant="ghost"
-        aria-label="Zoom in"
-        data-tip="Zoom in"
+        :aria-label="t('preview.zoom.in')"
+        :data-tip="t('preview.zoom.in')"
         :disabled="!s.ready || view.z === 4"
         @click="stepIn"
       >
@@ -307,7 +308,7 @@ onBeforeUnmount(() => observer?.disconnect())
         class="spinner"
         aria-hidden="true"
       ><span /></span>
-      Reading the score…
+      {{ t('preview.loading') }}
     </div>
 
     <div
@@ -316,7 +317,7 @@ onBeforeUnmount(() => observer?.disconnect())
       data-tone="danger"
       role="alert"
     >
-      <div><strong>Couldn’t render the score.</strong> {{ s.engineError }}</div>
+      <div><strong>{{ t('preview.error.title') }}</strong> {{ s.engineError }}</div>
     </div>
 
     <div
