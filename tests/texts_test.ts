@@ -5,9 +5,9 @@ import { join } from 'node:path'
 
 // Every text the app shows is t('key') from utils/i18n, with the key written out, so this finds
 // them all: a key the committed texts lack shows its name instead of a text, and a key no code
-// uses is left over in linguitas (delete it there, then `pnpm texts`).
-const { source } = JSON.parse(readFileSync('app/linguitas/languages.json', 'utf8'))
-const known = new Set(Object.keys(JSON.parse(readFileSync(`app/linguitas/texts/${source}.json`, 'utf8'))))
+// uses is left over (delete it where the texts are edited, then `pnpm texts`).
+const { source } = JSON.parse(readFileSync('app/i18n/languages.json', 'utf8'))
+const known = new Set(Object.keys(JSON.parse(readFileSync(`app/i18n/texts/${source}.json`, 'utf8'))))
 
 const IMPORTS_T = /import\s*\{[^}]*\bt\b[^}]*\}\s*from\s*['"]~\/utils\/i18n['"]/
 const CALL = /\bt\(\s*(['"])?([^'"),\s]*)/g
@@ -15,7 +15,7 @@ const CALL = /\bt\(\s*(['"])?([^'"),\s]*)/g
 function files(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name)
-    if (entry.isDirectory()) return path === join('app', 'linguitas') ? [] : files(path)
+    if (entry.isDirectory()) return path === join('app', 'i18n') ? [] : files(path)
     return /\.(vue|ts|js)$/.test(entry.name) ? [path] : []
   })
 }
