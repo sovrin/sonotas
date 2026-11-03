@@ -131,6 +131,24 @@ After an intended addition, refresh the lock with `pnpm settings:lock`
 only grows: the test compares it with its committed version, and CI with the
 commit before each push. The rules for agents are in [AGENTS.md](AGENTS.md).
 
+## Languages
+
+sonotas speaks English and German, one prerendered page each (`/en/`, `/de/`); the bare address
+sends a browser to its language, keeping a shared link's settings. The texts come from
+[linguitas](https://github.com/sovrin/linguitas) and are committed in `app/i18n/` with their
+client, a file per language, so a build needs nothing else and a page loads only its own language
+(and English, for texts it lacks). Every text is `t('key')` from `utils/i18n`, the key written
+out; `pnpm test` fails on a key with no text, a text no code uses, and a key put together.
+
+To change texts, edit and publish them there, then fetch them:
+
+```bash
+TEXTS_URL=<server> pnpm texts                                      # the published texts
+TEXTS_URL=<server> TEXTS_TOKEN=<build token> pnpm texts --draft    # the texts as they are now
+```
+
+The page fetches nothing while it runs: new texts ship with the next build.
+
 ## Self-hosting with Docker
 
 The production image prerenders the app and serves the static files with

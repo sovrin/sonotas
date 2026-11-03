@@ -3,6 +3,7 @@
 // that wouldn't open (what to open and how is the Open button's tip), or a
 // settings link that didn't fully apply.
 import { ACCEPT } from '~/utils/formats'
+import { t } from '~/utils/i18n'
 
 const { s, loadFile, togglePlay } = useSonotas()
 
@@ -24,8 +25,8 @@ function onPick(e) {
     role="note"
   >
     <div>
-      <strong>sonotas turns a Guitar Pro tab into a video with a moving playhead</strong>, rendered right in your browser.
-      This is a sample: press play to see it move, or open your own tab.
+      <strong>{{ t('intro.lead') }}</strong>
+      {{ t('intro.sample') }}
     </div>
     <span class="cluster gap-2 ms-auto">
       <button
@@ -39,7 +40,7 @@ function onPick(e) {
           class="icon"
           :data-icon="s.playing ? 'pause' : 'play'"
         />
-        {{ s.playing ? 'Pause' : 'Play' }}
+        {{ s.playing ? t('intro.pause') : t('intro.play') }}
       </button>
       <input
         ref="fileInput"
@@ -57,14 +58,14 @@ function onPick(e) {
           class="icon"
           data-icon="folder-open"
         />
-        Open a tab…
+        {{ t('header.open.label') }}
       </button>
       <button
         class="btn"
         data-icon
         data-size="s"
         data-variant="ghost"
-        aria-label="Dismiss"
+        :aria-label="t('notice.dismiss')"
         @click="introClosed = true"
       >
         <i
@@ -80,7 +81,7 @@ function onPick(e) {
     data-tone="danger"
     role="alert"
   >
-    <div><strong>Couldn’t open that file.</strong> {{ s.loadError }} Try a .gp, .gpx, .gp3–5 or MusicXML file.</div>
+    <div><strong>{{ t('file.error.title') }}</strong> {{ s.loadError }} {{ t('file.error.hint') }}</div>
   </div>
   <div
     v-if="s.settingsNotice"
@@ -94,7 +95,7 @@ function onPick(e) {
       data-icon
       data-size="s"
       data-variant="ghost"
-      aria-label="Dismiss"
+      :aria-label="t('notice.dismiss')"
       @click="s.settingsNotice = ''"
     >
       <i

@@ -2,6 +2,8 @@
 // A row of preset colours as one radio group, then any colour at all from the
 // system picker. Each swatch is named for screen readers since the square
 // alone says nothing.
+import { t } from '~/utils/i18n'
+
 const props = defineProps({
   colors: { type: Array, required: true },
   selected: { type: String, required: true },
@@ -39,8 +41,8 @@ const custom = computed(() => !props.colors.some(c => c.hex === props.selected.t
     <input
       type="color"
       class="input swatch-custom"
-      title="Custom colour"
-      :aria-label="`${label}: custom`"
+      :title="t('swatch.custom')"
+      :aria-label="t('swatch.custom.label', { name: label })"
       :value="selected"
       :data-active="custom || undefined"
       @input="$emit('pick', $event.target.value)"

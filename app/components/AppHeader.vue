@@ -3,10 +3,15 @@
 // its track, and the way to open another. Export is not up here; it waits
 // under the settings.
 import { ACCEPT } from '~/utils/formats'
+import { languages, t } from '~/utils/i18n'
 
 const { s, v, loadFile, setTrack, toggleTheme, copyLink, resetSettings } = useSonotas()
+const route = useRoute()
 
-const OPEN_TIP = 'Guitar Pro (.gp, .gpx, .gp3–5) or MusicXML. Or drop a file anywhere. It stays in your browser.'
+// Each language is its own page; the settings (?s=) and the hash go along.
+function switchLanguage(e) {
+  navigateTo({ path: `/${e.target.value}/`, query: route.query, hash: route.hash })
+}
 const fileInput = ref(null)
 
 function onPick(e) {
@@ -19,8 +24,8 @@ const bars = computed(() => s.songBars.length || s.barStarts.length)
 // The whole song's length, even while only a range is rendered.
 const length = computed(() => {
   if (!s.ready) return '' // the store's placeholder until the song is read
-  const t = (s.songMs || s.duration * 1000) / 1000
-  return t ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : ''
+  const sec = (s.songMs || s.duration * 1000) / 1000
+  return sec ? Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0') : ''
 })
 // The song's own title when the file carries one, else its file name.
 // The Sample badge already says it is the demo.
@@ -28,7 +33,7 @@ const name = computed(() => s.title || s.sourceName.replace(/\.[^.]+$/, '').repl
 const facts = computed(() => [
   s.isDemo ? '' : s.sourceName,
   s.artist,
-  bars.value ? `${bars.value} bars` : '',
+  bars.value ? t('header.bars', { count: bars.value }) : '',
   length.value
 ].filter(Boolean).join(' · '))
 </script>
@@ -53,7 +58,7 @@ const facts = computed(() => [
         <span
           v-if="s.isDemo"
           class="badge s:hidden"
-        >Sample</span>
+        >{{ t('header.sample') }}</span>
       </div>
       <span class="text-s text-muted truncate tabular">
         <span
@@ -71,7 +76,7 @@ const facts = computed(() => [
         class="cluster gap-2 text-s text-muted"
         :inert="v.isRendering"
       >
-        <span class="s:hidden">Track</span>
+        <span class="s:hidden">{{ t('header.track') }}</span>
         <span class="select">
           <select
             name="trackIndex"
@@ -82,11 +87,11 @@ const facts = computed(() => [
             @change="setTrack"
           >
             <option
-              v-for="t in s.tracks"
-              :key="t.index"
-              :value="t.index"
+              v-for="track in s.tracks"
+              :key="track.index"
+              :value="track.index"
             >
-              {{ t.name }}
+              {{ track.name }}
             </option>
           </select>
         </span>
@@ -101,10 +106,10 @@ const facts = computed(() => [
       <button
         class="btn"
         data-size="s"
-        :data-tip="OPEN_TIP"
+        :data-tip="t('header.open.tip')"
         data-tip-side="bottom"
-        :aria-description="OPEN_TIP"
-        aria-label="Open a tab…"
+        :aria-description="t('header.open.tip')"
+        :aria-label="t('header.open.label')"
         :inert="v.isRendering"
         @click="fileInput?.click()"
       >
@@ -112,15 +117,15 @@ const facts = computed(() => [
           class="icon"
           data-icon="folder-open"
         />
-        <span class="s:hidden">Open a tab…</span>
+        <span class="s:hidden">{{ t('header.open.label') }}</span>
       </button>
       <button
         class="btn"
         data-icon
         data-size="s"
         data-variant="ghost"
-        aria-label="Copy a link to these settings"
-        :data-tip="s.linkCopied ? 'Link copied' : 'Copy a link to these settings'"
+        :aria-label="t('header.link.label')"
+        :data-tip="s.linkCopied ? t('header.link.copied') : t('header.link.label')"
         data-tip-side="bottom"
         @click="copyLink"
       >
@@ -131,15 +136,15 @@ const facts = computed(() => [
         <span
           class="sr-only"
           role="status"
-        >{{ s.linkCopied ? 'Link copied' : '' }}</span>
+        >{{ s.linkCopied ? t('header.link.copied') : '' }}</span>
       </button>
       <button
         class="btn"
         data-icon
         data-size="s"
         data-variant="ghost"
-        :aria-label="s.undoReset ? 'Undo reset' : 'Reset settings'"
-        :data-tip="s.undoReset ? 'Undo reset' : 'Reset every setting to its default'"
+        :aria-label="s.undoReset ? t('header.reset.undo') : t('header.reset.label')"
+        :data-tip="s.undoReset ? t('header.reset.undo') : t('header.reset.tip')"
         data-tip-side="bottom"
         :disabled="(v.atDefaults && !s.undoReset) || v.isRendering"
         @click="resetSettings"
@@ -151,15 +156,35 @@ const facts = computed(() => [
         <span
           class="sr-only"
           role="status"
-        >{{ s.undoReset ? 'Settings reset' : '' }}</span>
+        >{{ s.undoReset ? t('header.reset.done') : '' }}</span>
       </button>
       <AppHelp />
+      <span
+        v-if="languages.length > 1"
+        class="select"
+      >
+        <select
+          class="input"
+          data-size="s"
+          :aria-label="t('header.language')"
+          :value="route.params.lang"
+          @change="switchLanguage"
+        >
+          <option
+            v-for="l in languages"
+            :key="l"
+            :value="l"
+          >
+            {{ l.toUpperCase() }}
+          </option>
+        </select>
+      </span>
       <button
         class="btn"
         data-icon
         data-size="s"
         data-variant="ghost"
-        :aria-label="s.uiTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        :aria-label="s.uiTheme === 'dark' ? t('header.theme.light') : t('header.theme.dark')"
         @click="toggleTheme"
       >
         <i

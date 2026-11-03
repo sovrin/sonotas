@@ -2,6 +2,8 @@
 // Play, where you are (as a timecode and as a bar), the strip of bars, and
 // whether the export covers the whole song or only some of its bars. A long
 // song's strip zooms in, so its bars stay readable; one click shows it whole.
+import { t } from '~/utils/i18n'
+
 const { s, v, togglePlay, seekTo, zoomStrip } = useSonotas()
 
 const count = computed(() => (s.songBars.length || s.barStarts.length))
@@ -29,7 +31,7 @@ function toggleRange() {
 }
 
 // Tenths, the way an editor's timecode counts: 0:04.2
-const tc = t => Math.floor(t / 60) + ':' + (t % 60).toFixed(1).padStart(4, '0')
+const tc = sec => Math.floor(sec / 60) + ':' + (sec % 60).toFixed(1).padStart(4, '0')
 
 const barNow = computed(() => (cropped.value ? s.fromBar : 1) + barUnderHead())
 
@@ -82,15 +84,15 @@ onBeforeUnmount(() => {
   <section
     ref="el"
     class="transport"
-    aria-label="Timeline"
+    :aria-label="t('timeline.label')"
     :inert="v.isRendering"
   >
     <button
       class="btn"
       data-icon
       data-size="l"
-      :aria-label="s.playing ? 'Pause' : 'Play'"
-      :data-tip="s.playing ? 'Pause (Space)' : 'Play (Space)'"
+      :aria-label="s.playing ? t('timeline.pause') : t('timeline.play')"
+      :data-tip="s.playing ? t('timeline.pause.tip') : t('timeline.play.tip')"
       aria-keyshortcuts="Space"
       :aria-pressed="s.playing ? 'true' : 'false'"
       :aria-busy="s.soundLoading ? 'true' : undefined"
@@ -105,15 +107,15 @@ onBeforeUnmount(() => {
 
     <div class="transport-readout">
       <b>{{ tc(s.time) }}</b>
-      <span>of {{ s.ready ? tc(s.duration) : '—' }}</span>
+      <span>{{ t('timeline.time.of', { total: s.ready ? tc(s.duration) : '—' }) }}</span>
     </div>
 
     <BarStrip class="transport-strip" />
 
     <div class="transport-readout items-end">
       <b>{{ barNow }}</b>
-      <span v-if="cropped">in bars {{ s.fromBar }}–{{ s.toBar }}</span>
-      <span v-else>of {{ count || '—' }} bars</span>
+      <span v-if="cropped">{{ t('timeline.bars.in', { from: s.fromBar, to: s.toBar }) }}</span>
+      <span v-else>{{ t('timeline.bars.of', { count: count || '—' }) }}</span>
     </div>
 
     <div class="transport-range">
@@ -124,27 +126,27 @@ onBeforeUnmount(() => {
           :disabled="!count"
           @change="toggleRange"
         >
-        <span v-if="s.renderOnlyBars && s.fromBar === s.toBar">Export only bar <b class="font-mono">{{ s.fromBar }}</b></span>
-        <span v-else-if="s.renderOnlyBars">Export only bars <b class="font-mono">{{ s.fromBar }}–{{ s.toBar }}</b></span>
-        <span v-else>Export only some bars</span>
+        <span v-if="s.renderOnlyBars && s.fromBar === s.toBar">{{ t('timeline.range.bar', { bar: s.fromBar }) }}</span>
+        <span v-else-if="s.renderOnlyBars">{{ t('timeline.range.bars', { from: s.fromBar, to: s.toBar }) }}</span>
+        <span v-else>{{ t('timeline.range.off') }}</span>
       </label>
       <span
         v-if="s.renderOnlyBars"
         class="caption"
-      >Drag the brackets, or press I and O at the playhead.</span>
+      >{{ t('timeline.range.hint') }}</span>
       <button
         v-if="s.stripZoom > 1"
         class="btn transport-zoom"
         data-size="s"
         data-variant="ghost"
-        data-tip="Double-click the window under the strip, too"
+        :data-tip="t('timeline.whole.tip')"
         @click="zoomStrip(1)"
       >
         <i
           class="icon"
           data-icon="zoom-out"
         />
-        Whole song
+        {{ t('timeline.whole') }}
       </button>
     </div>
   </section>

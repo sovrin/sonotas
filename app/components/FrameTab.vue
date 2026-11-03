@@ -3,16 +3,18 @@
 // how the score is laid out in it, how big it is, and how the view follows the
 // music. Each control says what its current value does.
 import { FREE_MAX, FREE_MIN, fitEdge } from '~/utils/frame'
+import { t } from '~/utils/i18n'
 
 const { s, v, setAspect, setLayout, toggle } = useSonotas()
 
-const ASPECTS = [
-  { v: '16:9', hint: 'Landscape, for YouTube.' },
-  { v: '9:16', hint: 'Portrait, for Shorts, Reels and TikTok.' },
-  { v: '1:1', hint: 'Square, for feeds.' },
-  { v: 'Custom', label: 'Free', hint: 'Any size, in px at 1080p. The notation keeps its size; the frame shows more or less of it.' }
-]
-const aspectHint = computed(() => ASPECTS.find(a => a.v === s.aspect)?.hint)
+// Computed, so the texts follow a change of language.
+const ASPECTS = computed(() => [
+  { v: '16:9', hint: t('frame.aspect.landscape.hint') },
+  { v: '9:16', hint: t('frame.aspect.portrait.hint') },
+  { v: '1:1', hint: t('frame.aspect.square.hint') },
+  { v: 'Custom', label: t('frame.aspect.free'), hint: t('frame.aspect.free.hint') }
+])
+const aspectHint = computed(() => ASPECTS.value.find(a => a.v === s.aspect)?.hint)
 // Held even, 240–3840 px and within a 4K frame's area; the field shows what was kept.
 function setFree(e) {
   const n = Number(e.target.value)
@@ -21,18 +23,18 @@ function setFree(e) {
   e.target.value = s[name]
 }
 
-const LAYOUTS = [
-  { v: 'Scrolling line', label: 'Line', hint: 'One long line of notation running through the frame.' },
-  { v: 'Page', label: 'Page', hint: 'Lines stacked like printed sheet music; the view moves down.' }
-]
-const layoutHint = computed(() => LAYOUTS.find(l => l.v === s.layout)?.hint)
-const BARS_PER_LINE = ['Auto', '2', '3', '4', '6'].map(n => ({ v: n, label: n }))
-const SPACINGS = [
-  { v: 'Tight', label: 'Tight', hint: 'Notes sit close together, so more bars fit.' },
-  { v: 'Normal', label: 'Normal', hint: 'The spacing alphaTab engraves by default.' },
-  { v: 'Wide', label: 'Wide', hint: 'Notes spread out, so each bar reads more easily.' }
-]
-const spacingHint = computed(() => SPACINGS.find(o => o.v === s.spacing)?.hint)
+const LAYOUTS = computed(() => [
+  { v: 'Scrolling line', label: t('frame.layout.line'), hint: t('frame.layout.line.hint') },
+  { v: 'Page', label: t('frame.layout.page'), hint: t('frame.layout.page.hint') }
+])
+const layoutHint = computed(() => LAYOUTS.value.find(l => l.v === s.layout)?.hint)
+const BARS_PER_LINE = computed(() => ['Auto', '2', '3', '4', '6'].map(n => ({ v: n, label: n === 'Auto' ? t('frame.bars_per_line.auto') : n })))
+const SPACINGS = computed(() => [
+  { v: 'Tight', label: t('frame.spacing.tight'), hint: t('frame.spacing.tight.hint') },
+  { v: 'Normal', label: t('frame.spacing.normal'), hint: t('frame.spacing.normal.hint') },
+  { v: 'Wide', label: t('frame.spacing.wide'), hint: t('frame.spacing.wide.hint') }
+])
+const spacingHint = computed(() => SPACINGS.value.find(o => o.v === s.spacing)?.hint)
 
 // Zoom has two modes: a notation size, or a number of bars that span the width
 // (line layout only). The store keeps the latter as fitBars ('Off' | 'N bars').
@@ -53,58 +55,58 @@ function setBars(e) {
   s.fitBars = n === 1 ? '1 bar' : `${n} bars`
 }
 
-const SIZES = [
-  { v: '80%', label: 'S' },
-  { v: '100%', label: 'M' },
-  { v: '120%', label: 'L' },
-  { v: '150%', label: 'XL' }
-]
+const SIZES = computed(() => [
+  { v: '80%', label: t('frame.size.s') },
+  { v: '100%', label: t('frame.size.m') },
+  { v: '120%', label: t('frame.size.l') },
+  { v: '150%', label: t('frame.size.xl') }
+])
 
 // Follow sets the playhead and the view apart; the knobs under them only show
 // where they do something. Page layout moves down, not across: it steps per
 // line, and has nothing to track or run past.
-const PLAYHEADS = [
-  { v: 'jump', label: 'Jump', hint: 'The playhead steps from note to note.' },
-  { v: 'glide', label: 'Glide', hint: 'The playhead sweeps through each bar in time.' }
-]
-const playheadHint = computed(() => PLAYHEADS.find(p => p.v === s.playhead)?.hint)
+const PLAYHEADS = computed(() => [
+  { v: 'jump', label: t('frame.playhead.jump'), hint: t('frame.playhead.jump.hint') },
+  { v: 'glide', label: t('frame.playhead.glide'), hint: t('frame.playhead.glide.hint') }
+])
+const playheadHint = computed(() => PLAYHEADS.value.find(p => p.v === s.playhead)?.hint)
 
-const VIEWS = [
-  { v: 'bar', label: 'Bar', hint: 'The view moves once per bar.', centred: 'The view moves once per bar, keeping the bars centred.', page: 'The view moves once per line.', pageLabel: 'Line' },
-  { v: 'screen', label: 'Screen', hint: 'The view holds still, then turns a whole screen.', page: 'The view holds a screenful of lines, then turns the page.' },
-  { v: 'track', label: 'Track', hint: 'The view moves all the time, keeping the playhead in place.', line: true }
-]
+const VIEWS = computed(() => [
+  { v: 'bar', label: t('frame.view.bar'), hint: t('frame.view.bar.hint'), centred: t('frame.view.bar.centred.hint'), page: t('frame.view.bar.page.hint'), pageLabel: t('frame.view.line') },
+  { v: 'screen', label: t('frame.view.screen'), hint: t('frame.view.screen.hint'), page: t('frame.view.screen.page.hint') },
+  { v: 'track', label: t('frame.view.track'), hint: t('frame.view.track.hint'), line: true }
+])
 // Showing only the current bars leaves no screen to turn.
-const views = computed(() => VIEWS
+const views = computed(() => VIEWS.value
   .filter(o => !(v.value.isPage && o.line) && !(s.currentBarOnly && o.v === 'screen'))
   .map(o => ({ ...o, label: (v.value.isPage && o.pageLabel) || o.label })))
 const viewHint = computed(() => {
-  const o = VIEWS.find(x => x.v === s.view)
+  const o = VIEWS.value.find(x => x.v === s.view)
   if (!o) return ''
   if (v.value.isPage) return o.page ?? o.hint
   // Framed bars are centred instead of pinned left in the bar view.
   return (byBars.value && o.centred) || o.hint
 })
 
-const TRANSITIONS = [
-  { v: 0, label: 'Cut' },
-  { v: 250, label: 'Quick' },
-  { v: 600, label: 'Slow' }
-]
+const TRANSITIONS = computed(() => [
+  { v: 0, label: t('frame.transition.cut') },
+  { v: 250, label: t('frame.transition.quick') },
+  { v: 600, label: t('frame.transition.slow') }
+])
 const transitionHint = computed(() => {
-  if (s.view === 'track') return s.transition ? 'How the view moves over to repeats and jumps.' : 'The view cuts to repeats and jumps.'
-  return s.transition ? 'How long the view takes to move over.' : 'The view cuts straight to its new place.'
+  if (s.view === 'track') return s.transition ? t('frame.transition.track.hint') : t('frame.transition.track.cut.hint')
+  return s.transition ? t('frame.transition.hint') : t('frame.transition.cut.hint')
 })
 
 // Where now sits: the leading bar's left edge, the playhead, or the current
 // line's middle. Centred bars (framed or alone) leave nothing to place.
 const showAt = computed(() => s.view !== 'screen' && !s.currentBarOnly && !(byBars.value && s.view === 'bar'))
 const at = computed(() => s.followAt)
-const atLabel = computed(() => v.value.isPage ? 'Current line sits at' : s.view === 'track' ? 'Playhead sits at' : 'Current bar starts at')
+const atLabel = computed(() => v.value.isPage ? t('frame.at.page') : s.view === 'track' ? t('frame.at.track') : t('frame.at.bar'))
 const atHint = computed(() => {
-  if (v.value.isPage) return `${at.value}% down the frame.`
-  if (s.view === 'track') return at.value < 50 ? `${at.value}% across, leaving more of what is coming in view.` : `${at.value}% across the frame.`
-  return `${at.value}% in from the left edge.`
+  if (v.value.isPage) return t('frame.at.page.hint', { n: at.value })
+  if (s.view === 'track') return at.value < 50 ? t('frame.at.track.ahead.hint', { n: at.value }) : t('frame.at.track.hint', { n: at.value })
+  return t('frame.at.bar.hint', { n: at.value })
 })
 function setAt(e) {
   s.followAt = Number(e.target.value)
@@ -130,13 +132,13 @@ function pickLayout(l) {
     class="stack"
     data-divided
   >
-    <InspectorGroup title="Shape">
+    <InspectorGroup :title="t('frame.shape')">
       <div class="field">
         <div
           class="segmented"
           data-fill
           role="radiogroup"
-          aria-label="Shape"
+          :aria-label="t('frame.shape')"
         >
           <label
             v-for="a in ASPECTS"
@@ -162,7 +164,7 @@ function pickLayout(l) {
             type="number"
             class="input"
             name="freeW"
-            aria-label="Width in px"
+            :aria-label="t('frame.free.width')"
             :min="FREE_MIN"
             :max="FREE_MAX"
             step="8"
@@ -174,7 +176,7 @@ function pickLayout(l) {
             type="number"
             class="input"
             name="freeH"
-            aria-label="Height in px"
+            :aria-label="t('frame.free.height')"
             :min="FREE_MIN"
             :max="FREE_MAX"
             step="8"
@@ -182,17 +184,17 @@ function pickLayout(l) {
             @change="setFree"
           >
         </div>
-        <small>Drag the frame's edges in the preview, or type a size. 720p and 480p scale it down.</small>
+        <small>{{ t('frame.free.hint') }}</small>
       </div>
     </InspectorGroup>
 
-    <InspectorGroup title="Layout">
+    <InspectorGroup :title="t('frame.layout')">
       <div class="field">
         <div
           class="segmented"
           data-fill
           role="radiogroup"
-          aria-label="Layout"
+          :aria-label="t('frame.layout')"
         >
           <label
             v-for="l in LAYOUTS"
@@ -212,14 +214,14 @@ function pickLayout(l) {
       <SegmentedField
         v-if="v.isPage"
         name="barsPerLine"
-        label="Bars per line"
+        :label="t('frame.bars_per_line')"
         :options="BARS_PER_LINE"
       >
-        <small>{{ s.barsPerLine === 'Auto' ? 'As many bars as fit the width.' : `${s.barsPerLine} bars on every line, squeezed or stretched to fit.` }}</small>
+        <small>{{ s.barsPerLine === 'Auto' ? t('frame.bars_per_line.auto.hint') : t('frame.bars_per_line.fixed.hint', { n: s.barsPerLine }) }}</small>
       </SegmentedField>
     </InspectorGroup>
 
-    <InspectorGroup title="Zoom">
+    <InspectorGroup :title="t('frame.zoom')">
       <div
         v-if="!v.isPage"
         class="field"
@@ -228,7 +230,7 @@ function pickLayout(l) {
           class="segmented"
           data-fill
           role="radiogroup"
-          aria-label="Zoom by"
+          :aria-label="t('frame.zoom.by')"
         >
           <label>
             <input
@@ -237,7 +239,7 @@ function pickLayout(l) {
               :checked="!byBars"
               @change="zoomBy('size')"
             >
-            <span>Size</span>
+            <span>{{ t('frame.zoom.by.size') }}</span>
           </label>
           <label>
             <input
@@ -246,7 +248,7 @@ function pickLayout(l) {
               :checked="byBars"
               @change="zoomBy('bars')"
             >
-            <span>Bars across</span>
+            <span>{{ t('frame.zoom.by.bars') }}</span>
           </label>
         </div>
       </div>
@@ -257,7 +259,7 @@ function pickLayout(l) {
             for="fitBars"
             class="flex justify-between"
           >
-            <span>Bars across the frame</span>
+            <span>{{ t('frame.fit_bars') }}</span>
             <span class="tabular">{{ bars }}</span>
           </label>
           <input
@@ -270,7 +272,7 @@ function pickLayout(l) {
             :style="{ '--value': ((bars - 1) / 7) * 100 + '%' }"
             @input="setBars"
           >
-          <small>The notation is sized so {{ bars === 1 ? 'one bar spans' : `${bars} bars span` }} the width.</small>
+          <small>{{ t('frame.fit_bars.hint', { n: bars }) }}</small>
         </div>
         <label>
           <input
@@ -279,32 +281,32 @@ function pickLayout(l) {
             :checked="s.currentBarOnly"
             @change="toggle('currentBarOnly')"
           >
-          {{ bars === 1 ? 'Show only this bar' : `Show only these ${bars} bars` }}
+          {{ t('frame.only_bars', { n: bars }) }}
         </label>
       </template>
 
       <SegmentedField
         v-else
         name="notationSize"
-        label="Notation size"
+        :label="t('frame.size')"
         :options="SIZES"
       >
-        <small>{{ v.isPage ? 'Larger notation fits fewer bars on each line.' : 'Larger notation shows fewer bars at once.' }}</small>
+        <small>{{ v.isPage ? t('frame.size.page.hint') : t('frame.size.line.hint') }}</small>
       </SegmentedField>
 
       <SegmentedField
         name="spacing"
-        label="Spacing"
+        :label="t('frame.spacing')"
         :options="SPACINGS"
       >
         <small>{{ spacingHint }}</small>
       </SegmentedField>
     </InspectorGroup>
 
-    <InspectorGroup title="Follow">
+    <InspectorGroup :title="t('frame.follow')">
       <SegmentedField
         name="playhead"
-        label="Playhead"
+        :label="t('frame.playhead')"
         :options="PLAYHEADS"
       >
         <small>{{ playheadHint }}</small>
@@ -312,7 +314,7 @@ function pickLayout(l) {
 
       <SegmentedField
         name="view"
-        label="View"
+        :label="t('frame.view')"
         :options="views"
         :set="pickView"
       >
@@ -321,7 +323,7 @@ function pickLayout(l) {
 
       <SegmentedField
         name="transition"
-        label="Transition"
+        :label="t('frame.transition')"
         :options="TRANSITIONS"
       >
         <small>{{ transitionHint }}</small>
@@ -358,7 +360,7 @@ function pickLayout(l) {
           :checked="s.turnEarly"
           @change="toggle('turnEarly')"
         >
-        Turn a {{ v.isPage ? 'line' : 'bar' }} early, so what comes next is in view
+        {{ v.isPage ? t('frame.turn_early.line') : t('frame.turn_early.bar') }}
       </label>
 
       <template v-if="s.view === 'track' && !v.isPage">
@@ -369,7 +371,7 @@ function pickLayout(l) {
             :checked="s.steady"
             @change="toggle('steady')"
           >
-          Steady speed through busy and sparse passages
+          {{ t('frame.steady') }}
         </label>
         <label>
           <input
@@ -378,7 +380,7 @@ function pickLayout(l) {
             :checked="s.runPast"
             @change="toggle('runPast')"
           >
-          Keep the playhead in place past the song's ends
+          {{ t('frame.run_past') }}
         </label>
       </template>
     </InspectorGroup>

@@ -2,28 +2,31 @@
 // What marks the music as it plays: the playhead line, the bar it is in and
 // the note being played. Each shows its colour; the measurements wait
 // behind a fold, since the defaults suit most videos.
+import { t } from '~/utils/i18n'
+
 const { s, v, toggle, setCursorColor, setHighlightColor, setActiveNoteColor } = useSonotas()
 
 // Grey holds 3:1 on both canvas themes; Ink is white on dark and near-black
 // on light, so a thin line never disappears into the paper.
 const CURSOR_COLORS = computed(() => [
-  { hex: '#737b87', name: 'Grey' },
-  { hex: '#e5484d', name: 'Red' },
-  { hex: INK[s.theme] ?? INK.dark, name: 'Ink' },
-  { hex: '#e0a94c', name: 'Amber' }
+  { hex: '#737b87', name: t('playhead.color.grey') },
+  { hex: '#e5484d', name: t('playhead.color.red') },
+  { hex: INK[s.theme] ?? INK.dark, name: t('playhead.color.ink') },
+  { hex: '#e0a94c', name: t('playhead.color.amber') }
 ])
-const HL_COLORS = [
-  { hex: '#e0a94c', name: 'Amber' },
-  { hex: '#737b87', name: 'Grey' },
-  { hex: '#46a758', name: 'Green' },
-  { hex: '#5b8def', name: 'Blue' }
-]
-const NOTE_COLORS = [
-  { hex: '#e5484d', name: 'Red' },
-  { hex: '#e0a94c', name: 'Amber' },
-  { hex: '#46a758', name: 'Green' },
-  { hex: '#5b8def', name: 'Blue' }
-]
+// Computed, so the names follow a change of language.
+const HL_COLORS = computed(() => [
+  { hex: '#e0a94c', name: t('playhead.color.amber') },
+  { hex: '#737b87', name: t('playhead.color.grey') },
+  { hex: '#46a758', name: t('playhead.color.green') },
+  { hex: '#5b8def', name: t('playhead.color.blue') }
+])
+const NOTE_COLORS = computed(() => [
+  { hex: '#e5484d', name: t('playhead.color.red') },
+  { hex: '#e0a94c', name: t('playhead.color.amber') },
+  { hex: '#46a758', name: t('playhead.color.green') },
+  { hex: '#5b8def', name: t('playhead.color.blue') }
+])
 </script>
 
 <template>
@@ -31,36 +34,36 @@ const NOTE_COLORS = [
     class="stack"
     data-divided
   >
-    <InspectorGroup title="Playhead">
+    <InspectorGroup :title="t('playhead.playhead')">
       <SwatchPicker
         :colors="CURSOR_COLORS"
         :selected="s.cursorColor"
-        label="Playhead colour"
+        :label="t('playhead.playhead.color')"
         @pick="setCursorColor"
       />
       <details class="accordion">
-        <summary>Fine-tune</summary>
+        <summary>{{ t('playhead.fine_tune') }}</summary>
         <div class="stack gap-3">
           <RangeField
             name="cursorOpacity"
-            label="Opacity"
-            aria-label="Playhead opacity"
+            :label="t('playhead.opacity')"
+            :aria-label="t('playhead.playhead.opacity')"
             :min="10"
             :max="100"
             unit="%"
           />
           <RangeField
             name="cursorWidth"
-            label="Width"
-            aria-label="Playhead width"
+            :label="t('playhead.width')"
+            :aria-label="t('playhead.playhead.width')"
             :min="1"
             :max="10"
             unit=" px"
           />
           <RangeField
             name="cursorOffset"
-            label="Horizontal offset"
-            aria-label="Playhead offset"
+            :label="t('playhead.offset')"
+            :aria-label="t('playhead.playhead.offset')"
             :min="-100"
             :max="100"
             unit=" px"
@@ -69,7 +72,7 @@ const NOTE_COLORS = [
             v-if="v.isPage"
             class="caption"
           >
-            In page layout the playhead always spans the current bar.
+            {{ t('playhead.playhead.page') }}
           </p>
           <template v-else>
             <label>
@@ -79,13 +82,13 @@ const NOTE_COLORS = [
                 :checked="s.cursorMatchBar"
                 @change="toggle('cursorMatchBar')"
               >
-              Same height as the bar
+              {{ t('playhead.playhead.match_bar') }}
             </label>
             <RangeField
               v-if="!s.cursorMatchBar"
               name="cursorHeight"
-              label="Height"
-              aria-label="Playhead height"
+              :label="t('playhead.height')"
+              :aria-label="t('playhead.playhead.height')"
               :min="40"
               :max="100"
               unit="%"
@@ -95,7 +98,7 @@ const NOTE_COLORS = [
       </details>
     </InspectorGroup>
 
-    <InspectorGroup title="Bar highlight">
+    <InspectorGroup :title="t('playhead.highlight')">
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -109,24 +112,24 @@ const NOTE_COLORS = [
         <SwatchPicker
           :colors="HL_COLORS"
           :selected="s.highlightColor"
-          label="Highlight colour"
+          :label="t('playhead.highlight.color')"
           @pick="setHighlightColor"
         />
         <details class="accordion">
-          <summary>Fine-tune</summary>
+          <summary>{{ t('playhead.fine_tune') }}</summary>
           <div class="stack gap-3">
             <RangeField
               name="highlightOpacity"
-              label="Opacity"
-              aria-label="Highlight opacity"
+              :label="t('playhead.opacity')"
+              :aria-label="t('playhead.highlight.opacity')"
               :min="5"
               :max="60"
               unit="%"
             />
             <RangeField
               name="highlightPadding"
-              label="Padding"
-              aria-label="Highlight padding"
+              :label="t('playhead.padding')"
+              :aria-label="t('playhead.highlight.padding')"
               :min="0"
               :max="20"
               unit=" px"
@@ -138,11 +141,11 @@ const NOTE_COLORS = [
         v-else
         class="caption"
       >
-        Tints the bar the playhead is in.
+        {{ t('playhead.highlight.off') }}
       </p>
     </InspectorGroup>
 
-    <InspectorGroup title="Current note">
+    <InspectorGroup :title="t('playhead.note')">
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -156,15 +159,15 @@ const NOTE_COLORS = [
         <SwatchPicker
           :colors="NOTE_COLORS"
           :selected="s.activeNoteColor"
-          label="Note colour"
+          :label="t('playhead.note.color')"
           @pick="setActiveNoteColor"
         />
         <details class="accordion">
-          <summary>Fine-tune</summary>
+          <summary>{{ t('playhead.fine_tune') }}</summary>
           <RangeField
             name="activeNoteOpacity"
-            label="Opacity"
-            aria-label="Note opacity"
+            :label="t('playhead.opacity')"
+            :aria-label="t('playhead.note.opacity')"
             :min="30"
             :max="100"
             unit="%"
@@ -175,7 +178,7 @@ const NOTE_COLORS = [
         v-else
         class="caption"
       >
-        Colours the note being played.
+        {{ t('playhead.note.off') }}
       </p>
     </InspectorGroup>
   </div>
