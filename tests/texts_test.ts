@@ -6,8 +6,8 @@ import { join } from 'node:path'
 // Every text the app shows is t('key') from utils/i18n, with the key written out, so this finds
 // them all: a key the committed texts lack shows its name instead of a text, and a key no code
 // uses is left over in linguitas (delete it there, then `pnpm texts`).
-const texts = JSON.parse(readFileSync('app/linguitas/texts.json', 'utf8'))
-const known = new Set(Object.keys(texts.texts[texts.source]))
+const { source } = JSON.parse(readFileSync('app/linguitas/languages.json', 'utf8'))
+const known = new Set(Object.keys(JSON.parse(readFileSync(`app/linguitas/texts/${source}.json`, 'utf8'))))
 
 const IMPORTS_T = /import\s*\{[^}]*\bt\b[^}]*\}\s*from\s*['"]~\/utils\/i18n['"]/
 const CALL = /\bt\(\s*(['"])?([^'"),\s]*)/g

@@ -6,7 +6,7 @@ definePageMeta({ validate: route => languages.includes(route.params.lang) })
 const route = useRoute()
 const lang = computed(() => route.params.lang)
 // Before anything renders, so the page renders in its language; again when the switcher moves on.
-setLanguage(lang.value)
+await setLanguage(lang.value)
 watch(lang, setLanguage)
 
 const { s, loadFile } = provideSonotas()

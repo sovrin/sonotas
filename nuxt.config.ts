@@ -1,5 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import texts from './app/linguitas/texts.json'
+import { languages } from './app/linguitas/languages.json'
 
 export default defineNuxtConfig({
   modules: [
@@ -38,11 +38,11 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-06-30',
 
-  // A page per language the committed texts have (app/linguitas, see utils/i18n). One at a time:
+  // A page per language the committed texts have (app/linguitas/languages.json, see utils/i18n). One at a time:
   // the texts' language is one setting for the whole process.
   nitro: {
     prerender: {
-      routes: Object.keys(texts.texts).map(lang => `/${lang}/`),
+      routes: languages.map(lang => `/${lang}/`),
       concurrency: 1
     }
   },
