@@ -133,7 +133,7 @@ commit before each push. The rules for agents are in [AGENTS.md](AGENTS.md).
 
 ## Languages
 
-sonotas speaks English and German, one prerendered page each (`/en/`, `/de/`); the bare address
+sonotas speaks 22 languages, one prerendered page each (`/en/`, `/de/`, …); the bare address
 sends a browser to its language, keeping a shared link's settings. The texts come from
 [linguitas](https://github.com/sovrin/linguitas) and are committed in `app/i18n/` with their
 client, a file per language, so a build needs nothing else and a page loads only its own language

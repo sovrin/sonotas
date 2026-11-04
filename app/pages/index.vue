@@ -1,5 +1,5 @@
 <script setup>
-import { languages, sourceLanguage } from '~/utils/i18n'
+import { languageName, languages, sourceLanguage } from '~/utils/i18n'
 
 // The bare address sends the browser to its language's page, keeping a shared link's settings
 // (?s=) and hash. It runs in <head>, before anything is drawn or Nuxt touches the address. Plain
@@ -27,7 +27,10 @@ useHead({ title: 'sonotas', script: [{ innerHTML: redirect }] })
     v-for="lang in languages"
     :key="lang"
     >
-    <a :href="`/${lang}/`">{{ lang }}</a>
+    <a
+    :href="`/${lang}/`"
+    :hreflang="lang"
+    >{{ languageName(lang) }}</a>
     </li>
     </ul>
   </noscript>

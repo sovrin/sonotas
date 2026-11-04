@@ -1,8 +1,28 @@
 {
-  "version": 2,
+  "version": 1,
   "source": "en",
   "languages": [
     "en",
-    "de"
+    "de",
+    "fr",
+    "es",
+    "it",
+    "pt",
+    "nl",
+    "pl",
+    "zh",
+    "ja",
+    "ko",
+    "ru",
+    "uk",
+    "tr",
+    "sv",
+    "cs",
+    "da",
+    "id",
+    "fi",
+    "nb",
+    "hu",
+    "ro"
   ]
 }
