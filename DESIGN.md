@@ -27,37 +27,37 @@ colors:
   note-red: "#e5484d"
 typography:
   display:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) * 4.236)"
     fontWeight: 300
     lineHeight: 1
     letterSpacing: "-0.04em"
     fontFeature: "tnum"
   readout:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) * 1.618)"
     fontWeight: 500
     lineHeight: 1.128
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
   title:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "clamp(0.95rem, 0.92rem + 0.15vw, 1.0625rem)"
     fontWeight: 560
     lineHeight: 1.128
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "calc(var(--ae-text-base) / 1.272)"
     fontWeight: 400
     lineHeight: 1.618
   label:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "calc(var(--ae-text-base) / 1.618)"
     fontWeight: 540
     letterSpacing: "0.12em"
   data:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) / 1.272)"
     fontWeight: 400
     lineHeight: 1
@@ -155,10 +155,10 @@ The video has its own two themes, chosen in the Look tab and independent of the 
 
 ## Typography
 
-**Body Font:** the system UI sans (SF Pro on macOS), with Geist Variable vendored as the fallback.
-**Data Font:** the system mono (SF Mono), with Geist Mono Variable vendored as the fallback.
+**Body Font:** Geist Variable (vendored with aequitas), falling back to the system UI sans for scripts it lacks.
+**Data Font:** Geist Mono Variable (vendored with aequitas), falling back to the system mono.
 
-**Character:** a native, unbranded sans for the interface, so the tool feels like part of the operating system, and a tabular mono for anything that counts time or music.
+**Character:** one quiet, neutral sans for the interface that reads the same on every OS, and a tabular mono for anything that counts time or music.
 
 ### Hierarchy
 The scale is φ-based on a fluid base of about 15–17px (`clamp(0.95rem, 0.92rem + 0.15vw, 1.0625rem)`).

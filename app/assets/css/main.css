@@ -14,6 +14,11 @@
   --ae-accent-dark: oklch(0.769 0.127 78);
   --ae-accent-light: oklch(0.56 0.12 75);
 
+  /* Geist, which aequitas already ships, rather than the system face: one
+     voice on every OS. Scripts it doesn't cover fall through to the system. */
+  --ae-font-sans: "Geist Variable", ui-sans-serif, -apple-system, system-ui, "Segoe UI", sans-serif;
+  --ae-font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
   /* A dim studio: one faint amber spill over the stage, where the video plays,
      and a cool ink field behind the settings. aequitas' default aurora derives
      three fields from the accent, which over this ink mix to brown. */
