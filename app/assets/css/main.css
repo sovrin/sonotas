@@ -781,12 +781,6 @@ main > .stage {
   }
 }
 
-/* An off switch's knob is muted, so it no longer outshines the ones that are on. */
-input[role="switch"]:not(:checked)::after {
-  background: var(--ae-text-muted);
-  box-shadow: none;
-}
-
 /* The credits sit under the transport on a desktop; stacked, they would split
    the transport from the settings, so a second copy closes the page instead. */
 .shell > .shell-credits {

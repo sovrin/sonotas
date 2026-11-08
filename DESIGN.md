@@ -218,7 +218,7 @@ Square and exact; only Export speaks up.
 The default control for two to four options, with every option visible and one click to choose. The track is a hairline fill; the selected option lifts to the surface tone with an amber underline. In the inspector they always fill the width with equal segments. Shape options carry a small outline glyph at the option's own aspect ratio.
 
 ### Switches, chips and the range checkbox
-Square switches for settings that change how a group behaves. On is amber with an ink knob; off has a muted knob, so off never outshines on. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
+Square switches for settings that change how a group behaves. On is amber with an ink knob; off is aequitas' empty track, outlined with a small knob, so off never outshines on. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
 
 What the video shows is a set of filter chips under **Show elements**, wrapping as whole chips, with the count of active ones in the heading row. A chip that is on is tinted with an amber edge and a check; off shows a plus. An element the file can't have (no title, no chords) is disabled with a minus, and one caption under the chips names what is missing.
 
