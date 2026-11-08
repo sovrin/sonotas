@@ -698,9 +698,9 @@ main > .stage {
 
 /* ── amber stays "now" and "on" ────────────────────────────────────────── */
 
-/* Credits, the sample badge and the theme toggle are neither: they read in
-   ink, so the amber left on the page is the playing bar, what is switched on,
-   and Export. */
+/* Credits are neither: they read in ink, so the amber left on the page is the
+   playing bar, what is switched on, and Export. Toolbar, zoom and secondary
+   actions get the same from data-tone="neutral" in their markup. */
 .shell :is(main > footer, .shell-credits) a {
   color: inherit;
   text-decoration-color: var(--ae-border-strong);
@@ -709,11 +709,6 @@ main > .stage {
     color: var(--ae-text);
     text-decoration-color: currentColor;
   }
-}
-
-.navbar .badge {
-  color: var(--ae-text-muted);
-  background: var(--ae-fill);
 }
 
 /* aequitas sizes icons to the small text (~12px), a hairline in a 26px button. */
@@ -762,25 +757,6 @@ main > .stage {
   }
 }
 
-.navbar .btn[data-variant="ghost"],
-.view-zoom .btn[data-variant="ghost"],
-.intro .btn[data-variant="ghost"] {
-  color: var(--ae-text-muted);
-
-  &:hover {
-    color: var(--ae-text);
-  }
-}
-
-/* Leaving a finished video is not "on" either. */
-.export-panel .btn[data-variant="ghost"] {
-  color: var(--ae-text-muted);
-
-  &:hover {
-    color: var(--ae-text);
-  }
-}
-
 /* The credits sit under the transport on a desktop; stacked, they would split
    the transport from the settings, so a second copy closes the page instead. */
 .shell > .shell-credits {
@@ -797,14 +773,6 @@ main > .stage {
     grid-column: 1 / -1;
     padding: var(--ae-space-4);
   }
-}
-
-/* The feedback form (collatas' web component, in the light DOM) sends with a primary button,
-   which would take the accent. In sonotas amber means "now" and Export, so Send reads in ink
-   like every other action. */
-collatas-form .btn[data-variant="primary"] {
-  --ae-tone: var(--ae-text);
-  --ae-tone-contrast: var(--ae-surface);
 }
 
 /* ── free frame resize ───────────────────────────────────────────────────── */

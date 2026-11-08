@@ -80,6 +80,7 @@ const mixHint = computed(() => ({
             class="btn"
             data-size="s"
             data-variant="ghost"
+            data-tone="neutral"
             :inert="v.isRendering"
             @click="loadSoundFont(null)"
           >

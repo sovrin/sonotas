@@ -247,6 +247,7 @@ onBeforeUnmount(() => observer?.disconnect())
     <div
       v-if="!s.videoUrl"
       class="btn-group view-zoom"
+      data-tone="neutral"
     >
       <button
         class="btn"

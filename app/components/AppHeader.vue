@@ -39,7 +39,10 @@ const facts = computed(() => [
 </script>
 
 <template>
-  <header class="navbar">
+  <header
+    class="navbar"
+    data-tone="neutral"
+  >
     <span class="brand">
       <img
         src="/favicon.svg?v=2"
@@ -119,6 +122,10 @@ const facts = computed(() => [
         />
         <span class="s:hidden">{{ t('header.open.label') }}</span>
       </button>
+      <hr
+        class="s:hidden"
+        aria-orientation="vertical"
+      >
       <button
         class="btn"
         data-icon
@@ -158,6 +165,10 @@ const facts = computed(() => [
           role="status"
         >{{ s.undoReset ? t('header.reset.done') : '' }}</span>
       </button>
+      <hr
+        class="s:hidden"
+        aria-orientation="vertical"
+      >
       <AppHelp />
       <span
         v-if="languages.length > 1"

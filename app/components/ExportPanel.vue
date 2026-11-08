@@ -39,6 +39,7 @@ const scope = computed(() => {
         class="btn w-full"
         data-size="s"
         data-variant="ghost"
+        data-tone="neutral"
         @click="closeRender"
       >
         {{ s.downloaded ? t('export.back') : t('export.discard') }}
