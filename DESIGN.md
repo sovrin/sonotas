@@ -188,12 +188,12 @@ Below 48rem (768px) everything stacks in one column: the stage takes the video's
 
 ## Elevation & Depth
 
-The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows: the app window, the inspector and the transport box are all flat. The live preview canvas (or the finished video) carries aequitas' large shadow and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
+The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows: the app window, the inspector and the transport box are all flat. The live preview canvas (or the finished video) carries the stage lift and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
 
 Atmosphere comes from a custom aurora replacing aequitas' default: one faint amber radial spill over the stage (55% × 45% at 38% 0%) and one cool ink field behind the inspector (45% × 60% at the bottom-right corner).
 
 ### Shadow Vocabulary
-- **Stage lift** (`var(--ae-shadow-l)`, three ink-tinted layers): only on the preview canvas and the finished video.
+- **Stage lift** (a 1px rim, a faint amber halo and two ink-tinted drops): only on the preview canvas and the finished video. The halo is a glow on the video's edge, never a pool on the stage, and stays faint enough in the light UI not to read as cream.
 
 ### Named Rules
 **The One Lit Thing Rule.** Only the video gets a shadow. Panels, cards and controls stay flat; depth elsewhere comes from tone.
@@ -237,7 +237,7 @@ The inspector tabs are a text tablist (Frame, Look, Playhead, Output) in body si
 The song as a strip of tab staff, in **play order**: repeats play again, so their bars appear again, and each cell is as wide as that play lasts. Six faint hairline strings run across a sunken track; each cell has a barline, a 2px line in Hairline Strong where the play jumps back, and the same at the end. Bar numbers in mono are spaced by where they land (at least 32px apart, never on the final barline), and jump-backs always keep their number. The current bar is tinted with the video's own highlight colour and the playhead uses the video's own cursor colour with a square cap and a thin halo. Dragging scrubs. With a bar range on, two amber brackets `[` `]` set the export range, bars outside it sit behind a veil, and during export an amber fill runs across the range.
 
 ### Transport
-Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), in one flat box (window tone, hairline edge), with the "Export only some bars" checkbox on a full-width row beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
+Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), in one flat box (frosted window tone, hairline edge, no shadow) floating over the foot of the stage, with the "Export only some bars" checkbox on a full-width row beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
 
 ### Export panel
 Pinned at the inspector's foot. Errors appear here, above the button: an unsupported browser disables Export and says why, and a failed export says what failed and what to try. At rest: the scope ("Whole song · 16:9"), a mono line of facts (resolution, fps, length and the estimated size once known) and the Export button. While rendering: phase, percentage, a progress bar and Cancel. When done: "Your video is ready", the file name and size, Download, and a muted secondary action that reads "Discard video" until the file has been downloaded, then "Back to preview". While an export runs, the inspector, transport, track select and Open hold still at 45% opacity, and leaving the page asks first. Progress is announced once per phase, not per frame.
