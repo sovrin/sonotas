@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.8](https://github.com/sovrin/sonotas/compare/v0.2.7...v0.2.8) (2026-11-13)
+
+
+### Features
+
+* a quieter sample intro, and the editor rises in on load ([1e0f1cb](https://github.com/sovrin/sonotas/commit/1e0f1cbaee11e8d5fc8fc17e90fcb9c36fd57220))
+* set the interface in Geist, the same on every system ([46a10e6](https://github.com/sovrin/sonotas/commit/46a10e61bf2ff09db145e3d3a58c22526cc546bf))
+* **stage:** a soft halo around the video, the only thing lifted off the page ([4879794](https://github.com/sovrin/sonotas/commit/4879794c3e17b351e43e3368ca449324245950b2))
+* switches read as off when they are off ([1a3c042](https://github.com/sovrin/sonotas/commit/1a3c042efabadb57ae976999f3b0f32550ca5ff6))
+* **toolbar:** group the toolbar's actions, and keep secondary actions in ink ([05d0c69](https://github.com/sovrin/sonotas/commit/05d0c69ff2116bcdbfd8998b0989ee3876c0e5ea))
+
 ## [0.2.7](https://github.com/sovrin/sonotas/compare/v0.2.6...v0.2.7) (2026-11-03)
 
 
