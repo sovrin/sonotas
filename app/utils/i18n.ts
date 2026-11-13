@@ -18,6 +18,12 @@ client.subscribe(() => revision.value++)
 export const languages = meta.languages
 export const sourceLanguage = meta.source
 
+/** A language's name in itself, as the language picker lists it: Deutsch, Українська, 中文. */
+export function languageName(lang: string) {
+  const name = new Intl.DisplayNames([lang], { type: 'language' }).of(lang) ?? lang
+  return name.charAt(0).toLocaleUpperCase(lang) + name.slice(1)
+}
+
 export const t: typeof client.t = (key, ...params) => {
   void revision.value
   return client.t(key, ...params)

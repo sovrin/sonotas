@@ -3,7 +3,7 @@
 // its track, and the way to open another. Export is not up here; it waits
 // under the settings.
 import { ACCEPT } from '~/utils/formats'
-import { languages, t } from '~/utils/i18n'
+import { languageName, languages, t } from '~/utils/i18n'
 
 const { s, v, loadFile, setTrack, toggleTheme, copyLink, resetSettings } = useSonotas()
 const route = useRoute()
@@ -186,7 +186,7 @@ const facts = computed(() => [
             :key="l"
             :value="l"
           >
-            {{ l.toUpperCase() }}
+            {{ languageName(l) }}
           </option>
         </select>
       </span>
