@@ -139,6 +139,7 @@ onBeforeUnmount(() => {
         class="btn transport-zoom"
         data-size="s"
         data-variant="ghost"
+        data-tone="neutral"
         :data-tip="t('timeline.whole.tip')"
         @click="zoomStrip(1)"
       >

@@ -14,6 +14,11 @@
   --ae-accent-dark: oklch(0.769 0.127 78);
   --ae-accent-light: oklch(0.56 0.12 75);
 
+  /* Geist, which aequitas already ships, rather than the system face: one
+     voice on every OS. Scripts it doesn't cover fall through to the system. */
+  --ae-font-sans: "Geist Variable", ui-sans-serif, -apple-system, system-ui, "Segoe UI", sans-serif;
+  --ae-font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
   /* A dim studio: one faint amber spill over the stage, where the video plays,
      and a cool ink field behind the settings. aequitas' default aurora derives
      three fields from the accent, which over this ink mix to brown. */
@@ -154,8 +159,14 @@ main > .stage {
     radial-gradient(circle, var(--ae-border-strong) calc(1px * var(--view-z, 1)), transparent calc(1.5px * var(--view-z, 1)))
     calc(50% + var(--view-x, 0px)) calc(50% + var(--view-y, 0px)) / var(--_dot) var(--_dot);
 
+  /* Rim, a faint amber halo and a long, soft drop: the video is the one lit
+     thing on the bench. A halo, not a pool on the stage, so no edge shows. */
   & > :is(canvas, video) {
-    box-shadow: var(--ae-shadow-l);
+    box-shadow:
+      0 0 0 1px light-dark(oklch(0.2 0.02 260 / 0.14), oklch(1 0 0 / 0.07)),
+      0 0 120px -24px light-dark(oklch(0.8 0.1 75 / 0.3), oklch(0.65 0.11 75 / 0.12)),
+      0 28px 56px -16px light-dark(oklch(0.25 0.03 260 / 0.28), oklch(0 0 0 / 0.6)),
+      0 8px 16px -8px light-dark(oklch(0.25 0.03 260 / 0.18), oklch(0 0 0 / 0.45));
   }
 
   /* Click the notation to jump there. */
@@ -315,7 +326,7 @@ main > .stage {
     /* Frosted with aequitas' own glass (solid where transparency is reduced). */
     background: var(--ae-frost-bg-sheer);
     backdrop-filter: var(--ae-frost-filter-l);
-    box-shadow: inset 0 0 0 1px var(--ae-border), var(--ae-shadow-l);
+    box-shadow: inset 0 0 0 1px var(--ae-border);
   }
 
   main > .stage {
@@ -687,9 +698,9 @@ main > .stage {
 
 /* ── amber stays "now" and "on" ────────────────────────────────────────── */
 
-/* Credits, the sample badge and the theme toggle are neither: they read in
-   ink, so the amber left on the page is the playing bar, what is switched on,
-   and Export. */
+/* Credits are neither: they read in ink, so the amber left on the page is the
+   playing bar, what is switched on, and Export. Toolbar, zoom and secondary
+   actions get the same from data-tone="neutral" in their markup. */
 .shell :is(main > footer, .shell-credits) a {
   color: inherit;
   text-decoration-color: var(--ae-border-strong);
@@ -700,48 +711,50 @@ main > .stage {
   }
 }
 
-.navbar .badge {
-  color: var(--ae-text-muted);
-  background: var(--ae-fill);
-}
-
 /* aequitas sizes icons to the small text (~12px), a hairline in a 26px button. */
 .navbar .btn .icon {
   font-size: 1.375em;
 }
 
-/* The sample's intro is a plain word, not an alert: neutral, its Play the one amber. */
+/* The sample's intro is a plain word, not an alert: one quiet line over the
+   stage, edged by a hairline, its Play the one amber. */
 .alert.intro {
-  background: var(--ae-fill);
+  padding-inline: 0;
+  padding-block-start: 0;
+  background: none;
+  box-shadow: inset 0 -1px 0 var(--ae-border);
+  backdrop-filter: none;
+  font-size: var(--ae-text-s);
+  color: var(--ae-text-muted);
 
   & strong {
     color: var(--ae-text);
+    font-weight: 560;
   }
 }
 
-.navbar .btn[data-variant="ghost"],
-.view-zoom .btn[data-variant="ghost"],
-.intro .btn[data-variant="ghost"] {
-  color: var(--ae-text-muted);
+/* On load the video rises onto the bench, then the transport and settings. */
+@media (prefers-reduced-motion: no-preference) {
+  main > .stage > canvas,
+  .shell > main > .transport,
+  .shell > .inspector {
+    animation: rise 640ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
 
-  &:hover {
-    color: var(--ae-text);
+  .shell > main > .transport {
+    animation-delay: 90ms;
+  }
+
+  .shell > .inspector {
+    animation-delay: 180ms;
   }
 }
 
-/* Leaving a finished video is not "on" either. */
-.export-panel .btn[data-variant="ghost"] {
-  color: var(--ae-text-muted);
-
-  &:hover {
-    color: var(--ae-text);
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--ae-space-3);
   }
-}
-
-/* An off switch's knob is muted, so it no longer outshines the ones that are on. */
-input[role="switch"]:not(:checked)::after {
-  background: var(--ae-text-muted);
-  box-shadow: none;
 }
 
 /* The credits sit under the transport on a desktop; stacked, they would split
@@ -762,14 +775,6 @@ input[role="switch"]:not(:checked)::after {
   }
 }
 
-/* The feedback form (collatas' web component, in the light DOM) sends with a primary button,
-   which would take the accent. In sonotas amber means "now" and Export, so Send reads in ink
-   like every other action. */
-collatas-form .btn[data-variant="primary"] {
-  --ae-tone: var(--ae-text);
-  --ae-tone-contrast: var(--ae-surface);
-}
-
 /* ── free frame resize ───────────────────────────────────────────────────── */
 
 /* Grips on the free frame's right edge, bottom edge and corner; while dragging,
@@ -788,7 +793,7 @@ main > .stage {
   /* Frosted like the transport; its ghost buttons let the frost show. */
   background: var(--ae-frost-bg-sheer);
   backdrop-filter: var(--ae-frost-filter-l);
-  box-shadow: inset 0 0 0 1px var(--ae-border), var(--ae-shadow-l);
+  box-shadow: inset 0 0 0 1px var(--ae-border);
 }
 
 .frame-resize {

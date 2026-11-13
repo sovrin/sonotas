@@ -65,6 +65,7 @@ function onPick(e) {
         data-icon
         data-size="s"
         data-variant="ghost"
+        data-tone="neutral"
         :aria-label="t('notice.dismiss')"
         @click="introClosed = true"
       >

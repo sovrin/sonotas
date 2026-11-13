@@ -27,37 +27,37 @@ colors:
   note-red: "#e5484d"
 typography:
   display:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) * 4.236)"
     fontWeight: 300
     lineHeight: 1
     letterSpacing: "-0.04em"
     fontFeature: "tnum"
   readout:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) * 1.618)"
     fontWeight: 500
     lineHeight: 1.128
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
   title:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "clamp(0.95rem, 0.92rem + 0.15vw, 1.0625rem)"
     fontWeight: 560
     lineHeight: 1.128
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "calc(var(--ae-text-base) / 1.272)"
     fontWeight: 400
     lineHeight: 1.618
   label:
-    fontFamily: "ui-sans-serif, -apple-system, SF Pro Text, system-ui, Geist Variable, Segoe UI, sans-serif"
+    fontFamily: "Geist Variable, ui-sans-serif, -apple-system, system-ui, Segoe UI, sans-serif"
     fontSize: "calc(var(--ae-text-base) / 1.618)"
     fontWeight: 540
     letterSpacing: "0.12em"
   data:
-    fontFamily: "ui-monospace, SF Mono, Geist Mono Variable, Menlo, Consolas, monospace"
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, Consolas, monospace"
     fontSize: "calc(var(--ae-text-base) / 1.272)"
     fontWeight: 400
     lineHeight: 1
@@ -155,10 +155,10 @@ The video has its own two themes, chosen in the Look tab and independent of the 
 
 ## Typography
 
-**Body Font:** the system UI sans (SF Pro on macOS), with Geist Variable vendored as the fallback.
-**Data Font:** the system mono (SF Mono), with Geist Mono Variable vendored as the fallback.
+**Body Font:** Geist Variable (vendored with aequitas), falling back to the system UI sans for scripts it lacks.
+**Data Font:** Geist Mono Variable (vendored with aequitas), falling back to the system mono.
 
-**Character:** a native, unbranded sans for the interface, so the tool feels like part of the operating system, and a tabular mono for anything that counts time or music.
+**Character:** one quiet, neutral sans for the interface that reads the same on every OS, and a tabular mono for anything that counts time or music.
 
 ### Hierarchy
 The scale is φ-based on a fluid base of about 15–17px (`clamp(0.95rem, 0.92rem + 0.15vw, 1.0625rem)`).
@@ -178,7 +178,7 @@ The scale is φ-based on a fluid base of about 15–17px (`clamp(0.95rem, 0.92re
 
 ## Layout
 
-The page is aequitas' editor shell, framed as one window: on a desktop it sits a space-4 step inside the viewport (padding on the app root, never a margin on the shell, which would scroll the page), edged by a single hairline on a page one tone deeper. Inside, its parts join by hairlines. A single toolbar runs across the top: the brand, a hairline, then the song (title and badge above a line of facts) and, at the far end, track select, Open, keyboard shortcuts, How it works and the theme toggle; the last three are ghost icons, and the shortcuts icon goes on a phone. Below it, the working column (sunken ink) holds the dot-grid stage, which grows to fill the height, then the transport in its own flat box. The inspector runs the full height on the right, a little wider than aequitas' default (φ⁶ rem plus space-4, about 300px), with Export at its foot.
+The page is aequitas' editor shell, framed as one window: on a desktop it sits a space-4 step inside the viewport (padding on the app root, never a margin on the shell, which would scroll the page), edged by a single hairline on a page one tone deeper. Inside, its parts join by hairlines. A single toolbar runs across the top: the brand, a hairline, then the song (title and badge above a line of facts) and, at the far end, three groups split by short hairlines: the song (track select, Open), this video's settings (copy link, reset) and the app (keyboard shortcuts, How it works, What's new, feedback, language, theme), all but Open and the selects as ghost icons. On a phone the hairlines and the shortcuts icon go. Below it, the working column (sunken ink) holds the dot-grid stage, which grows to fill the height, then the transport in its own flat box. The inspector runs the full height on the right, a little wider than aequitas' default (φ⁶ rem plus space-4, about 300px), with Export at its foot.
 
 The inspector stacks four tabs (Frame, Look, Playhead, Output) over a scrolling panel. Export is pinned at its foot behind a hairline, so the goal of the page is always in view. Groups inside a tab are separated by dividers, and each group follows the pattern label heading, control, one-line hint.
 
@@ -188,12 +188,12 @@ Below 48rem (768px) everything stacks in one column: the stage takes the video's
 
 ## Elevation & Depth
 
-The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows: the app window, the inspector and the transport box are all flat. The live preview canvas (or the finished video) carries aequitas' large shadow and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
+The system is flat tonal ink with exactly one lifted object. Surfaces separate by tone (surface vs. sunken) and hairlines, not shadows: the app window, the inspector and the transport box are all flat. The live preview canvas (or the finished video) carries the stage lift and sits on the sunken dot-grid stage, so it reads as the one lit thing on the bench.
 
 Atmosphere comes from a custom aurora replacing aequitas' default: one faint amber radial spill over the stage (55% × 45% at 38% 0%) and one cool ink field behind the inspector (45% × 60% at the bottom-right corner).
 
 ### Shadow Vocabulary
-- **Stage lift** (`var(--ae-shadow-l)`, three ink-tinted layers): only on the preview canvas and the finished video.
+- **Stage lift** (a 1px rim, a faint amber halo and two ink-tinted drops): only on the preview canvas and the finished video. The halo is a glow on the video's edge, never a pool on the stage, and stays faint enough in the light UI not to read as cream.
 
 ### Named Rules
 **The One Lit Thing Rule.** Only the video gets a shadow. Panels, cards and controls stay flat; depth elsewhere comes from tone.
@@ -218,7 +218,7 @@ Square and exact; only Export speaks up.
 The default control for two to four options, with every option visible and one click to choose. The track is a hairline fill; the selected option lifts to the surface tone with an amber underline. In the inspector they always fill the width with equal segments. Shape options carry a small outline glyph at the option's own aspect ratio.
 
 ### Switches, chips and the range checkbox
-Square switches for settings that change how a group behaves. On is amber with an ink knob; off has a muted knob, so off never outshines on. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
+Square switches for settings that change how a group behaves. On is amber with an ink knob; off is aequitas' empty track, outlined with a small knob, so off never outshines on. A group heading can carry its switch in the heading row (Bar highlight, Current note); while off, the group shows a one-line caption saying what the switch does.
 
 What the video shows is a set of filter chips under **Show elements**, wrapping as whole chips, with the count of active ones in the heading row. A chip that is on is tinted with an amber edge and a check; off shows a plus. An element the file can't have (no title, no chords) is disabled with a minus, and one caption under the chips names what is missing.
 
@@ -237,7 +237,7 @@ The inspector tabs are a text tablist (Frame, Look, Playhead, Output) in body si
 The song as a strip of tab staff, in **play order**: repeats play again, so their bars appear again, and each cell is as wide as that play lasts. Six faint hairline strings run across a sunken track; each cell has a barline, a 2px line in Hairline Strong where the play jumps back, and the same at the end. Bar numbers in mono are spaced by where they land (at least 32px apart, never on the final barline), and jump-backs always keep their number. The current bar is tinted with the video's own highlight colour and the playhead uses the video's own cursor colour with a square cap and a thin halo. Dragging scrubs. With a bar range on, two amber brackets `[` `]` set the export range, bars outside it sit behind a veil, and during export an amber fill runs across the range.
 
 ### Transport
-Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), in one flat box (window tone, hairline edge), with the "Export only some bars" checkbox on a full-width row beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
+Play/pause, the timecode readout ("0:04.2 of 2:23.6"), the bar strip, and the current-bar readout ("12 of 61 bars", or "in bars 12–28" while a range is rendered), in one flat box (frosted window tone, hairline edge, no shadow) floating over the foot of the stage, with the "Export only some bars" checkbox on a full-width row beneath and its caption right beside it. Space plays and pauses; I and O set the first and last exported bar at the playhead.
 
 ### Export panel
 Pinned at the inspector's foot. Errors appear here, above the button: an unsupported browser disables Export and says why, and a failed export says what failed and what to try. At rest: the scope ("Whole song · 16:9"), a mono line of facts (resolution, fps, length and the estimated size once known) and the Export button. While rendering: phase, percentage, a progress bar and Cancel. When done: "Your video is ready", the file name and size, Download, and a muted secondary action that reads "Discard video" until the file has been downloaded, then "Back to preview". While an export runs, the inspector, transport, track select and Open hold still at 45% opacity, and leaving the page asks first. Progress is announced once per phase, not per frame.
