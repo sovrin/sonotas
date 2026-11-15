@@ -21,7 +21,7 @@ const fill = computed(() => ((s[props.name] - props.min) / (props.max - props.mi
       :for="id"
       class="flex justify-between"
     >
-      <span>{{ label }}</span>
+      <span class="text-muted">{{ label }}</span>
       <span class="tabular">{{ s[name] }}{{ unit }}</span>
     </label>
     <input

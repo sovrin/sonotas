@@ -1,7 +1,6 @@
 <script setup>
-// A row of preset colours as one radio group, then any colour at all from the
-// system picker. Each swatch is named for screen readers since the square
-// alone says nothing.
+// A row of preset colours as one radio group, each named under its square,
+// then any colour at all from the system picker.
 import { t } from '~/utils/i18n'
 
 const props = defineProps({
@@ -17,16 +16,16 @@ const custom = computed(() => !props.colors.some(c => c.hex === props.selected.t
 </script>
 
 <template>
-  <div class="cluster gap-3">
+  <div class="cluster items-start gap-3">
     <div
       class="swatch-group"
+      data-labels
       role="radiogroup"
       :aria-label="label"
     >
       <label
         v-for="c in colors"
         :key="c.hex"
-        :title="c.name"
         :style="{ '--swatch': c.hex }"
       >
         <input
@@ -35,7 +34,7 @@ const custom = computed(() => !props.colors.some(c => c.hex === props.selected.t
           :checked="selected.toLowerCase() === c.hex"
           @change="$emit('pick', c.hex)"
         >
-        <span class="sr-only">{{ c.name }}</span>
+        <span>{{ c.name }}</span>
       </label>
     </div>
     <input

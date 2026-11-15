@@ -156,7 +156,7 @@ const facts = computed(() => [
         :data-tip="s.undoReset ? t('header.reset.undo') : t('header.reset.tip')"
         data-tip-side="bottom"
         :disabled="(v.atDefaults && !s.undoReset) || v.isRendering"
-        @click="resetSettings"
+        @click="resetSettings()"
       >
         <i
           class="icon"

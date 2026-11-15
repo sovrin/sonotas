@@ -4,8 +4,9 @@
 // music. Each control says what its current value does.
 import { FREE_MAX, FREE_MIN, fitEdge } from '~/utils/frame'
 import { t } from '~/utils/i18n'
+import { GROUPS } from '~/utils/settings-groups'
 
-const { s, v, setAspect, setLayout, toggle } = useSonotas()
+const { s, v, setAspect, setLayout } = useSonotas()
 
 // Computed, so the texts follow a change of language.
 const ASPECTS = computed(() => [
@@ -132,10 +133,14 @@ function pickLayout(l) {
     class="stack"
     data-divided
   >
-    <InspectorGroup :title="t('frame.shape')">
+    <InspectorGroup
+      :title="t('frame.shape')"
+      :keys="GROUPS.frame.shape"
+    >
       <div class="field">
         <div
           class="segmented"
+          data-size="s"
           data-fill
           role="radiogroup"
           :aria-label="t('frame.shape')"
@@ -188,10 +193,14 @@ function pickLayout(l) {
       </div>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('frame.layout')">
+    <InspectorGroup
+      :title="t('frame.layout')"
+      :keys="GROUPS.frame.layout"
+    >
       <div class="field">
         <div
           class="segmented"
+          data-size="s"
           data-fill
           role="radiogroup"
           :aria-label="t('frame.layout')"
@@ -221,13 +230,17 @@ function pickLayout(l) {
       </SegmentedField>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('frame.zoom')">
+    <InspectorGroup
+      :title="t('frame.zoom')"
+      :keys="GROUPS.frame.zoom"
+    >
       <div
         v-if="!v.isPage"
         class="field"
       >
         <div
           class="segmented"
+          data-size="s"
           data-fill
           role="radiogroup"
           :aria-label="t('frame.zoom.by')"
@@ -259,7 +272,7 @@ function pickLayout(l) {
             for="fitBars"
             class="flex justify-between"
           >
-            <span>{{ t('frame.fit_bars') }}</span>
+            <span class="text-muted">{{ t('frame.fit_bars') }}</span>
             <span class="tabular">{{ bars }}</span>
           </label>
           <input
@@ -274,15 +287,10 @@ function pickLayout(l) {
           >
           <small>{{ t('frame.fit_bars.hint', { n: bars }) }}</small>
         </div>
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.currentBarOnly"
-            @change="toggle('currentBarOnly')"
-          >
-          {{ t('frame.only_bars', { n: bars }) }}
-        </label>
+        <SwitchField
+          name="currentBarOnly"
+          :label="t('frame.only_bars', { n: bars })"
+        />
       </template>
 
       <SegmentedField
@@ -303,7 +311,10 @@ function pickLayout(l) {
       </SegmentedField>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('frame.follow')">
+    <InspectorGroup
+      :title="t('frame.follow')"
+      :keys="GROUPS.frame.follow"
+    >
       <SegmentedField
         name="playhead"
         :label="t('frame.playhead')"
@@ -337,7 +348,7 @@ function pickLayout(l) {
           for="followAt"
           class="flex justify-between"
         >
-          <span>{{ atLabel }}</span>
+          <span class="text-muted">{{ atLabel }}</span>
           <span class="tabular">{{ at }}%</span>
         </label>
         <input
@@ -353,35 +364,21 @@ function pickLayout(l) {
         <small>{{ atHint }}</small>
       </div>
 
-      <label v-if="s.view === 'screen'">
-        <input
-          type="checkbox"
-          role="switch"
-          :checked="s.turnEarly"
-          @change="toggle('turnEarly')"
-        >
-        {{ v.isPage ? t('frame.turn_early.line') : t('frame.turn_early.bar') }}
-      </label>
+      <SwitchField
+        v-if="s.view === 'screen'"
+        name="turnEarly"
+        :label="v.isPage ? t('frame.turn_early.line') : t('frame.turn_early.bar')"
+      />
 
       <template v-if="s.view === 'track' && !v.isPage">
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.steady"
-            @change="toggle('steady')"
-          >
-          {{ t('frame.steady') }}
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.runPast"
-            @change="toggle('runPast')"
-          >
-          {{ t('frame.run_past') }}
-        </label>
+        <SwitchField
+          name="steady"
+          :label="t('frame.steady')"
+        />
+        <SwitchField
+          name="runPast"
+          :label="t('frame.run_past')"
+        />
       </template>
     </InspectorGroup>
   </div>

@@ -650,9 +650,48 @@ main > .stage {
 
 /* ── inspector ─────────────────────────────────────────────────────────── */
 
-/* A show-element chip wraps as a whole, never inside its name. */
-.inspector .chip {
-  white-space: nowrap;
+/* A setting's name, then its switch at the row's end, as the group toggles sit. */
+.inspector .switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ae-space-3);
+}
+
+/* Show-element switches: rows of a list, columns side by side where they fit. */
+.inspector .show-grid {
+  column-gap: var(--ae-space-5);
+  row-gap: var(--ae-space-2);
+}
+
+/* Each speed step named under the slider; the chosen one in ink. */
+.inspector .ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--ae-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ae-text-muted);
+
+  & [data-on] {
+    color: var(--ae-text);
+  }
+}
+
+/* A tab whose settings are off their defaults. */
+.inspector .tab-dot {
+  display: inline-block;
+  inline-size: var(--ae-space-1);
+  block-size: var(--ae-space-1);
+  margin-inline-start: var(--ae-space-1);
+  vertical-align: middle;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* A group's Reset sits in its heading row without making it taller. */
+.inspector .btn.reset {
+  margin-block: calc(-1 * var(--ae-space-2));
 }
 
 .shell > .inspector {
@@ -687,6 +726,15 @@ main > .stage {
   & > :not(.tabs, .export-panel) {
     flex: 1;
     min-block-size: 0;
+  }
+
+  /* Beside the work, the panel scrolls under Export: it fades out there rather
+     than cutting a line in half, and its end scrolls clear of the fade. */
+  @media (width >= 48rem) {
+    & > .panels {
+      padding-block-end: var(--ae-space-6);
+      mask-image: linear-gradient(to bottom, #000 calc(100% - var(--ae-space-6)), transparent);
+    }
   }
 }
 

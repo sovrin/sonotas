@@ -18,9 +18,13 @@ function pick(v) {
 
 <template>
   <div class="field">
-    <label :id="id">{{ label }}</label>
+    <label
+      :id="id"
+      class="text-muted"
+    >{{ label }}</label>
     <div
       class="segmented"
+      data-size="s"
       data-fill
       role="radiogroup"
       :aria-labelledby="id"

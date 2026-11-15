@@ -2,6 +2,7 @@
 // How the score looks: a theme first, then which staves, then what is drawn.
 // Exact colours wait behind a fold. Where it sits is the Frame tab's job.
 import { t } from '~/utils/i18n'
+import { GROUPS } from '~/utils/settings-groups'
 
 const { s, setField, setCanvasTheme, toggle } = useSonotas()
 const route = useRoute()
@@ -61,7 +62,10 @@ const colorRows = computed(() => COLOR_ROWS.value.filter(r => r.name !== 'barNum
     class="stack"
     data-divided
   >
-    <InspectorGroup :title="t('look.theme')">
+    <InspectorGroup
+      :title="t('look.theme')"
+      :keys="GROUPS.look.theme"
+    >
       <div
         class="stack gap-2"
         role="radiogroup"
@@ -122,7 +126,10 @@ const colorRows = computed(() => COLOR_ROWS.value.filter(r => r.name !== 'barNum
       </details>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('look.notation')">
+    <InspectorGroup
+      :title="t('look.notation')"
+      :keys="GROUPS.look.notation"
+    >
       <SegmentedField
         name="staves"
         :label="t('look.staves')"
@@ -139,42 +146,39 @@ const colorRows = computed(() => COLOR_ROWS.value.filter(r => r.name !== 'barNum
           class="text-muted"
         >{{ t('look.rhythm.auto.hint') }}</small>
       </SegmentedField>
-      <div class="field">
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.songBook"
-            @change="toggle('songBook')"
-          >
-          {{ t('look.song_book') }}
-        </label>
+      <SwitchField
+        name="songBook"
+        :label="t('look.song_book')"
+      >
         <small class="text-muted">{{ t('look.song_book.hint') }}</small>
-      </div>
+      </SwitchField>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('look.show')">
+    <InspectorGroup
+      :title="t('look.show')"
+      :keys="GROUPS.look.show"
+    >
       <template #toggle>
         <span class="text-s text-muted tabular">{{ t('look.show.active', { n: activeCount }) }}</span>
       </template>
-      <div class="cluster gap-2">
+      <!-- One column in the sidebar, two where a phone's full width has room. -->
+      <div
+        class="grid show-grid"
+        style="--min: 10rem"
+      >
         <label
           v-for="item in shown"
           :key="item.key"
-          class="chip"
+          class="switch-row"
         >
+          <span>{{ item.label }}</span>
           <input
             type="checkbox"
+            role="switch"
             :checked="isOn(item)"
             :disabled="s.ready && item.missing?.()"
             @change="toggle(item.key)"
           >
-          <i
-            class="icon"
-            :data-icon="isOn(item) ? 'check' : s.ready && item.missing?.() ? 'minus' : 'plus'"
-            aria-hidden="true"
-          />
-          {{ item.label }}
         </label>
       </div>
       <small
