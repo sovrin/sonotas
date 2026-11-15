@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.9](https://github.com/sovrin/sonotas/compare/v0.2.8...v0.2.9) (2026-11-15)
+
+
+### Features
+
+* a new logo and link preview cards ([0d213b4](https://github.com/sovrin/sonotas/commit/0d213b4766396d3a93cf4edd60e0da9ae240df53))
+* a new logo, the name as a timeline with the playhead in it ([263854a](https://github.com/sovrin/sonotas/commit/263854a99462ed4efc04f27a5e774f3675b72c2f))
+* shared links show a preview card ([db4aaf9](https://github.com/sovrin/sonotas/commit/db4aaf9089851cd924c2f51fcd49703691335e73))
+
 ## [0.2.8](https://github.com/sovrin/sonotas/compare/v0.2.7...v0.2.8) (2026-11-13)
 
 
