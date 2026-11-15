@@ -97,6 +97,26 @@
   letter-spacing: -0.01em;
 }
 
+/* The name as a timeline: "sono" played, "tas" to come, the amber playhead between (DESIGN.md). */
+.wordmark {
+  font-size: var(--ae-text-l);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+
+  & span {
+    color: var(--ae-text-muted);
+  }
+
+  & i {
+    display: inline-block;
+    width: 0.1em;
+    height: 1.1em;
+    margin-inline: 0.04em 0.06em;
+    vertical-align: -0.22em;
+    background: var(--ae-accent);
+  }
+}
+
 /* The actions stay one row. On a phone they take a row of their own under the
    song, spread across it, so neither crowds the other. */
 .navbar > .end {

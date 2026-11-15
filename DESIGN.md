@@ -113,7 +113,7 @@ components:
 
 **Creative North Star: "The Dim Studio"**
 
-sonotas is a quiet editing room at night. The surfaces are cool ink, the stage is a dark bench marked with a faint dot grid, and the video is the only lit thing in the room. A single warm light, Stage-Light Amber, falls on whatever is playing now: the bar lit in the video, the current cell in the bar strip, the logo's one lit bar, the Export button. Everything else steps back so the creator's eye stays on the picture they are about to export.
+sonotas is a quiet editing room at night. The surfaces are cool ink, the stage is a dark bench marked with a faint dot grid, and the video is the only lit thing in the room. A single warm light, Stage-Light Amber, falls on whatever is playing now: the bar lit in the video, the current cell in the bar strip, the playhead in the logo, the Export button. Everything else steps back so the creator's eye stays on the picture they are about to export.
 
 The system is built on the user's own framework, aequitas (vendored in `app/assets/aequitas/`), and stays inside its language. Proportions come from φ (1.618): the spacing, type scale and leading are powers of it. Corners are square, lines are hairlines, and every musical or time number is set in tabular mono. Density sits in the middle: an editor with a preview, a transport and a four-tab inspector, where each setting explains in one line what its current value does.
 
@@ -131,7 +131,7 @@ Two visual worlds were explicitly rejected along the way: plain default aequitas
 A cool ink scale (hue 260) carrying one warm amber; the same amber lights the UI, the video and the logo.
 
 ### Primary
-- **Stage-Light Amber** (#e0a94c): the colour of "now". It is the video's default bar highlight, the logo's lit bar and the source of the UI accent. In the interface it appears as **Stage-Light Amber, dark UI** (oklch 0.769 0.127 78) with ink text on it, and as **Stage-Light Amber, light UI** (oklch 0.56 0.12 75), darkened so white text still holds 4.6:1. The UI uses it for the selected tab underline, segmented selections, checked switches, focus rings, range brackets, export progress and the Export button.
+- **Stage-Light Amber** (#e0a94c): the colour of "now". It is the video's default bar highlight, the logo's playhead and the source of the UI accent. In the interface it appears as **Stage-Light Amber, dark UI** (oklch 0.769 0.127 78) with ink text on it, and as **Stage-Light Amber, light UI** (oklch 0.56 0.12 75), darkened so white text still holds 4.6:1. The UI uses it for the selected tab underline, segmented selections, checked switches, focus rings, range brackets, export progress and the Export button.
 
 ### Neutral
 - **Studio Ink** (surface oklch 0.14 0.008 260 dark / 0.975 0.003 260 light): page and inspector background.
