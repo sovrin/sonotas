@@ -1,9 +1,7 @@
-<!-- sonotas: one bar of a tab staff, lit amber as the video lights the bar being
-     played, with the playhead running through it. -->
+<!-- sonotas: the s of the wordmark (Geist 600, outlined) and the amber
+     playhead that follows "sono" in it: played, then now. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#15161a"/>
-  <path d="M0 9h32v2H0zM0 15h32v2H0zM0 21h32v2H0z" fill="#5a5f6c"/>
-  <rect x="8" y="5" width="14" height="22" fill="#e0a94c"/>
-  <path d="M8 9h14v2H8zM8 15h14v2H8zM8 21h14v2H8z" fill="#a47a36"/>
-  <path d="M16 2h6v5h-2v23h-2V7h-2z" fill="#f2f2f0"/>
+  <rect width="32" height="32" fill="#121316"/>
+  <path fill="#e8e9eb" d="M14.38 24Q12.04 24 10.51 23.33Q8.97 22.67 8.18 21.5Q7.38 20.34 7.27 18.83L11.02 18.67Q11.22 19.87 11.99 20.53Q12.76 21.2 14.4 21.2Q15.68 21.2 16.37 20.78Q17.05 20.36 17.05 19.47Q17.05 18.95 16.81 18.6Q16.56 18.26 15.86 18Q15.15 17.74 13.79 17.5Q11.47 17.08 10.16 16.49Q8.84 15.9 8.31 15.01Q7.78 14.12 7.78 12.83Q7.78 10.68 9.43 9.34Q11.08 8 14.26 8Q16.48 8 17.89 8.7Q19.31 9.39 20.03 10.56Q20.76 11.73 20.88 13.15L17.17 13.32Q17.13 12.61 16.81 12.03Q16.49 11.46 15.86 11.13Q15.23 10.8 14.21 10.8Q12.91 10.8 12.24 11.32Q11.57 11.84 11.57 12.69Q11.57 13.31 11.84 13.71Q12.11 14.11 12.77 14.36Q13.43 14.61 14.57 14.79Q16.93 15.14 18.31 15.74Q19.68 16.33 20.27 17.24Q20.85 18.14 20.85 19.42Q20.85 21.62 19.09 22.81Q17.33 24 14.38 24Z"/>
+  <rect x="22.48" y="5" width="2.25" height="22" fill="#e0a94c"/>
 </svg>

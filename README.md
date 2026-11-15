@@ -158,6 +158,15 @@ The production image prerenders the app and serves the static files with
 docker compose up -d --build   # http://localhost:3000
 ```
 
+Shared links get a preview card (title, description, image) once the build
+knows the address it is served at, since previews need absolute URLs:
+
+```bash
+SITE_URL=https://tabs.example.org docker compose up -d --build
+```
+
+Without it the previews still show the title and description, but no image.
+
 ### Rebuilding the music font
 
 `public/fonts/sonotas-music.woff2` is a subset of Bravura holding only the

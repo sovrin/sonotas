@@ -1,5 +1,5 @@
 <script setup>
-import { languages, sourceLanguage } from '~/utils/i18n'
+import { languages, setLanguage, sourceLanguage, t } from '~/utils/i18n'
 
 // The bare address sends the browser to its language's page, keeping a shared link's settings
 // (?s=) and hash. It runs in <head>, before anything is drawn or Nuxt touches the address. Plain
@@ -16,6 +16,16 @@ const redirect = `(function (langs, source) {
 })(${JSON.stringify(languages)}, ${JSON.stringify(sourceLanguage)})`
 
 useHead({ title: 'sonotas', script: [{ innerHTML: redirect }] })
+
+// Shared links point here and link previews don't run the redirect, so this page describes the app too.
+await setLanguage(sourceLanguage)
+const site = useSiteUrl()
+useSeoMeta({
+  description: t('app.description'),
+  ogTitle: t('app.title'),
+  ogDescription: t('app.description'),
+  ogUrl: site ? `${site}/` : undefined
+})
 </script>
 
 <template>

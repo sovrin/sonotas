@@ -45,7 +45,7 @@ sonotas turns a Guitar Pro or MusicXML tab into a scrolling play-along video wit
 ## Brand Commitments
 
 - Name: **sonotas**, always lowercase.
-- Logo: `public/favicon.svg`.
+- Logo: the wordmark *sono▍tas* in Geist 600: "sono" lit, "tas" muted, an amber playhead between, so the name reads as a timeline (header: `.wordmark` in main.css). The icon is its s and playhead, outlined: `public/favicon.svg`.
 
 ## Evidence on Hand
 

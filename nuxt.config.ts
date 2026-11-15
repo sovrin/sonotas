@@ -25,6 +25,13 @@ export default defineNuxtConfig({
     }
   },
 
+  // The address the site is served at, for link previews (they need absolute URLs). The pages
+  // are prerendered, so it is set at build time: NUXT_PUBLIC_SITE_URL=https://… pnpm generate.
+  // Unset, the pages leave out og:url and the preview image.
+  runtimeConfig: {
+    public: { siteUrl: '' }
+  },
+
   // The renderer package ships raw .ts and pulls browser-only deps
   // (alphaTab, mediabunny/WebCodecs); Nuxt must transpile it, and it is only
   // ever imported dynamically on the client (see useSonotas).

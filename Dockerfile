@@ -50,7 +50,9 @@ FROM deps AS build
 COPY . .
 # public/fonts is kept out of the build context; use the freshly built subset.
 COPY --from=font-build /app/public/fonts/sonotas-music.woff2 ./public/fonts/
-RUN pnpm generate
+# The address link previews point at (see nuxt.config); empty leaves them out.
+ARG SITE_URL=
+RUN NUXT_PUBLIC_SITE_URL=$SITE_URL pnpm generate
 
 FROM joseluisq/static-web-server:2 AS runtime
 

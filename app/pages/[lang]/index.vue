@@ -16,12 +16,13 @@ useHead({
   htmlAttrs: { 'lang': lang, 'data-theme': () => s.uiTheme, 'data-density': 'compact' },
   link: languages.map(l => ({ rel: 'alternate', hreflang: l, href: `/${l}/` }))
 })
+const site = useSiteUrl()
 useSeoMeta({
   title: () => t('app.title'),
   description: () => t('app.description'),
   ogTitle: () => t('app.title'),
   ogDescription: () => t('app.description'),
-  twitterCard: 'summary_large_image'
+  ogUrl: () => site ? `${site}/${lang.value}/` : undefined
 })
 
 // Page-wide drag & drop: any file dropped anywhere replaces the loaded tab.

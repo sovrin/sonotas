@@ -43,14 +43,16 @@ const facts = computed(() => [
     class="navbar"
     data-tone="neutral"
   >
+    <!-- The wordmark on a desktop, the icon where the song needs the room. -->
     <span class="brand">
       <img
-        src="/favicon.svg?v=2"
-        alt=""
+        class="hidden s:inline-block"
+        src="/favicon.svg?v=4"
+        alt="sonotas"
         width="22"
         height="22"
       >
-      <strong class="s:hidden">sonotas</strong>
+      <strong class="wordmark s:hidden">sono<i aria-hidden="true" /><span>tas</span></strong>
     </span>
 
     <div class="song min-w-0">
