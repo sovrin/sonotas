@@ -13,7 +13,7 @@ const { s, loadFile } = provideSonotas()
 
 // aequitas reads the theme and density from <html data-theme data-density>.
 useHead({
-  htmlAttrs: { 'lang': lang, 'data-theme': () => s.uiTheme, 'data-density': 'compact' },
+  htmlAttrs: { 'lang': lang, 'data-theme': () => s.uiTheme, 'data-density': 'compact', 'data-radius': 'soft', 'data-emphasis': 'reduced' },
   link: languages.map(l => ({ rel: 'alternate', hreflang: l, href: `/${l}/` }))
 })
 const site = useSiteUrl()

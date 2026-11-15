@@ -4,7 +4,9 @@
 /* ── identity ──────────────────────────────────────────────────────────── */
 
 /* Amber is the colour the video lights the current bar with, so the interface
-   uses it for "now" and "on" as well; the neutrals are a cool ink. */
+   uses it for "now" and for the one action that makes the video; the neutrals
+   are a cool ink. Switches, checks and selections read in that ink, from
+   aequitas' data-emphasis="reduced" on <html>. */
 :root {
   --ae-hue: 75;
   --ae-neutral-hue: 260;
@@ -716,11 +718,11 @@ main > .stage {
   font-size: var(--ae-text-s);
 }
 
-/* ── amber stays "now" and "on" ────────────────────────────────────────── */
+/* ── amber stays "now" and "go" ────────────────────────────────────────── */
 
 /* Credits are neither: they read in ink, so the amber left on the page is the
-   playing bar, what is switched on, and Export. Toolbar, zoom and secondary
-   actions get the same from data-tone="neutral" in their markup. */
+   playing bar, Play and Export. Toolbar, zoom and secondary actions get the
+   same from data-tone="neutral" in their markup. */
 .shell :is(main > footer, .shell-credits) a {
   color: inherit;
   text-decoration-color: var(--ae-border-strong);
