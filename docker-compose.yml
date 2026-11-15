@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        SITE_URL: ${SITE_URL:-}
     image: sonotas
     container_name: sonotas
     restart: unless-stopped
