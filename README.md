@@ -7,8 +7,8 @@ playhead, ready for YouTube, Shorts, Reels or TikTok. Rendering and encoding run
 entirely on your machine, so nothing gets uploaded.
 
 <picture>
-  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot-light.png?v=2233da34">
-  <img alt="sonotas: a Guitar Pro tab rendered as a scrolling line with an amber playhead and highlighted bar, next to the video settings panel" src="docs/screenshot-dark.png?v=35360e19">
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshot-light.png?v=4800e199">
+  <img alt="sonotas: a Guitar Pro tab rendered as a scrolling line with an amber playhead and highlighted bar, next to the video settings panel" src="docs/screenshot-dark.png?v=9b4012ca">
 </picture>
 
 ## Features
