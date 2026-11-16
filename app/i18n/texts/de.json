@@ -246,6 +246,8 @@
   "preview.zoom.in": "Hineinzoomen",
   "preview.zoom.out": "Herauszoomen",
   "settings.label": "Einstellungen",
+  "settings.reset": "Zurücksetzen",
+  "settings.reset.label": "{group} zurücksetzen",
   "settings.tab.frame": "Bild",
   "settings.tab.look": "Stil",
   "settings.tab.output": "Ausgabe",

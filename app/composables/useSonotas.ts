@@ -808,20 +808,28 @@ function createSonotas() {
   }
 
   // Every video setting back to the app's defaults (the song, track and bar
-  // range stay). The URL follows, so the old ones can be put back for a moment.
+  // range stay), or only the given ones, as a settings group's Reset does. The
+  // URL follows, and the header's reset button offers all the old ones back
+  // for a moment.
   let undoTimer: ReturnType<typeof setTimeout> | null = null
-  function resetSettings() {
+  function resetSettings(only?: (keyof Settings)[]) {
     if (undoTimer) clearTimeout(undoTimer)
-    if (s.undoReset) {
+    if (s.undoReset && !only) {
       Object.assign(s, s.undoReset)
       s.undoReset = null
       return
     }
     const keys = Object.keys(APP_DEFAULTS) as (keyof Settings)[]
     s.undoReset = Object.fromEntries(keys.map(k => [k, s[k]])) as Settings
-    Object.assign(s, APP_DEFAULTS)
+    for (const k of only ?? keys) (s as Dynamic)[k] = APP_DEFAULTS[k]
+    normalise()
     s.settingsNotice = ''
     undoTimer = setTimeout(() => (s.undoReset = null), 6000)
+  }
+
+  // Whether any of these settings is off its default: a group's Reset and its tab's dot.
+  function changed(keys: readonly (keyof Settings)[]) {
+    return keys.some(k => s[k] !== APP_DEFAULTS[k])
   }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
@@ -961,6 +969,7 @@ function createSonotas() {
     zoomStrip,
     copyLink,
     resetSettings,
+    changed,
     setAspect,
     setLayout,
     setCanvasTheme,

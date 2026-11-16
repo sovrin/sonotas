@@ -246,6 +246,8 @@
   "preview.zoom.in": "Zoom in",
   "preview.zoom.out": "Zoom out",
   "settings.label": "Settings",
+  "settings.reset": "Reset",
+  "settings.reset.label": "Reset {group}",
   "settings.tab.frame": "Frame",
   "settings.tab.look": "Look",
   "settings.tab.output": "Output",

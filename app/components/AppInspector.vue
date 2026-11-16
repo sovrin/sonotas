@@ -3,6 +3,7 @@
 // in the picture, how it looks, what marks the playing note, what it sounds
 // like, and the file that comes out, right above the Export button pinned below.
 import { t } from '~/utils/i18n'
+import { GROUPS } from '~/utils/settings-groups'
 
 // Computed, so the labels follow the language.
 const tabs = computed(() => [
@@ -14,7 +15,10 @@ const tabs = computed(() => [
 ])
 
 // Settings hold still while an export reads them.
-const { v } = useSonotas()
+const { v, changed } = useSonotas()
+
+// A dot on a tab whose settings are off their defaults; each group in it has the Reset.
+const offDefault = id => changed(Object.values(GROUPS[id]).flat())
 
 const current = ref('frame')
 const tabEls = ref([])
@@ -60,11 +64,17 @@ function onKeydown(e, i) {
         @keydown="onKeydown($event, i)"
       >
         {{ tab.label }}
+        <span
+          v-if="offDefault(tab.id)"
+          class="tab-dot"
+          aria-hidden="true"
+        />
       </button>
     </div>
 
     <div
       ref="panels"
+      class="panels"
       :inert="v.isRendering"
     >
       <FrameTab

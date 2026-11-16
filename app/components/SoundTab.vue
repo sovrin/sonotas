@@ -1,7 +1,9 @@
 <script setup>
 // What the video sounds like: a built-in synth plays the song in the preview
 // and the exported file, with a metronome and a count-in to play along to.
+// While it's off, what it would offer stays in view, stepped back.
 import { t } from '~/utils/i18n'
+import { GROUPS } from '~/utils/settings-groups'
 
 const { s, v, toggle, loadSoundFont } = useSonotas()
 const fontInput = ref()
@@ -30,7 +32,10 @@ const mixHint = computed(() => ({
     class="stack"
     data-divided
   >
-    <InspectorGroup :title="t('sound.title')">
+    <InspectorGroup
+      :title="t('sound.title')"
+      :keys="GROUPS.sound.sound"
+    >
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -46,79 +51,74 @@ const mixHint = computed(() => ({
       >
         {{ t('sound.off.hint') }}
       </p>
-      <SegmentedField
-        v-else-if="s.tracks.length > 1"
-        name="soundMix"
-        :label="t('sound.mix.label')"
-        :options="MIX"
-      >
-        <small>{{ mixHint }}</small>
-      </SegmentedField>
       <div
-        v-if="s.sound"
-        class="field"
+        class="stack gap-3"
+        :inert="!s.sound"
       >
-        <span>{{ t('sound.font.label') }}</span>
-        <input
-          ref="fontInput"
-          type="file"
-          accept=".sf2,.sf3"
-          hidden
-          @change="onPickFont"
+        <SegmentedField
+          v-if="s.tracks.length > 1"
+          name="soundMix"
+          :label="t('sound.mix.label')"
+          :options="MIX"
         >
-        <div class="cluster">
-          <button
-            class="btn"
-            data-size="s"
-            :inert="v.isRendering"
-            @click="fontInput?.click()"
+          <small v-if="s.sound">{{ mixHint }}</small>
+        </SegmentedField>
+        <div class="field">
+          <span>{{ t('sound.font.label') }}</span>
+          <input
+            ref="fontInput"
+            type="file"
+            accept=".sf2,.sf3"
+            hidden
+            @change="onPickFont"
           >
-            {{ s.soundFontName ? t('sound.font.change') : t('sound.font.own') }}
-          </button>
-          <button
-            v-if="s.soundFontName"
-            class="btn"
-            data-size="s"
-            data-variant="ghost"
-            data-tone="neutral"
-            :inert="v.isRendering"
-            @click="loadSoundFont(null)"
-          >
-            {{ t('sound.font.builtin') }}
-          </button>
+          <div class="cluster">
+            <button
+              class="btn"
+              data-size="s"
+              :inert="v.isRendering"
+              @click="fontInput?.click()"
+            >
+              {{ s.soundFontName ? t('sound.font.change') : t('sound.font.own') }}
+            </button>
+            <button
+              v-if="s.soundFontName"
+              class="btn"
+              data-size="s"
+              data-variant="ghost"
+              data-tone="neutral"
+              :inert="v.isRendering"
+              @click="loadSoundFont(null)"
+            >
+              {{ t('sound.font.builtin') }}
+            </button>
+          </div>
+          <small v-if="s.soundFontError">{{ s.soundFontError }}</small>
+          <small v-else-if="s.sound">{{ s.soundFontName ? t('sound.font.playing', { name: s.soundFontName }) : t('sound.font.builtin.hint') }}</small>
         </div>
-        <small v-if="s.soundFontError">{{ s.soundFontError }}</small>
-        <small v-else>{{ s.soundFontName ? t('sound.font.playing', { name: s.soundFontName }) : t('sound.font.builtin.hint') }}</small>
       </div>
     </InspectorGroup>
 
     <InspectorGroup
-      v-if="s.sound"
       :title="t('sound.aids.title')"
+      :keys="GROUPS.sound.aids"
     >
-      <div class="field">
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.metronome"
-            @change="toggle('metronome')"
-          >
-          {{ t('sound.metronome.label') }}
-        </label>
-        <small>{{ t('sound.metronome.hint') }}</small>
-      </div>
-      <div class="field">
-        <label>
-          <input
-            type="checkbox"
-            role="switch"
-            :checked="s.countIn"
-            @change="toggle('countIn')"
-          >
-          {{ t('sound.countin.label') }}
-        </label>
-        <small>{{ t('sound.countin.hint') }}</small>
+      <div
+        class="stack gap-3"
+        :inert="!s.sound"
+      >
+        <SwitchField
+          name="metronome"
+          :label="t('sound.metronome.label')"
+        >
+          <small v-if="s.sound">{{ t('sound.metronome.hint') }}</small>
+        </SwitchField>
+        <SwitchField
+          name="countIn"
+          :label="t('sound.countin.label')"
+        >
+          <small v-if="s.sound">{{ t('sound.countin.hint') }}</small>
+        </SwitchField>
       </div>
     </InspectorGroup>
   </div>

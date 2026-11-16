@@ -1,8 +1,9 @@
 <script setup>
 // What marks the music as it plays: the playhead line, the bar it is in and
-// the note being played. Each shows its colour; the measurements wait
-// behind a fold, since the defaults suit most videos.
+// the note being played. Each shows its colour and the sliders people reach
+// for; the playhead's offset and height wait behind a fold.
 import { t } from '~/utils/i18n'
+import { GROUPS } from '~/utils/settings-groups'
 
 const { s, v, toggle, setCursorColor, setHighlightColor, setActiveNoteColor } = useSonotas()
 
@@ -34,32 +35,45 @@ const NOTE_COLORS = computed(() => [
     class="stack"
     data-divided
   >
-    <InspectorGroup :title="t('playhead.playhead')">
+    <InspectorGroup
+      :title="t('playhead.playhead')"
+      :keys="GROUPS.playhead.playhead"
+    >
       <SwatchPicker
         :colors="CURSOR_COLORS"
         :selected="s.cursorColor"
         :label="t('playhead.playhead.color')"
         @pick="setCursorColor"
       />
+      <div
+        class="grid gap-4"
+        style="--min: 7rem"
+      >
+        <RangeField
+          name="cursorWidth"
+          :label="t('playhead.width')"
+          :aria-label="t('playhead.playhead.width')"
+          :min="1"
+          :max="10"
+          unit=" px"
+        />
+        <RangeField
+          name="cursorOpacity"
+          :label="t('playhead.opacity')"
+          :aria-label="t('playhead.playhead.opacity')"
+          :min="10"
+          :max="100"
+          unit="%"
+        />
+      </div>
+      <SwitchField
+        v-if="!v.isPage"
+        name="cursorMatchBar"
+        :label="t('playhead.playhead.match_bar')"
+      />
       <details class="accordion">
         <summary>{{ t('playhead.fine_tune') }}</summary>
         <div class="stack gap-3">
-          <RangeField
-            name="cursorOpacity"
-            :label="t('playhead.opacity')"
-            :aria-label="t('playhead.playhead.opacity')"
-            :min="10"
-            :max="100"
-            unit="%"
-          />
-          <RangeField
-            name="cursorWidth"
-            :label="t('playhead.width')"
-            :aria-label="t('playhead.playhead.width')"
-            :min="1"
-            :max="10"
-            unit=" px"
-          />
           <RangeField
             name="cursorOffset"
             :label="t('playhead.offset')"
@@ -74,31 +88,23 @@ const NOTE_COLORS = computed(() => [
           >
             {{ t('playhead.playhead.page') }}
           </p>
-          <template v-else>
-            <label>
-              <input
-                type="checkbox"
-                role="switch"
-                :checked="s.cursorMatchBar"
-                @change="toggle('cursorMatchBar')"
-              >
-              {{ t('playhead.playhead.match_bar') }}
-            </label>
-            <RangeField
-              v-if="!s.cursorMatchBar"
-              name="cursorHeight"
-              :label="t('playhead.height')"
-              :aria-label="t('playhead.playhead.height')"
-              :min="40"
-              :max="100"
-              unit="%"
-            />
-          </template>
+          <RangeField
+            v-else-if="!s.cursorMatchBar"
+            name="cursorHeight"
+            :label="t('playhead.height')"
+            :aria-label="t('playhead.playhead.height')"
+            :min="40"
+            :max="100"
+            unit="%"
+          />
         </div>
       </details>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('playhead.highlight')">
+    <InspectorGroup
+      :title="t('playhead.highlight')"
+      :keys="GROUPS.playhead.highlight"
+    >
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -115,27 +121,27 @@ const NOTE_COLORS = computed(() => [
           :label="t('playhead.highlight.color')"
           @pick="setHighlightColor"
         />
-        <details class="accordion">
-          <summary>{{ t('playhead.fine_tune') }}</summary>
-          <div class="stack gap-3">
-            <RangeField
-              name="highlightOpacity"
-              :label="t('playhead.opacity')"
-              :aria-label="t('playhead.highlight.opacity')"
-              :min="5"
-              :max="60"
-              unit="%"
-            />
-            <RangeField
-              name="highlightPadding"
-              :label="t('playhead.padding')"
-              :aria-label="t('playhead.highlight.padding')"
-              :min="0"
-              :max="20"
-              unit=" px"
-            />
-          </div>
-        </details>
+        <div
+          class="grid gap-4"
+          style="--min: 7rem"
+        >
+          <RangeField
+            name="highlightOpacity"
+            :label="t('playhead.opacity')"
+            :aria-label="t('playhead.highlight.opacity')"
+            :min="5"
+            :max="60"
+            unit="%"
+          />
+          <RangeField
+            name="highlightPadding"
+            :label="t('playhead.padding')"
+            :aria-label="t('playhead.highlight.padding')"
+            :min="0"
+            :max="20"
+            unit=" px"
+          />
+        </div>
       </template>
       <p
         v-else
@@ -145,7 +151,10 @@ const NOTE_COLORS = computed(() => [
       </p>
     </InspectorGroup>
 
-    <InspectorGroup :title="t('playhead.note')">
+    <InspectorGroup
+      :title="t('playhead.note')"
+      :keys="GROUPS.playhead.note"
+    >
       <template #toggle="{ labelledby }">
         <input
           type="checkbox"
@@ -162,17 +171,14 @@ const NOTE_COLORS = computed(() => [
           :label="t('playhead.note.color')"
           @pick="setActiveNoteColor"
         />
-        <details class="accordion">
-          <summary>{{ t('playhead.fine_tune') }}</summary>
-          <RangeField
-            name="activeNoteOpacity"
-            :label="t('playhead.opacity')"
-            :aria-label="t('playhead.note.opacity')"
-            :min="30"
-            :max="100"
-            unit="%"
-          />
-        </details>
+        <RangeField
+          name="activeNoteOpacity"
+          :label="t('playhead.opacity')"
+          :aria-label="t('playhead.note.opacity')"
+          :min="30"
+          :max="100"
+          unit="%"
+        />
       </template>
       <p
         v-else

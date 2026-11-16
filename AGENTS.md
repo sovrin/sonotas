@@ -23,7 +23,9 @@ transient UI state (zoom, notices) are not settings and stay in the store.
    is usually "off". That is not necessarily the new default; old links read
    `absent`, new users get `APP_DEFAULTS`.
 3. Wire it like any setting (paint or build options, the store's watch lists,
-   `encodeParams` in `packages/renderer/index.ts` for paint options, the UI).
+   `encodeParams` in `packages/renderer/index.ts` for paint options, the UI,
+   and its inspector group in `app/utils/settings-groups.ts`, which gives it
+   the group's Reset; a test fails until it has one).
 4. Run `pnpm settings:lock`, then `pnpm test`, and commit the lock with the
    feature. Until you do, `pnpm test` fails with "the lock is behind the code".
 
