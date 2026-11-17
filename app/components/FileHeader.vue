@@ -9,23 +9,7 @@ const { s, loadFile, togglePlay } = useSonotas()
 
 // The intro goes with the sample until dismissed, then stays gone on this browser.
 // Read on mount: the page is prerendered, so there is no storage on the server.
-const INTRO_KEY = 'sonotas:intro-closed'
-const introClosed = ref(false)
-onMounted(() => {
-  try {
-    introClosed.value = localStorage.getItem(INTRO_KEY) === '1'
-  } catch {
-    // storage blocked (private mode): show the intro
-  }
-})
-function closeIntro() {
-  introClosed.value = true
-  try {
-    localStorage.setItem(INTRO_KEY, '1')
-  } catch {
-    // storage blocked: closed for this visit only
-  }
-}
+const introClosed = useLocalStorage('sonotas:intro-closed', false, { initOnMounted: true })
 const fileInput = ref(null)
 
 function onPick(e) {
@@ -84,7 +68,7 @@ function onPick(e) {
         data-variant="ghost"
         data-tone="neutral"
         :aria-label="t('notice.dismiss')"
-        @click="closeIntro"
+        @click="introClosed = true"
       >
         <i
           class="icon"
