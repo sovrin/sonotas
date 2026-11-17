@@ -3,7 +3,8 @@ import { languages } from './app/i18n/languages.json'
 
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/eslint'
+    '@nuxt/eslint',
+    '@vueuse/nuxt'
   ],
 
   devtools: {

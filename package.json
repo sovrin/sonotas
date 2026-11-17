@@ -19,6 +19,8 @@
     "texts": "node scripts/texts.mjs"
   },
   "dependencies": {
+    "@vueuse/core": "^15.0.0",
+    "@vueuse/nuxt": "^15.0.0",
     "nuxt": "^4.5.2",
     "renderer": "workspace:*"
   },

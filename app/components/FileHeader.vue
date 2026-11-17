@@ -7,8 +7,9 @@ import { t } from '~/utils/i18n'
 
 const { s, loadFile, togglePlay } = useSonotas()
 
-// The intro goes with the sample, or for this visit once dismissed.
-const introClosed = ref(false)
+// The intro goes with the sample until dismissed, then stays gone on this browser.
+// Read on mount: the page is prerendered, so there is no storage on the server.
+const introClosed = useLocalStorage('sonotas:intro-closed', false, { initOnMounted: true })
 const fileInput = ref(null)
 
 function onPick(e) {
