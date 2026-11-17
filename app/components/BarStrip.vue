@@ -7,7 +7,7 @@
 // brackets set which bars are exported, and an export fills the clip as it
 // renders. Zoomed in, the strip scrolls sideways and keeps the playhead in
 // view; the overview under it shows the whole song and the window in view.
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { t } from '~/utils/i18n'
 
 const { s, v, seekTo, togglePlay, zoomStrip } = useSonotas()
@@ -18,21 +18,6 @@ const content = ref(null)
 const overview = ref(null)
 const scrollerId = useId()
 const width = ref(0)
-let observer = null
-
-onMounted(() => {
-  observer = new ResizeObserver((entries) => {
-    for (const e of entries) {
-      if (e.target === strip.value) width.value = e.contentRect.width
-      if (e.target === sketchEl.value) sketchH.value = e.contentRect.height
-    }
-    syncView()
-  })
-  observer.observe(strip.value)
-  observer.observe(scroller.value)
-  observer.observe(sketchEl.value)
-})
-onBeforeUnmount(() => observer?.disconnect())
 
 // The whole song when it's known, else whatever is rendered.
 const plays = computed(() => (s.songPlays.length ? s.songPlays : s.plays))
@@ -114,6 +99,14 @@ const sketchEl = ref(null)
 const sketchH = ref(0)
 const NOTE_H = 3
 const NOTE_GAP = 1.5
+
+useResizeObserver([strip, scroller, sketchEl], (entries) => {
+  for (const e of entries) {
+    if (e.target === strip.value) width.value = e.contentRect.width
+    if (e.target === sketchEl.value) sketchH.value = e.contentRect.height
+  }
+  syncView()
+})
 
 function sketchPath(notes) {
   const k = width.value / totalMs.value

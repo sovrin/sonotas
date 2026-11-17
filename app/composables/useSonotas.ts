@@ -118,9 +118,7 @@ function createSonotas() {
   let ringing: AudioBufferSourceNode | null = null // a finished run's soundtrack, still ringing out
   let buildToken = 0
   let rendering: AbortController | null = null // the in-flight export
-  let rebuildTimer: ReturnType<typeof setTimeout> | null = null
   let estimating: AbortController | null = null // the in-flight size probe
-  let estTimer: ReturnType<typeof setTimeout> | null = null
   let blobUrl: string | null = null
 
   // ── option mapping (UI state → renderer options) ────────────────────────────
@@ -274,15 +272,15 @@ function createSonotas() {
   function abortEstimate() {
     estimating?.abort()
     estimating = null
-    if (estTimer) clearTimeout(estTimer)
-    estTimer = null
+    estTimer.stop()
   }
 
   function scheduleEstimate() {
     abortEstimate()
     if (!import.meta.client || !engine || s.estBytes || s.building || s.playing || s.render.status !== 'idle') return
-    estTimer = setTimeout(runEstimate, ESTIMATE_DELAY_MS)
+    estTimer.start()
   }
+  const estTimer = useTimeoutFn(runEstimate, ESTIMATE_DELAY_MS, { immediate: false })
 
   async function runEstimate() {
     if (!engine) return
@@ -365,9 +363,9 @@ function createSonotas() {
 
   function scheduleRebuild() {
     if (!import.meta.client) return
-    if (rebuildTimer) clearTimeout(rebuildTimer)
-    rebuildTimer = setTimeout(rebuild, 150)
+    rebuildTimer.start()
   }
+  const rebuildTimer = useTimeoutFn(() => rebuild(), 150, { immediate: false })
 
   // Swap the synth's soundfont for a user-picked .sf2/.sf3 (null: back to the
   // built-in one). The renderer reads it on the next soundtrack, so rebuild.
@@ -757,8 +755,8 @@ function createSonotas() {
     if (keys.every(k => s[k] === APP_DEFAULTS[k])) return ''
     return encodeSettings(Object.fromEntries(keys.map(k => [k, s[k]])) as Settings)
   })
-  let linkTimer: ReturnType<typeof setTimeout> | null = null
-  let copiedTimer: ReturnType<typeof setTimeout> | null = null
+  const linkTimer = useTimeoutFn(() => writeLink(), 300, { immediate: false })
+  const copiedTimer = useTimeoutFn(() => (s.linkCopied = false), 2000, { immediate: false })
 
   function readLink() {
     const code = route.query.s
@@ -779,10 +777,7 @@ function createSonotas() {
     if (query.s !== route.query.s) router.replace({ query })
   }
 
-  watch(settingsCode, () => {
-    if (linkTimer) clearTimeout(linkTimer)
-    linkTimer = setTimeout(writeLink, 300)
-  })
+  watch(settingsCode, () => linkTimer.start())
 
   async function copyLink() {
     writeLink()
@@ -803,15 +798,14 @@ function createSonotas() {
     }
     s.linkCopied = true
     track('link-copy')
-    if (copiedTimer) clearTimeout(copiedTimer)
-    copiedTimer = setTimeout(() => (s.linkCopied = false), 2000)
+    copiedTimer.start()
   }
 
   // Every video setting back to the app's defaults (the song, track and bar
   // range stay). The URL follows, so the old ones can be put back for a moment.
-  let undoTimer: ReturnType<typeof setTimeout> | null = null
+  const undoTimer = useTimeoutFn(() => (s.undoReset = null), 6000, { immediate: false })
   function resetSettings() {
-    if (undoTimer) clearTimeout(undoTimer)
+    undoTimer.stop()
     if (s.undoReset) {
       Object.assign(s, s.undoReset)
       s.undoReset = null
@@ -821,7 +815,7 @@ function createSonotas() {
     s.undoReset = Object.fromEntries(keys.map(k => [k, s[k]])) as Settings
     Object.assign(s, APP_DEFAULTS)
     s.settingsNotice = ''
-    undoTimer = setTimeout(() => (s.undoReset = null), 6000)
+    undoTimer.start()
   }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
@@ -830,9 +824,9 @@ function createSonotas() {
     if (s.render.status === 'rendering' || (s.render.status === 'done' && !s.downloaded)) e.preventDefault()
   }
 
+  useEventListener('beforeunload', onBeforeUnload)
   onMounted(() => {
     s.canExport = typeof VideoEncoder !== 'undefined'
-    window.addEventListener('beforeunload', onBeforeUnload)
     loadTracker()
   })
   // The prerendered page hydrates on its prerendered route (no query, even in
@@ -883,10 +877,8 @@ function createSonotas() {
   watch(() => [s.playing, s.render.status], scheduleEstimate)
 
   onBeforeUnmount(() => {
-    window.removeEventListener('beforeunload', onBeforeUnload)
     stopLoop()
     void audioCtx?.close()
-    if (rebuildTimer) clearTimeout(rebuildTimer)
     abortEstimate()
     if (blobUrl) URL.revokeObjectURL(blobUrl)
     if (soundFontUrl) URL.revokeObjectURL(soundFontUrl)
