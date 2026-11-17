@@ -2,7 +2,7 @@
 // The stage shows the live preview canvas, and the finished MP4 in its place
 // once an export completes. The canvas stays mounted (v-show) because the
 // store paints straight into it. Clicking the notation seeks to that beat.
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { FREE_MIN, fitEdge } from '~/utils/frame'
 import { t } from '~/utils/i18n'
 
@@ -24,7 +24,7 @@ let scaleIn = '' // the stage size it was kept in
 let awaiting = false // a dragged size waits for the rebuilt canvas
 
 // Narrow screens size the stage from the frame, so there the frame re-fits.
-const narrow = () => matchMedia('(width < 48rem)').matches
+const narrow = useMediaQuery('(width < 48rem)')
 
 function content(el) {
   const cs = getComputedStyle(el)
@@ -99,7 +99,7 @@ function end() {
   const d = drag.value
   drag.value = null
   if (!d?.size) return
-  if (!narrow()) {
+  if (!narrow.value) {
     scale = d.k
     const { w, h } = content(stageRef.value)
     scaleIn = `${w}x${h}`
@@ -184,14 +184,10 @@ watch(() => s.aspect, (a) => {
   if (a !== 'Custom') scale = pinned.value = null
 })
 
-let observer
 onMounted(() => {
   if (canvasRef.value) registerCanvas(canvasRef.value)
-  observer = new ResizeObserver(measure)
-  observer.observe(stageRef.value)
-  observer.observe(canvasRef.value)
 })
-onBeforeUnmount(() => observer?.disconnect())
+useResizeObserver([stageRef, canvasRef], measure)
 </script>
 
 <template>
