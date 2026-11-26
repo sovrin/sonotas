@@ -29,14 +29,19 @@ const QUALITY = computed(() => [
         :label="t('output.fps.label')"
         :options="FPS"
       />
+      <!-- A transparent video is lossless PNG frames: no quality to pick. -->
       <SegmentedField
+        v-if="!s.transparentBg"
         name="quality"
         :label="t('output.quality.label')"
         :options="QUALITY"
       >
         <small>{{ t('output.quality.hint') }}</small>
       </SegmentedField>
-      <div class="field">
+      <div
+        v-if="!s.transparentBg"
+        class="field"
+      >
         <label>
           <input
             type="checkbox"

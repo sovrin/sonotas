@@ -1,5 +1,5 @@
 // @sovrin/renderer — minimal, browser-only Guitar Pro → video renderer.
-// One track, a cursor, scrolling line or page layout. Render a single frame or a full mp4,
+// One track, a cursor, scrolling line or page layout. Render a single frame, a full mp4, or a mov with alpha,
 // optionally with a synthesized soundtrack.
 // This module wires the per-concern modules together.
 import { musicFontCss } from './font.ts'
@@ -20,8 +20,8 @@ import {
 import { buildTimeline } from './timeline.ts'
 import { createPainter } from './paint.ts'
 import { widestRun } from './fit.ts'
-import { AUDIO_BITRATE, encodeVideo, estimateVideoBytes } from './encode.ts'
-import { countInMs, RELEASE_MS, renderAudio } from './audio.ts'
+import { AUDIO_BITRATE, encodeMov, encodeVideo, estimateMovBytes, estimateVideoBytes } from './encode.ts'
+import { CHANNELS, countInMs, RELEASE_MS, renderAudio, SAMPLE_RATE } from './audio.ts'
 import type { EncodeParams } from './encode.ts'
 import type * as alphaTab from '@coderline/alphatab'
 import type { Aspect, EncodeOptions, EstimateOptions, Renderer, RendererOptions, SoundOptions } from './types.ts'
@@ -286,14 +286,16 @@ export async function createRenderer(
     async encode(opts: EncodeOptions = {}) {
       const params = encodeParams(opts)
       if (opts.audio) params.audio = await soundtrack({ ...params, ...opts.sound })
-      return encodeVideo(painter, params)
+      return (opts.format === 'mov' ? encodeMov : encodeVideo)(painter, params)
     },
     async estimateSize({ samples = 8, ...opts }: EstimateOptions = {}) {
       const params = encodeParams(opts)
-      const video = await estimateVideoBytes(painter, params, samples)
+      const mov = opts.format === 'mov'
+      // PNG frames are quick to probe one by one; two per GOP the mp4 probe takes.
+      const video = mov ? await estimateMovBytes(painter, params, samples * 2) : await estimateVideoBytes(painter, params, samples)
       if (video === null || !opts.audio) return video
       const seconds = (Math.min(params.endMs, durationMs + releaseMs) - params.startMs + (params.leadMs ?? 0)) / 1000 / params.speed
-      return video + Math.round((AUDIO_BITRATE / 8) * seconds)
+      return video + Math.round((mov ? SAMPLE_RATE * CHANNELS * 2 : AUDIO_BITRATE / 8) * seconds) // PCM is 2 bytes a sample
     }
   }
 }

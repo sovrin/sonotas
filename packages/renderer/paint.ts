@@ -272,8 +272,12 @@ export function createPainter(view: SheetView): Painter {
     // is screen-space (after scroll/scale), so scroll-independent.
     const cursorX = X(noteX) - cursorWidth / 2 + cursorOffsetX
 
-    ctx.fillStyle = backgroundColor
-    ctx.fillRect(0, 0, width, height)
+    if (opts?.background?.transparent) {
+      ctx.clearRect(0, 0, width, height)
+    } else {
+      ctx.fillStyle = backgroundColor
+      ctx.fillRect(0, 0, width, height)
+    }
 
     // Only the current bar(s): clip the notation to the focus span, as tall as
     // the bar box (which already spans the markings above the staff, e.g. tempo

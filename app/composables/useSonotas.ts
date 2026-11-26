@@ -224,7 +224,7 @@ function createSonotas() {
       cursor: { color: cursorCss(), width: s.cursorWidth, height: s.cursorHeight / 100, offsetX: s.cursorOffset, heightMode: s.cursorMatchBar ? 'bar' : 'frame' },
       highlight: { enabled: s.highlightBar, color: highlightCss(), padding: s.highlightPadding },
       activeNote: { enabled: s.recolorNote, color: activeNoteCss() },
-      background: { color: s.bg },
+      background: { color: s.bg, transparent: s.transparentBg },
       title: { enabled: s.showTitle, tuning: s.showTuning, color: s.fg }
     }
   }
@@ -261,6 +261,7 @@ function createSonotas() {
       speed: speedNum(),
       quality: qualityMode(),
       fast: s.fastExport,
+      format: s.transparentBg ? 'mov' : 'mp4', // only a mov holds the alpha
       audio: s.sound,
       sound: soundOpts(),
       startMs: 0,
@@ -636,6 +637,7 @@ function createSonotas() {
 
   // ── encode (real MP4) ───────────────────────────────────────────────────────
   function phaseFor(pct: number) {
+    if (s.transparentBg) return pct < 97 ? t('export.phase.frames') : t('export.phase.finalizing')
     return pct < 8 ? t('export.phase.preparing') : pct < 82 ? t('export.phase.frames') : pct < 97 ? t('export.phase.encoding') : t('export.phase.finalizing')
   }
 
@@ -727,8 +729,9 @@ function createSonotas() {
   function outName() {
     const base = s.sourceName.replace(/\(demo\)/i, '').trim().replace(/\.\w+$/, '')
     const slug = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sonotas'
-    if (s.aspect === 'Custom') return `${slug}-${outDims().join('x')}.mp4`
-    return `${slug}-${s.aspect.replace(':', 'x')}-${s.resolution}.mp4`
+    const ext = s.transparentBg ? 'mov' : 'mp4'
+    if (s.aspect === 'Custom') return `${slug}-${outDims().join('x')}.${ext}`
+    return `${slug}-${s.aspect.replace(':', 'x')}-${s.resolution}.${ext}`
   }
 
   function download() {
@@ -853,7 +856,7 @@ function createSonotas() {
   )
   // Repaint the current frame when a paint-time option changes (not during play).
   watch(
-    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.showTuning, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity].join('|'),
+    () => [s.bg, s.cursorColor, s.cursorOpacity, s.cursorWidth, s.cursorHeight, s.cursorOffset, s.cursorMatchBar, s.playhead, s.view, s.transition, s.followAt, s.turnEarly, s.runPast, s.steady, s.currentBarOnly, s.showTitle, s.showTuning, s.highlightBar, s.highlightColor, s.highlightOpacity, s.highlightPadding, s.recolorNote, s.activeNoteColor, s.activeNoteOpacity, s.transparentBg].join('|'),
     () => {
       invalidateResult()
       invalidateEstimate()

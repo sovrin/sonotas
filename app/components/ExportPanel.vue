@@ -23,6 +23,10 @@ const scope = computed(() => {
       >
         <strong class="text-s">{{ t('export.done.title') }}</strong>
         <span class="text-s text-muted font-mono tabular">{{ v.outName }} · {{ v.sizeLabel }}</span>
+        <span
+          v-if="s.transparentBg"
+          class="text-s text-muted"
+        >{{ t('export.done.mov_note') }}</span>
       </div>
       <button
         class="btn w-full"
@@ -33,7 +37,7 @@ const scope = computed(() => {
           class="icon"
           data-icon="download"
         />
-        {{ t('export.download') }}
+        {{ s.transparentBg ? t('export.download.mov') : t('export.download') }}
       </button>
       <button
         class="btn w-full"
@@ -94,7 +98,7 @@ const scope = computed(() => {
         :disabled="!s.ready || s.building || !s.canExport"
         @click="startRender"
       >
-        {{ t('export.start') }}
+        {{ s.transparentBg ? t('export.start.mov') : t('export.start') }}
       </button>
     </template>
   </footer>

@@ -15,6 +15,13 @@ const canvasRef = ref(null)
 // mirrors the drag. While dragging, an outline shows the new size; letting go
 // sets it. From then on the preview keeps that scale, so the notation keeps
 // its size on screen as the frame changes (drawn smaller only past the stage).
+// Behind a transparent frame, a checkerboard the notation stands out on: light
+// behind dark notation. Rec. 601 luma of the notation colour decides.
+const alpha = computed(() => {
+  if (!s.transparentBg) return undefined
+  const n = parseInt(s.fg.slice(1), 16)
+  return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) < 128 ? 'light' : 'dark'
+})
 const resizable = computed(() => s.aspect === 'Custom' && s.ready && !s.videoUrl && !v.value.isRendering)
 const box = ref(null) // the frame in stage px: { x, y, w, h }
 const drag = ref(null) // { edge, from, k, stage, size } while dragging
@@ -203,6 +210,7 @@ useResizeObserver([stageRef, canvasRef], measure)
     <canvas
       v-show="s.ready && !s.videoUrl"
       ref="canvasRef"
+      :data-alpha="alpha"
       :data-zoomed="view.z > 1 ? '' : undefined"
       :style="{
         ...(pinned && { width: `${pinned.w}px`, height: `${pinned.h}px` }),
@@ -288,8 +296,15 @@ useResizeObserver([stageRef, canvasRef], measure)
       </button>
     </div>
 
+    <!-- Browsers can't play a MOV of PNG frames: show its first look instead. -->
+    <img
+      v-if="s.videoUrl && s.transparentBg"
+      :src="s.posterUrl"
+      :alt="t('export.done.mov_note')"
+      :data-alpha="alpha"
+    >
     <video
-      v-if="s.videoUrl"
+      v-else-if="s.videoUrl"
       :src="s.videoUrl"
       :poster="s.posterUrl || undefined"
       controls
