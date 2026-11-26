@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.10](https://github.com/sovrin/sonotas/compare/v0.2.9...v0.2.10) (2026-11-26)
+
+
+### Features
+
+* option switches slide to the one you pick ([1d0e1e2](https://github.com/sovrin/sonotas/commit/1d0e1e2e4c24c8d02194043a41b61076fe186af4))
+
+
+### Bug Fixes
+
+* the intro stays closed once dismissed ([7ecacf5](https://github.com/sovrin/sonotas/commit/7ecacf5022799956533f5c434ab8e86b6d918dde))
+* the intro stays closed once dismissed ([77e40de](https://github.com/sovrin/sonotas/commit/77e40de8eb944efe20bfe3faf64bd31f8094dc7b))
+
 ## [0.2.9](https://github.com/sovrin/sonotas/compare/v0.2.8...v0.2.9) (2026-11-15)
 
 
