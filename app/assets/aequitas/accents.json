@@ -1,0 +1,42 @@
+{
+  "blue": {
+    "light": "oklch(0.55 0.2 255)",
+    "dark": "oklch(0.72 0.15 255)"
+  },
+  "indigo": {
+    "light": "oklch(0.55 0.2 280)",
+    "dark": "oklch(0.72 0.15 280)"
+  },
+  "purple": {
+    "light": "oklch(0.55 0.2 305)",
+    "dark": "oklch(0.72 0.15 305)"
+  },
+  "pink": {
+    "light": "oklch(0.55 0.2 350)",
+    "dark": "oklch(0.72 0.15 350)"
+  },
+  "red": {
+    "light": "oklch(0.55 0.2 25)",
+    "dark": "oklch(0.72 0.15 25)"
+  },
+  "orange": {
+    "light": "oklch(0.55 0.2 55)",
+    "dark": "oklch(0.72 0.15 55)"
+  },
+  "yellow": {
+    "light": "oklch(0.55 0.2 90)",
+    "dark": "oklch(0.72 0.15 90)"
+  },
+  "green": {
+    "light": "oklch(0.5 0.17 150)",
+    "dark": "oklch(0.72 0.15 150)"
+  },
+  "teal": {
+    "light": "oklch(0.5 0.13 195)",
+    "dark": "oklch(0.72 0.15 195)"
+  },
+  "graphite": {
+    "light": "oklch(0.42 0.01 255)",
+    "dark": "oklch(0.78 0.01 255)"
+  }
+}

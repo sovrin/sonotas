@@ -15,7 +15,7 @@
     "build-font": "pnpm --filter renderer build-font",
     "test": "node --test tests/*_test.ts && pnpm --filter renderer test",
     "settings:lock": "UPDATE_LOCK=1 node --test tests/settings-code_test.ts",
-    "aequitas:sync": "cp ../aequitas/dist/aequitas.css ../aequitas/dist/aequitas.icons.css app/assets/aequitas/ && cp ../aequitas/dist/fonts/*.woff2 app/assets/aequitas/fonts/",
+    "aequitas:sync": "cp ../aequitas/dist/aequitas.css ../aequitas/dist/aequitas.icons.css ../aequitas/dist/accents.json app/assets/aequitas/ && cp ../aequitas/dist/fonts/*.woff2 app/assets/aequitas/fonts/",
     "texts": "node scripts/texts.mjs"
   },
   "dependencies": {

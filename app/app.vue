@@ -1,11 +1,13 @@
 <script setup>
 // The page sets the language, the title, the description and its og:url (pages/); these hold for all.
+const { accent, logo } = useAccent()
 useHead({
+  htmlAttrs: { 'data-accent': accent || undefined },
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ],
   link: [
-    { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg?v=4' }
+    { rel: 'icon', type: 'image/svg+xml', href: logo }
   ]
 })
 useSeoMeta({

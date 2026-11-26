@@ -7,6 +7,7 @@ import { languages, t } from '~/utils/i18n'
 
 const { s, v, loadFile, setTrack, toggleTheme, copyLink, resetSettings } = useSonotas()
 const route = useRoute()
+const { logo } = useAccent()
 
 // Each language is its own page; the settings (?s=) and the hash go along.
 function switchLanguage(e) {
@@ -47,7 +48,7 @@ const facts = computed(() => [
     <span class="brand">
       <img
         class="hidden s:inline-block"
-        src="/favicon.svg?v=4"
+        :src="logo"
         alt="sonotas"
         width="22"
         height="22"

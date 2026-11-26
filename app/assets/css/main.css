@@ -6,13 +6,7 @@
 /* Amber is the colour the video lights the current bar with, so the interface
    uses it for "now" and "on" as well; the neutrals are a cool ink. */
 :root {
-  --ae-hue: 75;
   --ae-neutral-hue: 260;
-  /* The accent is the video's own bar-highlight amber (#e0a94c, the logo's
-     too), so "now" is one colour everywhere. In the light UI the same amber is
-     darkened until white text on it still reads (4.6:1). */
-  --ae-accent-dark: oklch(0.769 0.127 78);
-  --ae-accent-light: oklch(0.56 0.12 75);
 
   /* Geist, which aequitas already ships, rather than the system face: one
      voice on every OS. Scripts it doesn't cover fall through to the system. */
@@ -33,6 +27,16 @@
       light-dark(oklch(0.9 0.03 260 / 0.6), oklch(0.36 0.05 260 / 0.45)),
       transparent
     );
+}
+
+/* The accent is the video's own bar-highlight amber (#e0a94c, the logo's too),
+   so "now" is one colour everywhere. In the light UI the same amber is darkened
+   until white text on it still reads (4.6:1). A build with an accent
+   (NUXT_PUBLIC_ACCENT) leaves it to aequitas' [data-accent]. */
+:root:not([data-accent]) {
+  --ae-hue: 75;
+  --ae-accent-dark: oklch(0.769 0.127 78);
+  --ae-accent-light: oklch(0.56 0.12 75);
 }
 
 /* ── frame ─────────────────────────────────────────────────────────────── */

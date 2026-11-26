@@ -167,6 +167,14 @@ SITE_URL=https://tabs.example.org docker compose up -d --build
 
 Without it the previews still show the title and description, but no image.
 
+`ACCENT` swaps the amber for one of aequitas' named accents (`blue`, `indigo`,
+`purple`, `pink`, `red`, `orange`, `yellow`, `green`, `teal`, `graphite`), in
+the interface and the icon, say to tell a staging site apart:
+
+```bash
+ACCENT=red docker compose up -d --build
+```
+
 ### Rebuilding the music font
 
 `public/fonts/sonotas-music.woff2` is a subset of Bravura holding only the

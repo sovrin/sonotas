@@ -1,5 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { languages } from './app/i18n/languages.json'
+import accents from './app/assets/aequitas/accents.json'
+
+const accent = process.env.NUXT_PUBLIC_ACCENT ?? ''
+if (accent && !(accent in accents)) {
+  throw new Error(`NUXT_PUBLIC_ACCENT=${accent}: use one of ${Object.keys(accents).join(', ')}, or leave it empty for the amber`)
+}
 
 export default defineNuxtConfig({
   modules: [
@@ -29,8 +35,10 @@ export default defineNuxtConfig({
   // The address the site is served at, for link previews (they need absolute URLs). The pages
   // are prerendered, so it is set at build time: NUXT_PUBLIC_SITE_URL=https://… pnpm generate.
   // Unset, the pages leave out og:url and the preview image.
+  // The accent is one of aequitas' named accents (its accents.json), say to tell a staging
+  // site apart; unset, it is the amber.
   runtimeConfig: {
-    public: { siteUrl: '' }
+    public: { siteUrl: '', accent: '' }
   },
 
   // The renderer package ships raw .ts and pulls browser-only deps
