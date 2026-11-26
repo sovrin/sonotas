@@ -6,11 +6,17 @@ import { t } from '~/utils/i18n'
 const { s, setField, setCanvasTheme, toggle } = useSonotas()
 const route = useRoute()
 
-// Computed, so the texts follow a change of language.
-const THEMES = computed(() => [
-  { v: 'dark', label: t('look.theme.dark'), note: t('look.theme.dark.note'), bg: '#121316', fg: '#e8e9eb' },
-  { v: 'light', label: t('look.theme.light'), note: t('look.theme.light.note'), bg: '#f5f7f9', fg: '#13161c' }
-])
+// Computed, so the texts follow a change of language. Without paper a theme
+// only picks the notation's colour, so it is named for that and the footage it suits.
+const THEMES = computed(() => s.transparentBg
+  ? [
+      { v: 'dark', label: t('look.theme.dark.alpha'), note: t('look.theme.dark.alpha.note'), bg: '#121316', fg: '#e8e9eb' },
+      { v: 'light', label: t('look.theme.light.alpha'), note: t('look.theme.light.alpha.note'), bg: '#f5f7f9', fg: '#13161c' }
+    ]
+  : [
+      { v: 'dark', label: t('look.theme.dark'), note: t('look.theme.dark.note'), bg: '#121316', fg: '#e8e9eb' },
+      { v: 'light', label: t('look.theme.light'), note: t('look.theme.light.note'), bg: '#f5f7f9', fg: '#13161c' }
+    ])
 
 const STAVES = computed(() => [
   { v: 'Tab only', label: t('look.staves.tab') },
@@ -52,8 +58,8 @@ const COLOR_ROWS = computed(() => [
   { name: 'fg', label: t('look.color.fg') },
   { name: 'barNum', label: t('look.color.bar_numbers') }
 ])
-// No bar-number colour to pick while bar numbers are hidden.
-const colorRows = computed(() => COLOR_ROWS.value.filter(r => r.name !== 'barNum' || s.showBarNumbers))
+// No bar-number colour to pick while bar numbers are hidden, nor a paper while there is none.
+const colorRows = computed(() => COLOR_ROWS.value.filter(r => (r.name !== 'barNum' || s.showBarNumbers) && (r.name !== 'bg' || !s.transparentBg)))
 </script>
 
 <template>
@@ -85,9 +91,22 @@ const colorRows = computed(() => COLOR_ROWS.value.filter(r => r.name !== 'barNum
           <i
             class="theme-thumb"
             :style="{ '--bg': th.bg, '--fg': th.fg, '--now': s.highlightColor }"
+            :data-alpha="s.transparentBg ? (th.v === 'light' ? 'light' : 'dark') : undefined"
             aria-hidden="true"
           />
         </label>
+      </div>
+      <div class="field">
+        <label>
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="s.transparentBg"
+            @change="toggle('transparentBg')"
+          >
+          {{ t('look.transparent.label') }}
+        </label>
+        <small>{{ t('look.transparent.hint') }}</small>
       </div>
       <details class="accordion">
         <summary>{{ t('look.custom_colors') }}</summary>

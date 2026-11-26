@@ -9,6 +9,7 @@ import {
   Output
 } from 'mediabunny'
 import { CHANNELS, SAMPLE_RATE } from './audio.ts'
+import { createMovWriter } from './mov.ts'
 import type { Painter } from './paint.ts'
 import type { PaintOptions, Quality } from './types.ts'
 
@@ -241,7 +242,7 @@ async function encodeLanes(
       for (const { first, count } of ranges) {
         for (let i = first; i < first + count; i++) {
           if (halted()) return out
-          painter.paint(ctx, startMs + Math.max(0, (i / fps) * 1000 * speed - leadMs), paint) // clip-relative source time
+          painter.paint(ctx, frameMs({ fps, startMs, speed, leadMs }, i), paint) // clip-relative source time
           const frame = new VideoFrame(canvas, {
             timestamp: Math.round((i / fps) * 1e6), // output timestamps start at 0
             duration: Math.round(1e6 / fps)
@@ -373,6 +374,69 @@ export async function encodeVideo(
     lanes = 1 // encoders disagreed on the stream header: redo it as one stream
   }
 }
+
+/** PNG encodes in flight at once: the browser runs them off the main thread,
+ * and each holds a frame's copy, so a few keep it busy without piling up. */
+const PNG_IN_FLIGHT = 6
+
+/** The source time frame `i` shows. */
+const frameMs = ({ fps, startMs, speed, leadMs = 0 }: Pick<EncodeParams, 'fps' | 'startMs' | 'speed' | 'leadMs'>, i: number) =>
+  startMs + Math.max(0, (i / fps) * 1000 * speed - leadMs)
+
+/** Encode the clip window like `encodeVideo`, but to a .mov of lossless PNG
+ * frames (their alpha kept) with the soundtrack as PCM: the file to lay over
+ * footage in an editor. Aborting `signal` rejects with its reason. */
+export async function encodeMov(
+  painter: Painter,
+  { endMs, onProgress, signal, ...params }: EncodeParams
+): Promise<Blob> {
+  const { fps, paint } = params
+  const total = clipFrames(params.startMs, endMs, painter.durationMs + (params.tailMs ?? 0), fps, params.speed, params.leadMs)
+  const canvas = new OffscreenCanvas(painter.width, painter.height)
+  const ctx = canvas.getContext('2d')!
+  const mov = createMovWriter(painter.width, painter.height, fps, params.audio)
+  const pending: Promise<Blob>[] = []
+  let done = 0
+  const take = async () => {
+    mov.add(await pending.shift()!)
+    onProgress?.(++done, total)
+  }
+  for (let i = 0; i < total; i++) {
+    signal?.throwIfAborted()
+    painter.paint(ctx, frameMs(params, i), paint)
+    pending.push(canvas.convertToBlob({ type: 'image/png' })) // copies the frame now
+    if (pending.length >= PNG_IN_FLIGHT) await take()
+  }
+  while (pending.length) await take()
+  signal?.throwIfAborted()
+  return mov.finish()
+}
+
+/** Predict `encodeMov`'s size by encoding `samples` frames spread over the
+ * clip. PNG has no inter-frame state, so the mean of a spread sample is a fair
+ * guess; busy and empty stretches are where it misses. */
+export async function estimateMovBytes(
+  painter: Painter,
+  { endMs, onProgress: _, signal, ...params }: EncodeParams,
+  samples: number
+): Promise<number | null> {
+  const total = clipFrames(params.startMs, endMs, painter.durationMs + (params.tailMs ?? 0), params.fps, params.speed, params.leadMs)
+  const canvas = new OffscreenCanvas(painter.width, painter.height)
+  const ctx = canvas.getContext('2d')!
+  const n = Math.min(samples, total)
+  let bytes = 0
+  for (let k = 0; k < n; k++) {
+    if (signal?.aborted) return null
+    painter.paint(ctx, frameMs(params, Math.floor(((k + 0.5) * total) / n)), params.paint)
+    bytes += (await canvas.convertToBlob({ type: 'image/png' })).size
+  }
+  if (signal?.aborted) return null
+  return Math.round((bytes / n) * total + MOV_BASE_BYTES + MOV_BYTES_PER_FRAME * total)
+}
+
+/** mov container cost: the boxes, plus a size and a chunk offset per frame. */
+const MOV_BASE_BYTES = 1500
+const MOV_BYTES_PER_FRAME = 8
 
 /** mp4 container cost on top of the encoded packets: a fixed header plus the
  * per-sample index tables (size, timing, chunk offsets). Measured. */

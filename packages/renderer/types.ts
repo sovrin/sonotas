@@ -80,10 +80,10 @@ export interface CursorOptions {
   heightMode?: 'frame' | 'bar'
 }
 
-/** Background knobs. Own shape so a `transparent?` field can be added later
- * without a signature change (deferred — see PRD Non-goals). */
+/** Background knobs. */
 export interface BackgroundOptions {
   color?: string // solid fill, preview + export; default "#fff"
+  transparent?: boolean // no fill at all, for the alpha export; `color` is then unused. Default false
 }
 
 /** Played-bar highlight knobs. Fills a translucent box over the current bar so
@@ -144,7 +144,11 @@ export interface EncodeOptions extends PaintOptions {
   endMs?: number // clip end, default durationMs
   fps?: number // output frame rate, default 30
   speed?: number // playback rate (2 = twice as fast, half as long), default 1
-  quality?: Quality // encoder quality, default 'high'
+  quality?: Quality // encoder quality, default 'high'; unused by 'mov'
+  /** 'mp4' (default): H.264 in an mp4. 'mov': lossless PNG frames with their
+   * alpha, and PCM sound, in a QuickTime file editors read; pair it with a
+   * transparent background. Much larger files, and browsers don't play it. */
+  format?: 'mp4' | 'mov'
   /** Parallel software encoders: ~3× faster on multi-core machines, but 2–3×
    * larger files with slightly softer motion. Falls back to the default
    * constant-quality encoder where software H.264 isn't available. */
@@ -199,7 +203,7 @@ export interface Renderer {
    * defaults to the end plus the last notes' ring-out (when the clip ends the
    * song). Fetches the soundfont on first use. */
   soundtrack(opts?: Pick<EncodeOptions, 'startMs' | 'endMs' | 'speed'> & SoundOptions): Promise<Float32Array>
-  /** Encode a clip of the track to an mp4 Blob via WebCodecs. */
+  /** Encode a clip of the track to an mp4 (WebCodecs) or a mov (PNG) Blob. */
   encode(opts?: EncodeOptions): Promise<Blob>
   /** Predict `encode(opts)`'s output size in bytes by encoding a sample of its
    * 2s GOPs. Resolves `null` if `opts.signal` aborts mid-probe. */

@@ -52,6 +52,7 @@ export const APP_DEFAULTS = {
   tabRhythm: 'Auto', // stems under the tab: auto (as the file sets it), beams, bars or none
   theme: 'dark', // canvas preset: sets the three colours below unless changed
   bg: '#121316',
+  transparentBg: false, // no paper: exports a MOV with alpha, to lay over footage
   fg: '#e8e9eb', // notation
   barNum: '#e8e9eb',
   staffLines: 100, // % of the notation colour's strength the staff lines get
@@ -179,7 +180,8 @@ export const FIELDS: readonly Field[] = [
   { id: 55, key: 'songBook', type: 'bool', absent: false },
   { id: 56, key: 'staffLines', type: 'int', min: 20, max: 100, absent: 100 },
   { id: 57, key: 'freeW', type: 'int', min: 240, max: 3840, absent: 1920 },
-  { id: 58, key: 'freeH', type: 'int', min: 240, max: 3840, absent: 1080 }
+  { id: 58, key: 'freeH', type: 'int', min: 240, max: 3840, absent: 1080 },
+  { id: 59, key: 'transparentBg', type: 'bool', absent: false }
 ]
 
 /** Ids of removed fields: never reused; old codes carrying them skip them quietly. */
