@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         SITE_URL: ${SITE_URL:-}
+        ACCENT: ${ACCENT:-}
     image: sonotas
     container_name: sonotas
     restart: unless-stopped

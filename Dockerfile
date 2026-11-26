@@ -52,7 +52,9 @@ COPY . .
 COPY --from=font-build /app/public/fonts/sonotas-music.woff2 ./public/fonts/
 # The address link previews point at (see nuxt.config); empty leaves them out.
 ARG SITE_URL=
-RUN NUXT_PUBLIC_SITE_URL=$SITE_URL pnpm generate
+# One of aequitas' named accents (red, blue, …, see app/utils/accents); empty is the amber.
+ARG ACCENT=
+RUN NUXT_PUBLIC_SITE_URL=$SITE_URL NUXT_PUBLIC_ACCENT=$ACCENT pnpm generate
 
 FROM joseluisq/static-web-server:2 AS runtime
 
